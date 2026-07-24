@@ -1,17 +1,16 @@
 // ============================================
 // Supabase Configuration
 // ============================================
-const SUPABASE_URL = 'https://dvhjswspljxbjxngetdc.supabase.co';
+const SUPABASE_URL = 'https://dvhjswspljxbjxngetdc.db.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_5ojtC3p6Jt4blaXnYn_Cmw_AjxkVihX';
 
 // Initialize Supabase
-let supabase;
+let db;
 try {
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  console.log('Supabase initialized:', supabase);
+  db = window.db.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log('Supabase initialized');
 } catch (err) {
   console.error('Failed to initialize Supabase:', err);
-  document.getElementById('auth-error').textContent = 'خطا در اتصال به سرور';
 }
 
 // ============================================
@@ -35,7 +34,7 @@ const App = {
 // ============================================
 async function register(username, email, password, displayName) {
   console.log('Registering:', { username, email });
-  const { data, error } = await supabase.auth.signUp({
+  const { data, error } = await db.auth.signUp({
     email,
     password,
     options: {
@@ -52,7 +51,7 @@ async function register(username, email, password, displayName) {
 
 async function login(email, password) {
   console.log('Logging in:', { email });
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await db.auth.signInWithPassword({
     email,
     password
   });
@@ -62,17 +61,17 @@ async function login(email, password) {
 }
 
 async function logout() {
-  await supabase.auth.signOut();
+  await db.auth.signOut();
   App.currentUser = null;
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('app-screen').style.display = 'none';
 }
 
 async function getCurrentUser() {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await db.auth.getUser();
   if (!user) return null;
   
-  const { data: profile } = await supabase
+  const { data: profile } = await db
     .from('profiles')
     .select('*')
     .eq('id', user.id)
@@ -85,7 +84,7 @@ async function getCurrentUser() {
 // Room Functions
 // ============================================
 async function getRooms() {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('rooms')
     .select('*')
     .order('created_at');
@@ -93,7 +92,7 @@ async function getRooms() {
 }
 
 async function createRoom(name, type) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('rooms')
     .insert({ name, type, created_by: App.currentUser.id })
     .select()
@@ -106,7 +105,7 @@ async function createRoom(name, type) {
 // Message Functions
 // ============================================
 async function getMessages(roomId) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('messages')
     .select('*, profiles:user_id (id, username, display_name, role)')
     .eq('room_id', roomId)
@@ -116,7 +115,7 @@ async function getMessages(roomId) {
 }
 
 async function sendMessage(roomId, content, type = 'text', fileUrl = null, fileName = null, fileSize = null) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('messages')
     .insert({
       room_id: roomId,
@@ -140,13 +139,13 @@ async function uploadFile(file) {
   const fileExt = file.name.split('.').pop();
   const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
   
-  const { data, error } = await supabase.storage
+  const { data, error } = await db.storage
     .from('uploads')
     .upload(fileName, file);
   
   if (error) throw error;
   
-  const { data: { publicUrl } } = supabase.storage
+  const { data: { publicUrl } } = db.storage
     .from('uploads')
     .getPublicUrl(fileName);
   
@@ -161,7 +160,7 @@ async function uploadFile(file) {
 // Realtime Subscriptions
 // ============================================
 function subscribeToMessages(roomId) {
-  return supabase
+  return db
     .channel(`messages:${roomId}`)
     .on('postgres_changes', {
       event: 'INSERT',
@@ -169,7 +168,7 @@ function subscribeToMessages(roomId) {
       table: 'messages',
       filter: `room_id=eq.${roomId}`
     }, async (payload) => {
-      const { data } = await supabase
+      const { data } = await db
         .from('messages')
         .select('*, profiles:user_id (id, username, display_name, role)')
         .eq('id', payload.new.id)
