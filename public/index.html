@@ -174,29 +174,60 @@
       }
 
       showLoading('در حال ثبت نام...');
+      console.log('Starting registration...');
 
-      const { data, error } = await db.auth.signUp({
-        email,
-        password,
-        options: { data: { username, display_name: displayName } }
-      });
+      try {
+        const { data, error } = await db.auth.signUp({
+          email,
+          password,
+          options: { data: { username, display_name: displayName } }
+        });
 
-      if (error) {
-        console.error('Register error:', error);
-        showError(error.message);
-        return;
-      }
+        console.log('Registration response:', JSON.stringify({ data, error }));
 
-      // Check if user needs email confirmation
-      if (data.user && !data.session) {
-        showSuccess('ثبت نام شد! حالا وارد شو.');
-        // Switch to login tab
-        switchTab('login');
-        document.getElementById('login-email').value = email;
-        document.getElementById('login-password').value = password;
-      } else if (data.session) {
-        // Auto logged in
-        await loadUser();
+        if (error) {
+          console.error('Register error:', error);
+          showError('خطا: ' + error.message);
+          return;
+        }
+
+        if (data.user) {
+          console.log('User created:', data.user.id);
+          
+          if (data.session) {
+            // Auto logged in
+            console.log('Auto login...');
+            await loadUser();
+          } else if (data.user.identities && data.user.identities.length === 0) {
+            // Email already exists
+            showError('این ایمیل قبلاً ثبت نام شده. وارد شو.');
+            switchTab('login');
+            document.getElementById('login-email').value = email;
+          } else {
+            // Need email confirmation or auto confirmed
+            console.log('User created, trying to login...');
+            
+            // Try to login directly
+            const { data: loginData, error: loginError } = await db.auth.signInWithPassword({
+              email,
+              password
+            });
+            
+            if (loginError) {
+              console.log('Auto login failed, need email confirmation');
+              showSuccess('ثبت نام شد! اگه ایمیل تأیید فعاله، ایمیلت رو چک کن.');
+              switchTab('login');
+              document.getElementById('login-email').value = email;
+              document.getElementById('login-password').value = password;
+            } else {
+              console.log('Auto login success');
+              await loadUser();
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Registration exception:', err);
+        showError('خطای غیرمنتظره: ' + err.message);
       }
     }
 
@@ -210,17 +241,25 @@
       }
 
       showLoading('در حال ورود...');
+      console.log('Starting login...');
 
-      const { data, error } = await db.auth.signInWithPassword({ email, password });
+      try {
+        const { data, error } = await db.auth.signInWithPassword({ email, password });
 
-      if (error) {
-        console.error('Login error:', error);
-        showError(error.message);
-        return;
+        console.log('Login response:', JSON.stringify({ data: error ? null : 'success', error }));
+
+        if (error) {
+          console.error('Login error:', error);
+          showError('خطا: ' + error.message);
+          return;
+        }
+
+        console.log('Login success, loading user...');
+        await loadUser();
+      } catch (err) {
+        console.error('Login exception:', err);
+        showError('خطای غیرمنتظره: ' + err.message);
       }
-
-      console.log('Login success');
-      await loadUser();
     }
 
     async function loadUser() {
