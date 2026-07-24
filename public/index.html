@@ -3,1198 +3,442 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>چت روم | Messenger</title>
+  <title>چت روم</title>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--bg:#0f0f1a;--bg2:#161625;--bg3:#1e1e32;--bg4:#282845;--accent:#6c5ce7;--accent2:#a29bfe;--green:#00b894;--red:#ff6b6b;--yellow:#ffeaa7;--text:#dfe6e9;--text2:#b2bec3;--text3:#636e72;--border:#2d2d4a}
+    body{font-family:'Vazirmatn',sans-serif;background:var(--bg);color:var(--text);height:100vh;height:100dvh;overflow:hidden}
     
-    :root {
-      --bg-darkest: #0d0d12;
-      --bg-dark: #141419;
-      --bg-main: #1a1a24;
-      --bg-secondary: #222230;
-      --bg-hover: #2a2a3a;
-      --bg-active: #33334a;
-      --accent: #5865f2;
-      --accent-hover: #4752c4;
-      --accent-light: #7289da;
-      --green: #3ba55c;
-      --red: #ed4245;
-      --yellow: #faa61a;
-      --text-primary: #dcddde;
-      --text-secondary: #8e9297;
-      --text-muted: #5c5e66;
-      --border: #2f3136;
-      --shadow: 0 8px 32px rgba(0,0,0,0.4);
-    }
-
-    body {
-      font-family: 'Vazirmatn', sans-serif;
-      background: var(--bg-darkest);
-      color: var(--text-primary);
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    /* ============ ANIMATIONS ============ */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateX(-20px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-
-    @keyframes ripple {
-      0% { box-shadow: 0 0 0 0 rgba(88, 101, 242, 0.4); }
-      100% { box-shadow: 0 0 0 20px rgba(88, 101, 242, 0); }
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
-    @keyframes typing {
-      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-      40% { transform: scale(1); opacity: 1; }
-    }
-
-    @keyframes glow {
-      0%, 100% { box-shadow: 0 0 5px var(--accent); }
-      50% { box-shadow: 0 0 20px var(--accent), 0 0 30px var(--accent); }
-    }
-
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(100%); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes scaleIn {
-      from { opacity: 0; transform: scale(0.8); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    /* ============ AUTH SCREEN ============ */
-    #auth-screen {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      background: linear-gradient(135deg, var(--bg-darkest) 0%, #1a1040 50%, var(--bg-darkest) 100%);
-      animation: fadeIn 0.5s ease;
-    }
-
-    .auth-box {
-      background: var(--bg-main);
-      padding: 40px;
-      border-radius: 16px;
-      box-shadow: var(--shadow);
-      width: 100%;
-      max-width: 420px;
-      animation: scaleIn 0.4s ease;
-      border: 1px solid var(--border);
-    }
-
-    .auth-logo {
-      font-size: 72px;
-      text-align: center;
-      margin-bottom: 10px;
-      animation: float 3s ease-in-out infinite;
-    }
-
-    .auth-box h1 {
-      text-align: center;
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .auth-subtitle {
-      text-align: center;
-      color: var(--text-secondary);
-      margin-bottom: 30px;
-      font-size: 14px;
-    }
-
-    .auth-tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 24px;
-      background: var(--bg-dark);
-      padding: 4px;
-      border-radius: 12px;
-    }
-
-    .auth-tab {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      background: transparent;
-      color: var(--text-secondary);
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 15px;
-      font-family: inherit;
-      transition: all 0.3s ease;
-    }
-
-    .auth-tab.active {
-      background: var(--accent);
-      color: white;
-      box-shadow: 0 4px 12px rgba(88, 101, 242, 0.4);
-    }
-
-    .auth-tab:hover:not(.active) {
-      color: var(--text-primary);
-      background: var(--bg-hover);
-    }
-
-    .auth-form {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .auth-form input {
-      padding: 14px 16px;
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      background: var(--bg-dark);
-      color: var(--text-primary);
-      font-size: 15px;
-      font-family: inherit;
-      transition: all 0.3s ease;
-    }
-
-    .auth-form input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.2);
-    }
-
-    .auth-form input::placeholder {
-      color: var(--text-muted);
-    }
-
-    .btn-primary {
-      padding: 14px 24px;
-      border: none;
-      border-radius: 10px;
-      background: var(--accent);
-      color: white;
-      font-size: 16px;
-      font-weight: 600;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .btn-primary:hover {
-      background: var(--accent-hover);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(88, 101, 242, 0.4);
-    }
-
-    .btn-primary:active {
-      transform: translateY(0);
-    }
-
-    .auth-msg {
-      text-align: center;
-      margin-top: 12px;
-      font-size: 14px;
-      min-height: 20px;
-    }
-
-    .auth-msg.error { color: var(--red); }
-    .auth-msg.success { color: var(--green); }
-    .auth-msg.loading { color: var(--yellow); }
-
-    /* ============ APP LAYOUT ============ */
-    #app-screen {
-      display: none;
-      height: 100vh;
-    }
-
-    #app-screen.active {
-      display: flex;
-    }
-
-    /* ============ SIDEBAR ============ */
-    .sidebar {
-      width: 260px;
-      background: var(--bg-dark);
-      display: flex;
-      flex-direction: column;
-      border-left: 1px solid var(--border);
-      animation: slideIn 0.3s ease;
-    }
-
-    .sidebar-header {
-      padding: 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .user-card {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .avatar {
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      background: var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 18px;
-      color: white;
-      transition: transform 0.2s ease;
-    }
-
-    .avatar:hover {
-      transform: scale(1.1);
-    }
-
-    .user-info .name {
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    .role-badge {
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 6px;
-      display: inline-block;
-      font-weight: 500;
-    }
-
-    .role-badge.owner { background: var(--accent); color: white; }
-    .role-badge.admin { background: var(--yellow); color: #000; }
-    .role-badge.user { background: var(--bg-secondary); color: var(--text-secondary); }
-
-    .sidebar-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px;
-    }
-
-    .sidebar-content::-webkit-scrollbar {
-      width: 4px;
-    }
-
-    .sidebar-content::-webkit-scrollbar-thumb {
-      background: var(--border);
-      border-radius: 4px;
-    }
-
-    .section {
-      margin-bottom: 20px;
-    }
-
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      padding: 0 4px;
-    }
-
-    .section-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .btn-add {
-      width: 24px;
-      height: 24px;
-      border: none;
-      background: var(--bg-secondary);
-      color: var(--text-secondary);
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-    }
-
-    .btn-add:hover {
-      background: var(--accent);
-      color: white;
-      transform: scale(1.1);
-    }
-
-    .room-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      margin-bottom: 2px;
-    }
-
-    .room-item:hover {
-      background: var(--bg-hover);
-    }
-
-    .room-item.active {
-      background: var(--bg-active);
-      color: white;
-    }
-
-    .room-item .icon {
-      font-size: 18px;
-      opacity: 0.7;
-    }
-
-    .room-item .name {
-      flex: 1;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .user-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 13px;
-    }
-
-    .online-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--green);
-      animation: pulse 2s infinite;
-    }
-
-    .sidebar-footer {
-      padding: 12px;
-      border-top: 1px solid var(--border);
-    }
-
-    .btn-logout {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: var(--red);
-      color: white;
-      font-size: 14px;
-      font-weight: 500;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .btn-logout:hover {
-      opacity: 0.9;
-      transform: translateY(-1px);
-    }
-
-    /* ============ MAIN CONTENT ============ */
-    .main-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background: var(--bg-main);
-    }
-
-    .welcome {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-secondary);
-      animation: fadeIn 0.5s ease;
-    }
-
-    .welcome-icon {
-      font-size: 100px;
-      margin-bottom: 20px;
-      animation: float 3s ease-in-out infinite;
-    }
-
-    .welcome h2 {
-      font-size: 24px;
-      margin-bottom: 10px;
-      color: var(--text-primary);
-    }
-
-    /* ============ CHAT ============ */
-    .chat-screen {
-      display: none;
-      flex-direction: column;
-      flex: 1;
-    }
-
-    .chat-screen.active {
-      display: flex;
-    }
-
-    .chat-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: var(--bg-dark);
-    }
-
-    .chat-header h2 {
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    .chat-header-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .btn-icon {
-      width: 36px;
-      height: 36px;
-      border: none;
-      background: var(--bg-secondary);
-      color: var(--text-secondary);
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-      transition: all 0.2s ease;
-    }
-
-    .btn-icon:hover {
-      background: var(--bg-hover);
-      color: var(--text-primary);
-      transform: translateY(-2px);
-    }
-
-    .btn-voice-join {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 8px;
-      background: var(--green);
-      color: white;
-      font-size: 13px;
-      font-weight: 500;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .btn-voice-join:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(59, 165, 92, 0.4);
-    }
-
-    .btn-voice-leave {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 8px;
-      background: var(--red);
-      color: white;
-      font-size: 13px;
-      font-weight: 500;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    /* ============ MESSAGES ============ */
-    .messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .messages::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .messages::-webkit-scrollbar-thumb {
-      background: var(--border);
-      border-radius: 4px;
-    }
-
-    .message {
-      display: flex;
-      gap: 14px;
-      animation: slideUp 0.3s ease;
-      max-width: 80%;
-    }
-
-    .message.own {
-      flex-direction: row-reverse;
-      align-self: flex-end;
-    }
-
-    .msg-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--accent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 16px;
-      color: white;
-      flex-shrink: 0;
-    }
-
-    .msg-body {
-      background: var(--bg-secondary);
-      padding: 12px 16px;
-      border-radius: 16px;
-      border-top-right-radius: 4px;
-      max-width: 100%;
-    }
-
-    .message.own .msg-body {
-      background: var(--accent);
-      border-top-right-radius: 16px;
-      border-top-left-radius: 4px;
-    }
-
-    .msg-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 4px;
-    }
-
-    .msg-username {
-      font-weight: 600;
-      font-size: 13px;
-    }
-
-    .msg-role {
-      font-size: 10px;
-      padding: 1px 6px;
-      border-radius: 4px;
-    }
-
-    .msg-time {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    .msg-text {
-      font-size: 14px;
-      line-height: 1.6;
-      word-wrap: break-word;
-    }
-
-    .msg-image {
-      max-width: 300px;
-      max-height: 300px;
-      border-radius: 8px;
-      margin-top: 8px;
-      cursor: pointer;
-      transition: transform 0.2s ease;
-    }
-
-    .msg-image:hover {
-      transform: scale(1.02);
-    }
-
-    .msg-audio {
-      margin-top: 8px;
-      max-width: 250px;
-    }
-
-    .msg-file {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 14px;
-      background: var(--bg-dark);
-      border-radius: 8px;
-      margin-top: 8px;
-      text-decoration: none;
-      color: var(--text-primary);
-      font-size: 13px;
-      transition: all 0.2s ease;
-    }
-
-    .msg-file:hover {
-      background: var(--bg-hover);
-      transform: translateX(-4px);
-    }
-
-    /* ============ MESSAGE INPUT ============ */
-    .input-area {
-      padding: 16px 20px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      align-items: flex-end;
-      gap: 12px;
-      background: var(--bg-dark);
-    }
-
-    .input-area textarea {
-      flex: 1;
-      padding: 12px 16px;
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-      font-size: 14px;
-      font-family: inherit;
-      resize: none;
-      max-height: 120px;
-      transition: all 0.3s ease;
-    }
-
-    .input-area textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.2);
-    }
-
-    .btn-send {
-      padding: 12px 20px;
-      border: none;
-      border-radius: 12px;
-      background: var(--accent);
-      color: white;
-      font-size: 14px;
-      font-weight: 600;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .btn-send:hover {
-      background: var(--accent-hover);
-      transform: translateY(-2px);
-    }
-
-    /* ============ MEDIA PANEL ============ */
-    .media-panel {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      width: 320px;
-      background: var(--bg-dark);
-      border-radius: 16px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      z-index: 100;
-      animation: slideUp 0.3s ease;
-      border: 1px solid var(--border);
-    }
-
-    .media-header {
-      padding: 14px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .media-header h3 {
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    #remote-video {
-      width: 100%;
-      background: #000;
-      max-height: 200px;
-    }
-
-    .media-controls {
-      padding: 14px;
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-    }
-
-    .btn-media {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      border: none;
-      background: var(--bg-secondary);
-      color: white;
-      font-size: 18px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .btn-media:hover {
-      transform: scale(1.1);
-    }
-
-    .btn-media.danger {
-      background: var(--red);
-    }
-
-    /* ============ MODAL ============ */
-    .modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 200;
-      animation: fadeIn 0.2s ease;
-    }
-
-    .modal-content {
-      background: var(--bg-main);
-      padding: 28px;
-      border-radius: 16px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: var(--shadow);
-      animation: scaleIn 0.3s ease;
-      border: 1px solid var(--border);
-    }
-
-    .modal-content h2 {
-      margin-bottom: 20px;
-      font-size: 20px;
-      font-weight: 600;
-    }
-
-    .modal-content input,
-    .modal-content select {
-      width: 100%;
-      padding: 12px 14px;
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      background: var(--bg-dark);
-      color: var(--text-primary);
-      font-size: 14px;
-      font-family: inherit;
-      margin-bottom: 12px;
-      transition: all 0.2s ease;
-    }
-
-    .modal-content input:focus,
-    .modal-content select:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 8px;
-    }
-
-    .btn-secondary {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-      font-size: 14px;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .btn-secondary:hover {
-      background: var(--bg-hover);
-    }
-
-    /* ============ MOBILE ============ */
-    @media (max-width: 768px) {
-      .sidebar {
-        position: fixed;
-        right: 0;
-        top: 0;
-        height: 100%;
-        z-index: 50;
-        transform: translateX(100%);
-        transition: transform 0.3s ease;
-      }
-
-      .sidebar.open {
-        transform: translateX(0);
-      }
-
-      .message {
-        max-width: 95%;
-      }
-
-      .mobile-menu {
-        display: block !important;
-      }
-    }
-
-    .mobile-menu {
-      display: none;
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      z-index: 40;
+    /* ANIMATIONS */
+    @keyframes fade{from{opacity:0}to{opacity:1}}
+    @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes slideRight{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    @keyframes glow{0%,100%{box-shadow:0 0 5px var(--accent)}50%{box-shadow:0 0 20px var(--accent)}}
+    @keyframes bounce{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+    @keyframes ripple{0%{transform:scale(1);opacity:1}100%{transform:scale(2.5);opacity:0}}
+    
+    /* AUTH */
+    #auth{display:flex;align-items:center;justify-content:center;height:100vh;background:linear-gradient(135deg,#0f0f1a,#1a1a3e);animation:fade .5s}
+    .auth-box{background:var(--bg2);padding:40px 32px;border-radius:20px;width:90%;max-width:400px;animation:slideUp .5s;border:1px solid var(--border)}
+    .auth-logo{text-align:center;font-size:64px;margin-bottom:12px;animation:bounce 2s infinite}
+    .auth-box h1{text-align:center;font-size:26px;margin-bottom:6px}
+    .auth-sub{text-align:center;color:var(--text2);font-size:13px;margin-bottom:28px}
+    .auth-tabs{display:flex;gap:6px;margin-bottom:20px;background:var(--bg);padding:4px;border-radius:12px}
+    .auth-tab{flex:1;padding:10px;border:none;background:transparent;color:var(--text2);border-radius:8px;cursor:pointer;font:500 14px inherit;transition:.3s}
+    .auth-tab.active{background:var(--accent);color:#fff;box-shadow:0 4px 15px rgba(108,92,231,.4)}
+    .auth-tab:hover:not(.active){background:var(--bg3)}
+    .auth-form{display:flex;flex-direction:column;gap:12px}
+    .auth-form input{padding:14px;border:2px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font:15px inherit;transition:.3s}
+    .auth-form input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,92,231,.2)}
+    .auth-form input::placeholder{color:var(--text3)}
+    .btn{padding:14px;border:none;border-radius:10px;font:600 15px inherit;cursor:pointer;transition:.3s}
+    .btn-primary{background:var(--accent);color:#fff}
+    .btn-primary:hover{background:var(--accent2);transform:translateY(-2px);box-shadow:0 6px 20px rgba(108,92,231,.4)}
+    .auth-msg{text-align:center;margin-top:10px;font-size:13px;min-height:18px}
+    .auth-msg.err{color:var(--red)}
+    .auth-msg.ok{color:var(--green)}
+    .auth-msg.load{color:var(--yellow)}
+    
+    /* APP */
+    #app{display:none;height:100vh;height:100dvh}
+    #app.show{display:flex}
+    
+    /* SIDEBAR */
+    .sidebar{width:280px;background:var(--bg2);display:flex;flex-direction:column;border-left:1px solid var(--border);animation:slideRight .3s}
+    .sb-head{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+    .avatar{width:44px;height:44px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font:700 18px sans-serif;color:#fff;flex-shrink:0}
+    .sb-user{flex:1;min-width:0}
+    .sb-name{font:600 14px inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sb-role{font-size:11px;padding:2px 8px;border-radius:6px;display:inline-block}
+    .sb-role.owner{background:var(--accent);color:#fff}
+    .sb-role.admin{background:var(--yellow);color:#000}
+    .sb-role.user{background:var(--bg4);color:var(--text2)}
+    .sb-content{flex:1;overflow-y:auto;padding:12px}
+    .sb-content::-webkit-scrollbar{width:4px}
+    .sb-content::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+    .section{margin-bottom:16px}
+    .sec-head{display:flex;justify-content:space-between;align-items:center;padding:0 4px;margin-bottom:6px}
+    .sec-title{font:700 11px inherit;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+    .btn-add{width:22px;height:22px;border:none;background:var(--bg4);color:var(--text2);border-radius:6px;cursor:pointer;font:14px inherit;display:none;align-items:center;justify-content:center;transition:.2s}
+    .btn-add:hover{background:var(--accent);color:#fff}
+    .btn-add.show{display:flex}
+    .room{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;cursor:pointer;transition:.2s;margin-bottom:2px}
+    .room:hover{background:var(--bg4)}
+    .room.active{background:var(--bg4);color:#fff}
+    .room .icon{width:20px;text-align:center;opacity:.7}
+    .room .name{flex:1;font:500 14px inherit}
+    .room .badge{background:var(--red);color:#fff;font-size:10px;padding:2px 6px;border-radius:10px}
+    .user-item{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;font:13px inherit}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+    .sb-foot{padding:12px;border-top:1px solid var(--border)}
+    .btn-logout{width:100%;padding:10px;border:none;border-radius:8px;background:var(--red);color:#fff;font:500 13px inherit;cursor:pointer;transition:.2s}
+    .btn-logout:hover{opacity:.9}
+    
+    /* MAIN */
+    .main{flex:1;display:flex;flex-direction:column;background:var(--bg)}
+    .welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text2);animation:fade .5s}
+    .welcome-icon{font-size:80px;margin-bottom:16px;animation:bounce 2s infinite}
+    
+    /* CHAT */
+    .chat{display:none;flex-direction:column;flex:1}
+    .chat.show{display:flex}
+    .chat-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--bg2)}
+    .chat-head h2{font:600 15px inherit}
+    .chat-actions{display:flex;gap:8px;align-items:center}
+    .btn-sm{padding:8px 14px;border:none;border-radius:8px;font:500 12px inherit;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:6px}
+    .btn-green{background:var(--green);color:#fff}
+    .btn-red{background:var(--red);color:#fff}
+    .btn-icon{width:36px;height:36px;border:none;background:var(--bg3);color:var(--text2);border-radius:8px;cursor:pointer;font:16px inherit;transition:.2s}
+    .btn-icon:hover{background:var(--bg4);color:var(--text)}
+    
+    /* MESSAGES */
+    .msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+    .msgs::-webkit-scrollbar{width:6px}
+    .msgs::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+    .msg{display:flex;gap:12px;animation:slideUp .3s;max-width:85%}
+    .msg.own{flex-direction:row-reverse;align-self:flex-end}
+    .msg-av{width:38px;height:38px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font:700 14px sans-serif;color:#fff;flex-shrink:0}
+    .msg-body{background:var(--bg3);padding:10px 14px;border-radius:14px;border-top-right-radius:4px}
+    .msg.own .msg-body{background:var(--accent);border-top-right-radius:14px;border-top-left-radius:4px}
+    .msg-hdr{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+    .msg-name{font:600 12px inherit}
+    .msg-role{font-size:9px;padding:1px 5px;border-radius:4px}
+    .msg-time{font-size:10px;color:var(--text3)}
+    .msg-text{font:14px/1.6 inherit;word-wrap:break-word}
+    .msg-img{max-width:280px;max-height:280px;border-radius:8px;margin-top:6px}
+    .msg-audio{margin-top:6px;max-width:240px}
+    .msg-file{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--bg);border-radius:8px;margin-top:6px;text-decoration:none;color:var(--text);font:12px inherit;transition:.2s}
+    .msg-file:hover{background:var(--bg4)}
+    
+    /* INPUT */
+    .input-area{padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:flex-end;gap:10px;background:var(--bg2)}
+    .input-area textarea{flex:1;padding:12px;border:2px solid var(--border);border-radius:12px;background:var(--bg3);color:var(--text);font:14px inherit;resize:none;max-height:100px;transition:.3s}
+    .input-area textarea:focus{outline:none;border-color:var(--accent)}
+    .btn-send{padding:12px 18px;border:none;border-radius:12px;background:var(--accent);color:#fff;font:600 14px inherit;cursor:pointer;transition:.2s}
+    .btn-send:hover{background:var(--accent2);transform:translateY(-2px)}
+    
+    /* MEDIA */
+    .media{position:fixed;bottom:16px;left:16px;width:300px;background:var(--bg2);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.5);overflow:hidden;z-index:100;animation:slideUp .3s;border:1px solid var(--border)}
+    .media-head{padding:12px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+    .media-head h3{font:600 13px inherit}
+    .media video{width:100%;background:#000;max-height:180px}
+    .media-ctrls{padding:12px;display:flex;justify-content:center;gap:10px}
+    .btn-media{width:44px;height:44px;border-radius:50%;border:none;background:var(--bg4);color:#fff;font:16px inherit;cursor:pointer;transition:.2s}
+    .btn-media:hover{transform:scale(1.1)}
+    .btn-media.red{background:var(--red)}
+    .btn-media.green{background:var(--green);animation:glow 2s infinite}
+    
+    /* MODAL */
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:200;animation:fade .2s}
+    .modal-box{background:var(--bg2);padding:24px;border-radius:16px;width:90%;max-width:380px;border:1px solid var(--border);animation:slideUp .3s}
+    .modal-box h2{margin-bottom:16px;font:600 18px inherit}
+    .modal-box input,.modal-box select{width:100%;padding:12px;border:2px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font:14px inherit;margin-bottom:10px}
+    .modal-box input:focus,.modal-box select:focus{outline:none;border-color:var(--accent)}
+    .modal-btns{display:flex;gap:8px}
+    .modal-btns .btn{flex:1;padding:12px}
+    .btn-cancel{background:var(--bg4);color:var(--text)}
+    
+    /* MOBILE */
+    .menu-btn{display:none;position:fixed;top:12px;right:12px;z-index:40}
+    @media(max-width:768px){
+      .sidebar{position:fixed;right:0;top:0;height:100%;z-index:50;transform:translateX(100%);transition:.3s}
+      .sidebar.open{transform:translateX(0)}
+      .menu-btn{display:flex}
+      .msg{max-width:95%}
+      .media{width:calc(100% - 32px);left:16px;right:16px}
     }
   </style>
 </head>
 <body>
-  <!-- Mobile Menu Button -->
-  <button class="btn-icon mobile-menu" id="mobile-menu-btn">
-    <i class="fas fa-bars"></i>
-  </button>
-
-  <!-- Auth Screen -->
-  <div id="auth-screen">
+  <button class="btn-icon menu-btn" id="menu-btn"><i class="fas fa-bars"></i></button>
+  
+  <!-- AUTH -->
+  <div id="auth">
     <div class="auth-box">
       <div class="auth-logo">💬</div>
       <h1>چت روم</h1>
-      <p class="auth-subtitle">با دوستات چت کن، صدا بزن، صفحه رو شیر کن</p>
-      
+      <p class="auth-sub">با دوستات چت کن، صدا بزن، صفحه رو شیر کن</p>
       <div class="auth-tabs">
         <button class="auth-tab active" data-tab="login">ورود</button>
         <button class="auth-tab" data-tab="register">ثبت نام</button>
       </div>
-
       <form id="login-form" class="auth-form">
         <input type="email" id="login-email" placeholder="ایمیل" required>
         <input type="password" id="login-password" placeholder="رمز عبور" required>
-        <button type="submit" class="btn-primary">ورود</button>
+        <button type="submit" class="btn btn-primary">ورود</button>
       </form>
-
       <form id="register-form" class="auth-form" style="display:none">
         <input type="text" id="reg-username" placeholder="نام کاربری" required>
         <input type="email" id="reg-email" placeholder="ایمیل" required>
         <input type="password" id="reg-password" placeholder="رمز عبور (حداقل 6 کاراکتر)" required minlength="6">
-        <input type="text" id="reg-displayname" placeholder="نام نمایشی (اختیاری)">
-        <button type="submit" class="btn-primary">ثبت نام</button>
+        <input type="text" id="reg-displayname" placeholder="نام نمایشی">
+        <button type="submit" class="btn btn-primary">ثبت نام</button>
       </form>
-
       <div id="auth-msg" class="auth-msg"></div>
     </div>
   </div>
-
-  <!-- Main App -->
-  <div id="app-screen">
+  
+  <!-- APP -->
+  <div id="app">
     <aside class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <div class="user-card">
-          <div class="avatar" id="user-avatar"></div>
-          <div class="user-info">
-            <div class="name" id="sidebar-username"></div>
-            <span class="role-badge" id="sidebar-role"></span>
-          </div>
+      <div class="sb-head">
+        <div class="avatar" id="my-avatar"></div>
+        <div class="sb-user">
+          <div class="sb-name" id="my-name"></div>
+          <span class="sb-role" id="my-role"></span>
         </div>
       </div>
-      <div class="sidebar-content">
+      <div class="sb-content">
         <div class="section">
-          <div class="section-header">
-            <span class="section-title">اتاق‌های متنی</span>
-            <button class="btn-add admin-only" id="add-text-room">+</button>
+          <div class="sec-head">
+            <span class="sec-title">اتاق‌های متنی</span>
+            <button class="btn-add" id="add-text">+</button>
           </div>
           <div id="text-rooms"></div>
         </div>
         <div class="section">
-          <div class="section-header">
-            <span class="section-title">کانال‌های صوتی</span>
-            <button class="btn-add admin-only" id="add-voice-room">+</button>
+          <div class="sec-head">
+            <span class="sec-title">کانال‌های صوتی</span>
+            <button class="btn-add" id="add-voice">+</button>
           </div>
           <div id="voice-rooms"></div>
         </div>
         <div class="section">
-          <div class="section-header">
-            <span class="section-title">کاربران</span>
+          <div class="sec-head">
+            <span class="sec-title">آنلاین</span>
           </div>
-          <div id="users-list"></div>
+          <div id="online-list"></div>
         </div>
       </div>
-      <div class="sidebar-footer">
-        <button class="btn-logout" id="logout-btn">
-          <i class="fas fa-sign-out-alt"></i> خروج
-        </button>
+      <div class="sb-foot">
+        <button class="btn-logout" id="logout-btn"><i class="fas fa-sign-out-alt"></i> خروج</button>
       </div>
     </aside>
-
-    <main class="main-content">
-      <div id="welcome-screen" class="welcome">
+    
+    <main class="main">
+      <div id="welcome" class="welcome">
         <div class="welcome-icon">👋</div>
         <h2>به چت روم خوش اومدی!</h2>
         <p>یه اتاق از سمت چپ انتخاب کن</p>
       </div>
-      
-      <div id="chat-screen" class="chat-screen">
-        <div class="chat-header">
-          <h2 id="current-room-name"></h2>
-          <div class="chat-header-actions">
-            <div id="voice-btns" style="display:none">
-              <button class="btn-voice-join" id="join-voice-btn">
-                <i class="fas fa-microphone"></i> ورود
-              </button>
-              <button class="btn-voice-leave" id="leave-voice-btn" style="display:none">
-                <i class="fas fa-microphone-slash"></i> خروج
-              </button>
-              <button class="btn-icon" id="share-screen-btn" style="display:none">
-                <i class="fas fa-desktop"></i>
-              </button>
-            </div>
+      <div id="chat" class="chat">
+        <div class="chat-head">
+          <h2 id="room-name"></h2>
+          <div class="chat-actions" id="voice-actions" style="display:none">
+            <button class="btn-sm btn-green" id="join-voice"><i class="fas fa-microphone"></i> ورود</button>
+            <button class="btn-sm btn-red" id="leave-voice" style="display:none"><i class="fas fa-microphone-slash"></i> خروج</button>
+            <button class="btn-icon" id="share-screen" style="display:none"><i class="fas fa-desktop"></i></button>
           </div>
         </div>
-        <div id="messages-container" class="messages"></div>
+        <div id="messages" class="msgs"></div>
         <div id="input-area" class="input-area">
-          <button class="btn-icon" id="upload-btn">
-            <i class="fas fa-paperclip"></i>
-          </button>
+          <button class="btn-icon" id="upload-btn"><i class="fas fa-paperclip"></i></button>
           <input type="file" id="file-input" style="display:none" accept="image/*,audio/*,.zip,.pdf,.txt">
-          <textarea id="message-input" placeholder="پیام بنویسید..." rows="1"></textarea>
-          <button class="btn-send" id="send-btn">
-            <i class="fas fa-paper-plane"></i>
-          </button>
+          <textarea id="msg-input" placeholder="پیام بنویسید..." rows="1"></textarea>
+          <button class="btn-send" id="send-btn"><i class="fas fa-paper-plane"></i></button>
         </div>
       </div>
     </main>
-
-    <!-- Media Panel -->
-    <div id="media-panel" class="media-panel" style="display:none">
-      <div class="media-header">
+    
+    <div id="media-panel" class="media" style="display:none">
+      <div class="media-head">
         <h3><i class="fas fa-phone"></i> تماس صوتی</h3>
-        <button class="btn-icon" id="close-media-btn">
-          <i class="fas fa-times"></i>
-        </button>
+        <button class="btn-icon" id="close-media"><i class="fas fa-times"></i></button>
       </div>
       <video id="remote-video" autoplay playsinline></video>
-      <div class="media-controls">
-        <button class="btn-media" id="mute-btn">
-          <i class="fas fa-microphone"></i>
-        </button>
-        <button class="btn-media danger" id="end-call-btn">
-          <i class="fas fa-phone-slash"></i>
-        </button>
+      <div class="media-ctrls">
+        <button class="btn-media green" id="mute-btn"><i class="fas fa-microphone"></i></button>
+        <button class="btn-media red" id="end-call"><i class="fas fa-phone-slash"></i></button>
       </div>
     </div>
-
-    <!-- Create Room Modal -->
+    
     <div id="modal" class="modal" style="display:none">
-      <div class="modal-content">
-        <h2>ایجاد اتاق جدید</h2>
+      <div class="modal-box">
+        <h2>ایجاد اتاق</h2>
         <input type="text" id="room-name-input" placeholder="نام اتاق">
         <select id="room-type-select">
           <option value="text">اتاق متنی</option>
           <option value="voice">کانال صوتی</option>
         </select>
-        <div class="modal-actions">
-          <button class="btn-primary" id="confirm-room">ایجاد</button>
-          <button class="btn-secondary" id="cancel-room">لغو</button>
+        <div class="modal-btns">
+          <button class="btn btn-primary" id="confirm-room">ایجاد</button>
+          <button class="btn btn-cancel" id="cancel-room">لغو</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // CONFIG
-    const SUPABASE_URL = 'https://dvhjswspljxbjxngetdc.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2aGpzd3NwbGp4Ymp4bmdldGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4OTA5NDAsImV4cCI6MjEwMDQ2Njk0MH0.HRU4N_JM7mDBQJ2t9t_AfSk8zE-dPz7BecRpop0uxww';
+    // ========== CONFIG ==========
+    const URL = 'https://dvhjswspljxbjxngetdc.supabase.co';
+    const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2aGpzd3NwbGp4Ymp4bmdldGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4OTA5NDAsImV4cCI6MjEwMDQ2Njk0MH0.HRU4N_JM7mDBQJ2t9t_AfSk8zE-dPz7BecRpop0uxww';
+    const db = supabase.createClient(URL, KEY);
 
-    // INIT
-    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // ========== STATE ==========
+    let me = null, curRoom = null, curType = null, myStream = null, sub = null;
+    const peers = new Map();
+    let presenceChannel = null;
 
-    // STATE
-    let user = null;
-    let room = null;
-    let roomType = null;
-    let stream = null;
-    let sub = null;
-
-    // AUTH
-    async function register() {
-      const u = document.getElementById('reg-username').value.trim();
-      const e = document.getElementById('reg-email').value.trim();
-      const p = document.getElementById('reg-password').value;
-      const d = document.getElementById('reg-displayname').value.trim() || u;
-      
-      if (!u || !e || !p) return showMsg('همه فیلدها رو پر کن', 'error');
-      
-      showMsg('در حال ثبت نام...', 'loading');
-      
+    // ========== AUTH ==========
+    async function doReg() {
+      const u = $('reg-username').value.trim(), e = $('reg-email').value.trim(), p = $('reg-password').value, d = $('reg-displayname').value.trim() || u;
+      if (!u || !e || !p) return msg('همه فیلدها رو پر کن', 'err');
+      msg('در حال ثبت نام...', 'load');
       const { data, error } = await db.auth.signUp({ email: e, password: p, options: { data: { username: u, display_name: d } } });
-      
-      if (error) return showMsg('خطا: ' + error.message, 'error');
-      if (!data.user) return showMsg('خطا در ثبت نام', 'error');
-      
-      // Login
+      if (error) return msg('خطا: ' + error.message, 'err');
       const { error: le } = await db.auth.signInWithPassword({ email: e, password: p });
-      if (le) {
-        showMsg('ثبت نام شد! حالا وارد شو.', 'success');
-        switchTab('login');
-        document.getElementById('login-email').value = e;
-        document.getElementById('login-password').value = p;
-        return;
-      }
-      
-      // Create profile
+      if (le) { msg('ثبت نام شد! حالا وارد شو.', 'ok'); goTab('login'); $('login-email').value = e; $('login-password').value = p; return; }
       const { count } = await db.from('profiles').select('*', { count: 'exact', head: true });
       await db.from('profiles').insert({ id: data.user.id, username: u, display_name: d, role: count === 0 ? 'owner' : 'user' });
-      
-      await loadUser();
+      await loadMe();
     }
 
-    async function login() {
-      const e = document.getElementById('login-email').value.trim();
-      const p = document.getElementById('login-password').value;
-      
-      if (!e || !p) return showMsg('ایمیل و رمز رو پر کن', 'error');
-      
-      showMsg('در حال ورود...', 'loading');
-      
+    async function doLogin() {
+      const e = $('login-email').value.trim(), p = $('login-password').value;
+      if (!e || !p) return msg('ایمیل و رمز رو پر کن', 'err');
+      msg('در حال ورود...', 'load');
       const { error } = await db.auth.signInWithPassword({ email: e, password: p });
-      if (error) return showMsg('خطا: ' + error.message, 'error');
-      
-      await loadUser();
+      if (error) return msg('خطا: ' + error.message, 'err');
+      await loadMe();
     }
 
-    async function loadUser() {
+    async function loadMe() {
       const { data: { user: u } } = await db.auth.getUser();
       if (!u) return hideMsg();
-      
       await new Promise(r => setTimeout(r, 300));
-      
       let { data: p } = await db.from('profiles').select('*').eq('id', u.id).single();
-      
       if (!p) {
         const { count } = await db.from('profiles').select('*', { count: 'exact', head: true });
         const un = u.user_metadata?.username || u.email.split('@')[0];
         await db.from('profiles').insert({ id: u.id, username: un, display_name: u.user_metadata?.display_name || un, role: count === 0 ? 'owner' : 'user' });
         ({ data: p } = await db.from('profiles').select('*').eq('id', u.id).single());
       }
-      
-      if (p) {
-        user = p;
-        showApp();
-      }
+      if (p) { me = p; showApp(); }
       hideMsg();
     }
 
-    async function logout() {
-      if (sub) { db.removeChannel(sub); sub = null; }
+    async function doLogout() {
+      if (presenceChannel) { await db.removeChannel(presenceChannel); presenceChannel = null; }
+      if (sub) { await db.removeChannel(sub); sub = null; }
       leaveVoice();
       await db.auth.signOut();
-      user = null;
-      document.getElementById('auth-screen').style.display = 'flex';
-      document.getElementById('app-screen').classList.remove('active');
+      me = null;
+      $('auth').style.display = 'flex';
+      $('app').classList.remove('show');
     }
 
-    // UI
-    function showMsg(t, c) { const el = document.getElementById('auth-msg'); el.textContent = t; el.className = 'auth-msg ' + c; }
-    function hideMsg() { document.getElementById('auth-msg').textContent = ''; }
-    
-    function switchTab(t) {
+    // ========== UI ==========
+    function $(id) { return document.getElementById(id); }
+    function msg(t, c) { const el = $('auth-msg'); el.textContent = t; el.className = 'auth-msg ' + c; }
+    function hideMsg() { $('auth-msg').textContent = ''; }
+    function goTab(t) {
       document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
       document.querySelector(`[data-tab="${t}"]`).classList.add('active');
-      document.getElementById('login-form').style.display = t === 'login' ? 'flex' : 'none';
-      document.getElementById('register-form').style.display = t === 'register' ? 'flex' : 'none';
+      $('login-form').style.display = t === 'login' ? 'flex' : 'none';
+      $('register-form').style.display = t === 'register' ? 'flex' : 'none';
       hideMsg();
     }
 
     function showApp() {
-      document.getElementById('auth-screen').style.display = 'none';
-      document.getElementById('app-screen').classList.add('active');
-      
-      document.getElementById('sidebar-username').textContent = user.display_name || user.username;
-      document.getElementById('user-avatar').textContent = (user.display_name || user.username).charAt(0).toUpperCase();
-      
-      const r = document.getElementById('sidebar-role');
-      r.textContent = user.role === 'owner' ? 'مالک' : user.role === 'admin' ? 'ادمین' : 'کاربر';
-      r.className = 'role-badge ' + user.role;
-      
-      const admin = ['owner', 'admin'].includes(user.role);
-      document.querySelectorAll('.admin-only').forEach(el => el.style.display = admin ? 'flex' : 'none');
-      
+      $('auth').style.display = 'none';
+      $('app').classList.add('show');
+      $('my-name').textContent = me.display_name || me.username;
+      $('my-avatar').textContent = (me.display_name || me.username).charAt(0).toUpperCase();
+      const r = $('my-role');
+      r.textContent = me.role === 'owner' ? 'مالک' : me.role === 'admin' ? 'ادمین' : 'کاربر';
+      r.className = 'sb-role ' + me.role;
+      const ad = ['owner', 'admin'].includes(me.role);
+      $('add-text').classList.toggle('show', ad);
+      $('add-voice').classList.toggle('show', ad);
       loadRooms();
-      loadUsers();
+      trackPresence();
     }
 
-    // ROOMS
+    // ========== PRESENCE ==========
+    async function trackPresence() {
+      if (presenceChannel) await db.removeChannel(presenceChannel);
+      presenceChannel = db.channel('online-users');
+      presenceChannel.on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState();
+        renderOnline(state);
+      }).on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        const state = presenceChannel.presenceState();
+        renderOnline(state);
+      }).on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        const state = presenceChannel.presenceState();
+        renderOnline(state);
+      });
+      await presenceChannel.subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presenceChannel.track({ user_id: me.id, username: me.username, display_name: me.display_name, online_at: new Date().toISOString() });
+        }
+      });
+    }
+
+    function renderOnline(state) {
+      const list = $('online-list');
+      list.innerHTML = '';
+      const seen = new Set();
+      for (const [key, presences] of Object.entries(state)) {
+        for (const p of presences) {
+          if (seen.has(p.user_id)) continue;
+          seen.add(p.user_id);
+          const d = document.createElement('div');
+          d.className = 'user-item';
+          const icon = p.user_id === me.id ? ' (شما)' : '';
+          d.innerHTML = `<span class="dot"></span><span>${p.display_name || p.username}${icon}</span>`;
+          list.appendChild(d);
+        }
+      }
+    }
+
+    // ========== ROOMS ==========
     async function loadRooms() {
       const { data } = await db.from('rooms').select('*').order('created_at');
-      const tl = document.getElementById('text-rooms');
-      const vl = document.getElementById('voice-rooms');
-      tl.innerHTML = '';
-      vl.innerHTML = '';
-      
+      $('text-rooms').innerHTML = '';
+      $('voice-rooms').innerHTML = '';
       if (data) data.forEach(r => {
         const d = document.createElement('div');
-        d.className = 'room-item';
+        d.className = 'room';
         d.dataset.id = r.id;
         d.innerHTML = `<span class="icon">${r.type === 'voice' ? '<i class="fas fa-volume-up"></i>' : '<i class="fas fa-comment"></i>'}</span><span class="name">${r.name}</span>`;
         d.onclick = () => openRoom(r.id, r.name, r.type);
-        if (r.type === 'voice') vl.appendChild(d);
-        else tl.appendChild(d);
+        if (r.type === 'voice') $('voice-rooms').appendChild(d);
+        else $('text-rooms').appendChild(d);
       });
     }
 
     async function createRoom() {
-      const name = document.getElementById('room-name-input').value.trim();
-      const type = document.getElementById('room-type-select').value;
+      const name = $('room-name-input').value.trim(), type = $('room-type-select').value;
       if (!name) return;
-      
-      await db.from('rooms').insert({ name, type, created_by: user.id });
-      document.getElementById('modal').style.display = 'none';
-      document.getElementById('room-name-input').value = '';
+      await db.from('rooms').insert({ name, type, created_by: me.id });
+      $('modal').style.display = 'none';
+      $('room-name-input').value = '';
       loadRooms();
     }
 
-    // MESSAGES
+    // ========== MESSAGES ==========
     async function openRoom(id, name, type) {
-      if (sub) { db.removeChannel(sub); sub = null; }
-      
-      room = id;
-      roomType = type;
-      
-      document.getElementById('welcome-screen').style.display = 'none';
-      document.getElementById('chat-screen').classList.add('active');
-      document.getElementById('current-room-name').textContent = name;
-      document.getElementById('input-area').style.display = type === 'text' ? 'flex' : 'none';
-      document.getElementById('voice-btns').style.display = type === 'voice' ? 'block' : 'none';
-      
-      document.querySelectorAll('.room-item').forEach(el => el.classList.remove('active'));
-      document.querySelector(`.room-item[data-id="${id}"]`)?.classList.add('active');
+      if (sub) { await db.removeChannel(sub); sub = null; }
+      curRoom = id;
+      curType = type;
+      $('welcome').style.display = 'none';
+      $('chat').classList.add('show');
+      $('room-name').textContent = name;
+      $('input-area').style.display = type === 'text' ? 'flex' : 'none';
+      $('voice-actions').style.display = type === 'voice' ? 'flex' : 'none';
+      document.querySelectorAll('.room').forEach(el => el.classList.remove('active'));
+      document.querySelector(`.room[data-id="${id}"]`)?.classList.add('active');
       
       if (type === 'text') {
         const { data } = await db.from('messages').select('*, profiles:user_id (id, username, display_name, role)').eq('room_id', id).order('created_at').limit(100);
-        const c = document.getElementById('messages-container');
-        c.innerHTML = '';
+        $('messages').innerHTML = '';
         if (data) data.forEach(m => addMsg(m));
-        c.scrollTop = c.scrollHeight;
+        $('messages').scrollTop = $('messages').scrollHeight;
       }
       
       sub = db.channel('room:' + id)
@@ -1206,138 +450,192 @@
     }
 
     function addMsg(m) {
-      const c = document.getElementById('messages-container');
-      const d = document.createElement('div');
-      const own = m.user_id === user.id;
-      const u = m.profiles;
+      const c = $('messages'), d = document.createElement('div');
+      const own = m.user_id === me.id, u = m.profiles;
       const role = u?.role === 'owner' ? 'مالک' : u?.role === 'admin' ? 'ادمین' : '';
-      
       let content = '';
       if (m.type === 'text') content = `<div class="msg-text">${esc(m.content)}</div>`;
-      else if (m.type === 'image') content = `<img src="${m.file_url}" class="msg-image">`;
+      else if (m.type === 'image') content = `<img src="${m.file_url}" class="msg-img">`;
       else if (m.type === 'voice') content = `<audio controls class="msg-audio" src="${m.file_url}"></audio>`;
       else if (m.type === 'file') content = `<a href="${m.file_url}" class="msg-file" target="_blank"><i class="fas fa-file"></i> ${m.file_name || 'فایل'}</a>`;
-      
       const time = new Date(m.created_at).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
-      
-      d.className = `message ${own ? 'own' : ''}`;
-      d.innerHTML = `
-        <div class="msg-avatar" style="background:${own ? 'var(--accent)' : 'var(--green)'}">${(u?.display_name || '?').charAt(0).toUpperCase()}</div>
-        <div class="msg-body">
-          <div class="msg-header">
-            <span class="msg-username">${u?.display_name || 'ناشناس'}</span>
-            ${role ? `<span class="msg-role role-badge ${u?.role}">${role}</span>` : ''}
-            <span class="msg-time">${time}</span>
-          </div>
-          ${content}
-        </div>
-      `;
+      d.className = `msg ${own ? 'own' : ''}`;
+      d.innerHTML = `<div class="msg-av" style="background:${own ? 'var(--accent)' : 'var(--green)'}">${(u?.display_name || '?').charAt(0).toUpperCase()}</div><div class="msg-body"><div class="msg-hdr"><span class="msg-name">${u?.display_name || 'ناشناس'}</span>${role ? `<span class="msg-role sb-role ${u?.role}">${role}</span>` : ''}<span class="msg-time">${time}</span></div>${content}</div>`;
       c.appendChild(d);
       c.scrollTop = c.scrollHeight;
     }
 
     async function sendMsg() {
-      const i = document.getElementById('message-input');
-      const t = i.value.trim();
-      if (!t || !room) return;
-      await db.from('messages').insert({ room_id: room, user_id: user.id, type: 'text', content: t });
-      i.value = '';
+      const t = $('msg-input').value.trim();
+      if (!t || !curRoom) return;
+      await db.from('messages').insert({ room_id: curRoom, user_id: me.id, type: 'text', content: t });
+      $('msg-input').value = '';
     }
 
-    // UPLOAD
+    // ========== UPLOAD ==========
     async function upload(file) {
-      const ext = file.name.split('.').pop();
-      const name = `${Date.now()}.${ext}`;
+      const ext = file.name.split('.').pop(), name = `${Date.now()}.${ext}`;
       const { error } = await db.storage.from('uploads').upload(name, file);
       if (error) { alert('خطا در آپلود'); return null; }
       const { data } = db.storage.from('uploads').getPublicUrl(name);
       return { url: data.publicUrl, name: file.name, size: file.size };
     }
 
-    // USERS
-    async function loadUsers() {
-      const { data } = await db.from('profiles').select('id, username, display_name, role');
-      const l = document.getElementById('users-list');
-      l.innerHTML = '';
-      if (data) data.forEach(u => {
-        const d = document.createElement('div');
-        d.className = 'user-item';
-        const icon = u.role === 'owner' ? '👑' : u.role === 'admin' ? '⭐' : '';
-        d.innerHTML = `<span class="online-dot"></span><span>${u.display_name || u.username} ${icon}</span>`;
-        l.appendChild(d);
-      });
-    }
-
-    // VOICE
+    // ========== VOICE (WebRTC) ==========
+    let voiceChannel = null;
+    
     async function joinVoice() {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        document.getElementById('join-voice-btn').style.display = 'none';
-        document.getElementById('leave-voice-btn').style.display = 'inline-flex';
-        document.getElementById('share-screen-btn').style.display = 'flex';
-        document.getElementById('media-panel').style.display = 'block';
-      } catch (e) { alert('دسترسی به میکروفون رد شد'); }
+        myStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        $('join-voice').style.display = 'none';
+        $('leave-voice').style.display = 'inline-flex';
+        $('share-screen').style.display = 'flex';
+        $('media-panel').style.display = 'block';
+        
+        // Signal to others in voice channel
+        voiceChannel = db.channel('voice:' + curRoom);
+        voiceChannel.on('broadcast', { event: 'join' }, async ({ payload }) => {
+          if (payload.userId === me.id) return;
+          await createPeerConnection(payload.userId, true);
+        }).on('broadcast', { event: 'offer' }, async ({ payload }) => {
+          if (payload.to !== me.id) return;
+          await handleOffer(payload.from, payload.offer);
+        }).on('broadcast', { event: 'answer' }, async ({ payload }) => {
+          if (payload.to !== me.id) return;
+          await handleAnswer(payload.from, payload.answer);
+        }).on('broadcast', { event: 'ice' }, async ({ payload }) => {
+          if (payload.to !== me.id) return;
+          await handleIce(payload.from, payload.candidate);
+        }).on('broadcast', { event: 'leave' }, ({ payload }) => {
+          if (peers.has(payload.userId)) {
+            peers.get(payload.userId).close();
+            peers.delete(payload.userId);
+          }
+        }).subscribe();
+        
+        // Announce join
+        await voiceChannel.send({ type: 'broadcast', event: 'join', payload: { userId: me.id } });
+        
+      } catch (e) {
+        console.error('Voice error:', e);
+        alert('دسترسی به میکروفون رد شد');
+      }
     }
 
     function leaveVoice() {
-      if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-      document.getElementById('join-voice-btn').style.display = 'inline-flex';
-      document.getElementById('leave-voice-btn').style.display = 'none';
-      document.getElementById('share-screen-btn').style.display = 'none';
-      document.getElementById('media-panel').style.display = 'none';
+      if (voiceChannel) {
+        voiceChannel.send({ type: 'broadcast', event: 'leave', payload: { userId: me.id } });
+        db.removeChannel(voiceChannel);
+        voiceChannel = null;
+      }
+      if (myStream) { myStream.getTracks().forEach(t => t.stop()); myStream = null; }
+      peers.forEach(pc => pc.close());
+      peers.clear();
+      $('join-voice').style.display = 'inline-flex';
+      $('leave-voice').style.display = 'none';
+      $('share-screen').style.display = 'none';
+      $('media-panel').style.display = 'none';
+      $('remote-video').srcObject = null;
+    }
+
+    async function createPeerConnection(peerId, initiator) {
+      const pc = new RTCPeerConnection({
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' }
+        ]
+      });
+      peers.set(peerId, pc);
+      
+      if (myStream) myStream.getTracks().forEach(t => pc.addTrack(t, myStream));
+      
+      pc.onicecandidate = e => {
+        if (e.candidate) voiceChannel.send({ type: 'broadcast', event: 'ice', payload: { from: me.id, to: peerId, candidate: e.candidate } });
+      };
+      
+      pc.ontrack = e => {
+        $('remote-video').srcObject = e.streams[0];
+      };
+      
+      if (initiator) {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        voiceChannel.send({ type: 'broadcast', event: 'offer', payload: { from: me.id, to: peerId, offer } });
+      }
+      
+      return pc;
+    }
+
+    async function handleOffer(from, offer) {
+      const pc = await createPeerConnection(from, false);
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      voiceChannel.send({ type: 'broadcast', event: 'answer', payload: { from: me.id, to: from, answer } });
+    }
+
+    async function handleAnswer(from, answer) {
+      const pc = peers.get(from);
+      if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
+    }
+
+    async function handleIce(from, candidate) {
+      const pc = peers.get(from);
+      if (pc) await pc.addIceCandidate(new RTCIceCandidate(candidate));
     }
 
     async function shareScreen() {
       try {
         const s = await navigator.mediaDevices.getDisplayMedia({ video: true });
-        document.getElementById('remote-video').srcObject = s;
-        s.getVideoTracks()[0].onended = () => document.getElementById('remote-video').srcObject = null;
+        $('remote-video').srcObject = s;
+        s.getVideoTracks()[0].onended = () => $('remote-video').srcObject = myStream;
       } catch (e) {}
     }
 
     function toggleMute() {
-      if (stream) {
-        const a = stream.getAudioTracks()[0];
-        if (a) { a.enabled = !a.enabled; document.getElementById('mute-btn').innerHTML = a.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>'; }
+      if (myStream) {
+        const a = myStream.getAudioTracks()[0];
+        if (a) { a.enabled = !a.enabled; $('mute-btn').innerHTML = a.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>'; }
       }
     }
 
     function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 
-    // EVENTS
+    // ========== EVENTS ==========
     document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('.auth-tab').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
-      document.getElementById('login-form').onsubmit = e => { e.preventDefault(); login(); };
-      document.getElementById('register-form').onsubmit = e => { e.preventDefault(); register(); };
-      document.getElementById('logout-btn').onclick = logout;
-      document.getElementById('send-btn').onclick = sendMsg;
-      document.getElementById('message-input').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } };
-      document.getElementById('upload-btn').onclick = () => document.getElementById('file-input').click();
-      document.getElementById('file-input').onchange = async e => {
-        if (e.target.files[0] && room) {
+      document.querySelectorAll('.auth-tab').forEach(b => b.addEventListener('click', () => goTab(b.dataset.tab)));
+      $('login-form').onsubmit = e => { e.preventDefault(); doLogin(); };
+      $('register-form').onsubmit = e => { e.preventDefault(); doReg(); };
+      $('logout-btn').onclick = doLogout;
+      $('send-btn').onclick = sendMsg;
+      $('msg-input').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } };
+      $('upload-btn').onclick = () => $('file-input').click();
+      $('file-input').onchange = async e => {
+        if (e.target.files[0] && curRoom) {
           const f = await upload(e.target.files[0]);
           if (f) {
             let t = 'file';
             if (e.target.files[0].type.startsWith('image/')) t = 'image';
             else if (e.target.files[0].type.startsWith('audio/')) t = 'voice';
-            await db.from('messages').insert({ room_id: room, user_id: user.id, type: t, content: f.name, file_url: f.url, file_name: f.name, file_size: f.size });
+            await db.from('messages').insert({ room_id: curRoom, user_id: me.id, type: t, content: f.name, file_url: f.url, file_name: f.name, file_size: f.size });
           }
           e.target.value = '';
         }
       };
-      document.getElementById('add-text-room').onclick = () => { document.getElementById('room-type-select').value = 'text'; document.getElementById('modal').style.display = 'flex'; };
-      document.getElementById('add-voice-room').onclick = () => { document.getElementById('room-type-select').value = 'voice'; document.getElementById('modal').style.display = 'flex'; };
-      document.getElementById('confirm-room').onclick = createRoom;
-      document.getElementById('cancel-room').onclick = () => document.getElementById('modal').style.display = 'none';
-      document.getElementById('join-voice-btn').onclick = joinVoice;
-      document.getElementById('leave-voice-btn').onclick = leaveVoice;
-      document.getElementById('share-screen-btn').onclick = shareScreen;
-      document.getElementById('mute-btn').onclick = toggleMute;
-      document.getElementById('end-call-btn').onclick = leaveVoice;
-      document.getElementById('close-media-btn').onclick = leaveVoice;
-      document.getElementById('mobile-menu-btn').onclick = () => document.getElementById('sidebar').classList.toggle('open');
+      $('add-text').onclick = () => { $('room-type-select').value = 'text'; $('modal').style.display = 'flex'; };
+      $('add-voice').onclick = () => { $('room-type-select').value = 'voice'; $('modal').style.display = 'flex'; };
+      $('confirm-room').onclick = createRoom;
+      $('cancel-room').onclick = () => $('modal').style.display = 'none';
+      $('join-voice').onclick = joinVoice;
+      $('leave-voice').onclick = leaveVoice;
+      $('share-screen').onclick = shareScreen;
+      $('mute-btn').onclick = toggleMute;
+      $('end-call').onclick = leaveVoice;
+      $('close-media').onclick = leaveVoice;
+      $('menu-btn').onclick = () => $('sidebar').classList.toggle('open');
       
-      loadUser();
+      loadMe();
     });
   </script>
 </body>
