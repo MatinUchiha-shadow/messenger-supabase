@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>چت روم | Messenger</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💬</text></svg>">
+</head>
+<body>
+  <!-- Auth Screen -->
+  <div id="auth-screen">
+    <div class="auth-container">
+      <div class="auth-logo">💬</div>
+      <h1>چت روم</h1>
+      <p class="auth-subtitle">با دوستات چت کن، صدا بزن، صفحه رو شیر کن</p>
+      
+      <div id="auth-tabs">
+        <button class="tab-btn active" data-tab="login">ورود</button>
+        <button class="tab-btn" data-tab="register">ثبت نام</button>
+      </div>
+
+      <form id="login-form" class="auth-form">
+        <input type="email" id="login-email" placeholder="ایمیل" required>
+        <input type="password" id="login-password" placeholder="رمز عبور" required>
+        <button type="submit" class="btn-primary">ورود</button>
+      </form>
+
+      <form id="register-form" class="auth-form" style="display:none">
+        <input type="text" id="reg-username" placeholder="نام کاربری" required>
+        <input type="email" id="reg-email" placeholder="ایمیل" required>
+        <input type="password" id="reg-password" placeholder="رمز عبور" required>
+        <input type="text" id="reg-displayname" placeholder="نام نمایشی (اختیاری)">
+        <button type="submit" class="btn-primary">ثبت نام</button>
+      </form>
+
+      <div id="auth-error" class="error-msg"></div>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="app-screen" style="display:none">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="user-info">
+          <div class="avatar" id="user-avatar"></div>
+          <div>
+            <div class="username" id="sidebar-username"></div>
+            <div class="role-badge" id="sidebar-role"></div>
+          </div>
+        </div>
+        <button class="btn-icon" id="settings-btn" title="تنظیمات">⚙️</button>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-header">
+          <h3>اتاق‌های متنی</h3>
+          <button class="btn-icon-sm" id="add-text-room" title="افزودن اتاق">+</button>
+        </div>
+        <ul id="text-rooms-list" class="room-list"></ul>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-header">
+          <h3>کانال‌های صوتی</h3>
+          <button class="btn-icon-sm" id="add-voice-room" title="افزودن کانال">+</button>
+        </div>
+        <ul id="voice-rooms-list" class="room-list"></ul>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-header">
+          <h3>کاربران آنلاین</h3>
+        </div>
+        <ul id="online-users-list" class="user-list"></ul>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="btn-danger" id="logout-btn">خروج</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Welcome Screen -->
+      <div id="welcome-screen" class="welcome-screen">
+        <div class="welcome-icon">👋</div>
+        <h2>به چت روم خوش اومدی!</h2>
+        <p>یه اتاق از سمت چپ انتخاب کن تا شروع کنی</p>
+      </div>
+
+      <!-- Chat Screen -->
+      <div id="chat-screen" style="display:none">
+        <div class="chat-header">
+          <div class="chat-header-info">
+            <h2 id="current-room-name"></h2>
+            <span id="current-room-type" class="room-type-badge"></span>
+          </div>
+          <div class="chat-header-actions">
+            <div id="voice-channel-controls" style="display:none">
+              <button class="btn-voice" id="join-voice-btn">🎤 ورود</button>
+              <button class="btn-voice active" id="leave-voice-btn" style="display:none">🔇 خروج</button>
+              <button class="btn-screen" id="share-screen-btn" style="display:none">🖥️ شیر صفحه</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="messages-container" class="messages-container"></div>
+
+        <div id="typing-indicator" class="typing-indicator" style="display:none">
+          <span class="typing-dots"><span></span><span></span><span></span></span>
+          <span id="typing-text"></span>
+        </div>
+
+        <div id="message-input-area" class="message-input-area">
+          <button class="btn-icon" id="upload-btn" title="آپلود فایل">📎</button>
+          <input type="file" id="file-input" style="display:none" accept=".zip,.rar,.png,.jpg,.jpeg,.gif,.webp,.mp3,.wav,.ogg,.mp4,.pdf,.txt">
+          <textarea id="message-input" placeholder="پیام بنویسید..." rows="1"></textarea>
+          <button class="btn-send" id="send-btn">ارسال</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Video/Voice Panel -->
+    <div id="media-panel" class="media-panel" style="display:none">
+      <div class="media-header">
+        <h3 id="media-title">تماس صوتی</h3>
+        <button class="btn-icon" id="close-media-btn">✕</button>
+      </div>
+      <video id="remote-video" autoplay playsinline></video>
+      <div class="media-controls">
+        <button class="btn-media" id="mute-btn" title="بی‌صدا">🎤</button>
+        <button class="btn-media danger" id="end-call-btn" title="پایان تماس">📞</button>
+      </div>
+    </div>
+
+    <!-- Create Room Modal -->
+    <div id="create-room-modal" class="modal" style="display:none">
+      <div class="modal-content">
+        <h2>ایجاد اتاق جدید</h2>
+        <input type="text" id="new-room-name" placeholder="نام اتاق">
+        <select id="new-room-type">
+          <option value="text">اتاق متنی</option>
+          <option value="voice">کانال صوتی</option>
+        </select>
+        <div class="modal-actions">
+          <button class="btn-primary" id="confirm-create-room">ایجاد</button>
+          <button class="btn-secondary" id="cancel-create-room">لغو</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase JS -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
