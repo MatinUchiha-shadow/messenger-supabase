@@ -40,7 +40,6 @@
 
   <!-- Main App -->
   <div id="app-screen" style="display:none">
-    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="user-info">
@@ -50,110 +49,248 @@
             <div class="role-badge" id="sidebar-role"></div>
           </div>
         </div>
-        <button class="btn-icon" id="settings-btn" title="تنظیمات">⚙️</button>
       </div>
-
       <div class="sidebar-section">
         <div class="section-header">
           <h3>اتاق‌های متنی</h3>
-          <button class="btn-icon-sm" id="add-text-room" title="افزودن اتاق">+</button>
+          <button class="btn-icon-sm" id="add-text-room">+</button>
         </div>
         <ul id="text-rooms-list" class="room-list"></ul>
       </div>
-
       <div class="sidebar-section">
         <div class="section-header">
           <h3>کانال‌های صوتی</h3>
-          <button class="btn-icon-sm" id="add-voice-room" title="افزودن کانال">+</button>
+          <button class="btn-icon-sm" id="add-voice-room">+</button>
         </div>
         <ul id="voice-rooms-list" class="room-list"></ul>
       </div>
-
-      <div class="sidebar-section">
-        <div class="section-header">
-          <h3>کاربران آنلاین</h3>
-        </div>
-        <ul id="online-users-list" class="user-list"></ul>
-      </div>
-
       <div class="sidebar-footer">
         <button class="btn-danger" id="logout-btn">خروج</button>
       </div>
     </aside>
 
-    <!-- Main Content -->
     <main class="main-content">
-      <!-- Welcome Screen -->
       <div id="welcome-screen" class="welcome-screen">
         <div class="welcome-icon">👋</div>
         <h2>به چت روم خوش اومدی!</h2>
-        <p>یه اتاق از سمت چپ انتخاب کن تا شروع کنی</p>
+        <p>یه اتاق از سمت چپ انتخاب کن</p>
       </div>
-
-      <!-- Chat Screen -->
       <div id="chat-screen" style="display:none">
         <div class="chat-header">
-          <div class="chat-header-info">
-            <h2 id="current-room-name"></h2>
-            <span id="current-room-type" class="room-type-badge"></span>
-          </div>
-          <div class="chat-header-actions">
-            <div id="voice-channel-controls" style="display:none">
-              <button class="btn-voice" id="join-voice-btn">🎤 ورود</button>
-              <button class="btn-voice active" id="leave-voice-btn" style="display:none">🔇 خروج</button>
-              <button class="btn-screen" id="share-screen-btn" style="display:none">🖥️ شیر صفحه</button>
-            </div>
-          </div>
+          <h2 id="current-room-name"></h2>
         </div>
-
         <div id="messages-container" class="messages-container"></div>
-
-        <div id="typing-indicator" class="typing-indicator" style="display:none">
-          <span class="typing-dots"><span></span><span></span><span></span></span>
-          <span id="typing-text"></span>
-        </div>
-
         <div id="message-input-area" class="message-input-area">
-          <button class="btn-icon" id="upload-btn" title="آپلود فایل">📎</button>
-          <input type="file" id="file-input" style="display:none" accept=".zip,.rar,.png,.jpg,.jpeg,.gif,.webp,.mp3,.wav,.ogg,.mp4,.pdf,.txt">
           <textarea id="message-input" placeholder="پیام بنویسید..." rows="1"></textarea>
           <button class="btn-send" id="send-btn">ارسال</button>
         </div>
       </div>
     </main>
-
-    <!-- Video/Voice Panel -->
-    <div id="media-panel" class="media-panel" style="display:none">
-      <div class="media-header">
-        <h3 id="media-title">تماس صوتی</h3>
-        <button class="btn-icon" id="close-media-btn">✕</button>
-      </div>
-      <video id="remote-video" autoplay playsinline></video>
-      <div class="media-controls">
-        <button class="btn-media" id="mute-btn" title="بی‌صدا">🎤</button>
-        <button class="btn-media danger" id="end-call-btn" title="پایان تماس">📞</button>
-      </div>
-    </div>
-
-    <!-- Create Room Modal -->
-    <div id="create-room-modal" class="modal" style="display:none">
-      <div class="modal-content">
-        <h2>ایجاد اتاق جدید</h2>
-        <input type="text" id="new-room-name" placeholder="نام اتاق">
-        <select id="new-room-type">
-          <option value="text">اتاق متنی</option>
-          <option value="voice">کانال صوتی</option>
-        </select>
-        <div class="modal-actions">
-          <button class="btn-primary" id="confirm-create-room">ایجاد</button>
-          <button class="btn-secondary" id="cancel-create-room">لغو</button>
-        </div>
-      </div>
-    </div>
   </div>
 
-  <!-- Supabase JS -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script src="/js/app.js"></script>
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ============================================
+    // Supabase Config
+    // ============================================
+    const SUPABASE_URL = 'https://dvhjswspljxbjxngetdc.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_5ojtC3p6Jt4blaXnYn_Cmw_AjxkVihX';
+    
+    // Create client
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log('Supabase OK');
+
+    // ============================================
+    // State
+    // ============================================
+    let currentUser = null;
+    let currentRoom = null;
+
+    // ============================================
+    // Auth
+    // ============================================
+    async function doRegister() {
+      const username = document.getElementById('reg-username').value;
+      const email = document.getElementById('reg-email').value;
+      const password = document.getElementById('reg-password').value;
+      const displayName = document.getElementById('reg-displayname').value || username;
+      
+      console.log('Registering...');
+      
+      const { data, error } = await db.auth.signUp({
+        email,
+        password,
+        options: { data: { username, display_name: displayName } }
+      });
+      
+      if (error) {
+        console.error('Register error:', error);
+        document.getElementById('auth-error').textContent = error.message;
+        return;
+      }
+      
+      console.log('Register success:', data);
+      document.getElementById('auth-error').style.color = '#2ecc71';
+      document.getElementById('auth-error').textContent = 'ثبت نام شد! حالا وارد شو.';
+    }
+
+    async function doLogin() {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      
+      console.log('Logging in...');
+      
+      const { data, error } = await db.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        console.error('Login error:', error);
+        document.getElementById('auth-error').textContent = error.message;
+        return;
+      }
+      
+      console.log('Login success');
+      await loadUser();
+    }
+
+    async function loadUser() {
+      const { data: { user } } = await db.auth.getUser();
+      if (!user) return;
+      
+      const { data: profile } = await db
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      if (profile) {
+        currentUser = profile;
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('app-screen').style.display = 'flex';
+        document.getElementById('sidebar-username').textContent = profile.display_name || profile.username;
+        document.getElementById('user-avatar').textContent = (profile.display_name || profile.username).charAt(0).toUpperCase();
+        document.getElementById('sidebar-role').textContent = profile.role;
+        loadRooms();
+      }
+    }
+
+    async function doLogout() {
+      await db.auth.signOut();
+      currentUser = null;
+      document.getElementById('auth-screen').style.display = 'flex';
+      document.getElementById('app-screen').style.display = 'none';
+    }
+
+    // ============================================
+    // Rooms
+    // ============================================
+    async function loadRooms() {
+      const { data } = await db.from('rooms').select('*').order('created_at');
+      if (!data) return;
+      
+      const textList = document.getElementById('text-rooms-list');
+      const voiceList = document.getElementById('voice-rooms-list');
+      textList.innerHTML = '';
+      voiceList.innerHTML = '';
+      
+      data.forEach(room => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${room.type === 'voice' ? '🔊' : '💬'}</span> ${room.name}`;
+        li.onclick = () => openRoom(room.id, room.name, room.type);
+        if (room.type === 'voice') voiceList.appendChild(li);
+        else textList.appendChild(li);
+      });
+    }
+
+    async function openRoom(id, name, type) {
+      currentRoom = id;
+      document.getElementById('welcome-screen').style.display = 'none';
+      document.getElementById('chat-screen').style.display = 'flex';
+      document.getElementById('current-room-name').textContent = name;
+      document.getElementById('message-input-area').style.display = type === 'text' ? 'flex' : 'none';
+      
+      if (type === 'text') {
+        const { data } = await db.from('messages')
+          .select('*, profiles:user_id (username, display_name, role)')
+          .eq('room_id', id)
+          .order('created_at')
+          .limit(50);
+        
+        const container = document.getElementById('messages-container');
+        container.innerHTML = '';
+        if (data) data.forEach(msg => addMessage(msg));
+      }
+      
+      // Subscribe to new messages
+      db.channel('room:' + id)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `room_id=eq.${id}` }, payload => {
+          db.from('messages').select('*, profiles:user_id (username, display_name, role)').eq('id', payload.new.id).single().then(({ data }) => {
+            if (data) addMessage(data);
+          });
+        })
+        .subscribe();
+    }
+
+    function addMessage(msg) {
+      const container = document.getElementById('messages-container');
+      const div = document.createElement('div');
+      const isOwn = msg.user_id === currentUser.id;
+      const user = msg.profiles;
+      div.className = `message ${isOwn ? 'own' : ''}`;
+      div.innerHTML = `
+        <div class="message-avatar">${(user?.display_name || '?').charAt(0)}</div>
+        <div class="message-content">
+          <div class="message-header">
+            <span class="message-username">${user?.display_name || 'ناشناس'}</span>
+          </div>
+          <div class="message-text">${msg.content || ''}</div>
+        </div>
+      `;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('message-input');
+      const content = input.value.trim();
+      if (!content || !currentRoom) return;
+      
+      await db.from('messages').insert({
+        room_id: currentRoom,
+        user_id: currentUser.id,
+        type: 'text',
+        content
+      });
+      
+      input.value = '';
+    }
+
+    // ============================================
+    // Event Listeners
+    // ============================================
+    document.addEventListener('DOMContentLoaded', () => {
+      // Tabs
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const tab = btn.dataset.tab;
+          document.getElementById('login-form').style.display = tab === 'login' ? 'flex' : 'none';
+          document.getElementById('register-form').style.display = tab === 'register' ? 'flex' : 'none';
+          document.getElementById('auth-error').textContent = '';
+        });
+      });
+
+      // Forms
+      document.getElementById('login-form').onsubmit = (e) => { e.preventDefault(); doLogin(); };
+      document.getElementById('register-form').onsubmit = (e) => { e.preventDefault(); doRegister(); };
+      document.getElementById('logout-btn').onclick = doLogout;
+      document.getElementById('send-btn').onclick = sendMessage;
+      document.getElementById('message-input').onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
+
+      // Check if logged in
+      loadUser();
+    });
+  </script>
 </body>
 </html>
