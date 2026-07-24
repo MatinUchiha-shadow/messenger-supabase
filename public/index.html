@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>چت روم | Messenger</title>
   <link rel="stylesheet" href="/css/style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💬</text></svg>">
 </head>
 <body>
   <!-- Auth Screen -->
@@ -29,7 +28,7 @@
       <form id="register-form" class="auth-form" style="display:none">
         <input type="text" id="reg-username" placeholder="نام کاربری" required>
         <input type="email" id="reg-email" placeholder="ایمیل" required>
-        <input type="password" id="reg-password" placeholder="رمز عبور" required>
+        <input type="password" id="reg-password" placeholder="رمز عبور (حداقل 6 کاراکتر)" required minlength="6">
         <input type="text" id="reg-displayname" placeholder="نام نمایشی (اختیاری)">
         <button type="submit" class="btn-primary">ثبت نام</button>
       </form>
@@ -53,16 +52,20 @@
       <div class="sidebar-section">
         <div class="section-header">
           <h3>اتاق‌های متنی</h3>
-          <button class="btn-icon-sm" id="add-text-room">+</button>
+          <button class="btn-icon-sm admin-only" id="add-text-room">+</button>
         </div>
         <ul id="text-rooms-list" class="room-list"></ul>
       </div>
       <div class="sidebar-section">
         <div class="section-header">
           <h3>کانال‌های صوتی</h3>
-          <button class="btn-icon-sm" id="add-voice-room">+</button>
+          <button class="btn-icon-sm admin-only" id="add-voice-room">+</button>
         </div>
         <ul id="voice-rooms-list" class="room-list"></ul>
+      </div>
+      <div class="sidebar-section">
+        <h3>کاربران</h3>
+        <ul id="users-list" class="user-list"></ul>
       </div>
       <div class="sidebar-footer">
         <button class="btn-danger" id="logout-btn">خروج</button>
@@ -78,157 +81,380 @@
       <div id="chat-screen" style="display:none">
         <div class="chat-header">
           <h2 id="current-room-name"></h2>
+          <div id="voice-controls" style="display:none">
+            <button class="btn-voice" id="join-voice-btn">🎤 ورود</button>
+            <button class="btn-voice active" id="leave-voice-btn" style="display:none">🔇 خروج</button>
+            <button class="btn-screen" id="share-screen-btn" style="display:none">🖥️ شیر</button>
+          </div>
         </div>
         <div id="messages-container" class="messages-container"></div>
         <div id="message-input-area" class="message-input-area">
+          <button class="btn-icon" id="upload-btn">📎</button>
+          <input type="file" id="file-input" style="display:none" accept="image/*,audio/*,.zip,.pdf,.txt">
           <textarea id="message-input" placeholder="پیام بنویسید..." rows="1"></textarea>
           <button class="btn-send" id="send-btn">ارسال</button>
         </div>
       </div>
     </main>
+
+    <!-- Media Panel -->
+    <div id="media-panel" class="media-panel" style="display:none">
+      <div class="media-header">
+        <h3>تماس صوتی</h3>
+        <button class="btn-icon" id="close-media-btn">✕</button>
+      </div>
+      <video id="remote-video" autoplay playsinline></video>
+      <div class="media-controls">
+        <button class="btn-media" id="mute-btn">🎤</button>
+        <button class="btn-media danger" id="end-call-btn">📞</button>
+      </div>
+    </div>
+
+    <!-- Create Room Modal -->
+    <div id="create-room-modal" class="modal" style="display:none">
+      <div class="modal-content">
+        <h2>ایجاد اتاق جدید</h2>
+        <input type="text" id="new-room-name" placeholder="نام اتاق">
+        <select id="new-room-type">
+          <option value="text">اتاق متنی</option>
+          <option value="voice">کانال صوتی</option>
+        </select>
+        <div class="modal-actions">
+          <button class="btn-primary" id="confirm-create-room">ایجاد</button>
+          <button class="btn-secondary" id="cancel-create-room">لغو</button>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Supabase CDN -->
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // ============================================
-    // Supabase Config
+    // CONFIG
     // ============================================
     const SUPABASE_URL = 'https://dvhjswspljxbjxngetdc.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_5ojtC3p6Jt4blaXnYn_Cmw_AjxkVihX';
-    
-    // Create client
-    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    console.log('Supabase OK');
 
     // ============================================
-    // State
+    // INIT SUPABASE
+    // ============================================
+    let db;
+    try {
+      db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      console.log('Supabase initialized');
+    } catch(e) {
+      console.error('Supabase init failed:', e);
+      alert('خطا در اتصال به سرور');
+    }
+
+    // ============================================
+    // STATE
     // ============================================
     let currentUser = null;
     let currentRoom = null;
+    let currentRoomType = null;
+    let localStream = null;
+    let screenStream = null;
+    let peers = new Map();
+    let messageSubscription = null;
 
     // ============================================
-    // Auth
+    // AUTH
     // ============================================
     async function doRegister() {
-      const username = document.getElementById('reg-username').value;
-      const email = document.getElementById('reg-email').value;
+      const username = document.getElementById('reg-username').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
       const password = document.getElementById('reg-password').value;
-      const displayName = document.getElementById('reg-displayname').value || username;
-      
-      console.log('Registering...');
-      
+      const displayName = document.getElementById('reg-displayname').value.trim() || username;
+
+      if (!username || !email || !password) {
+        showError('همه فیلدها رو پر کن');
+        return;
+      }
+
+      showLoading('در حال ثبت نام...');
+
       const { data, error } = await db.auth.signUp({
         email,
         password,
         options: { data: { username, display_name: displayName } }
       });
-      
+
       if (error) {
         console.error('Register error:', error);
-        document.getElementById('auth-error').textContent = error.message;
+        showError(error.message);
         return;
       }
-      
-      console.log('Register success:', data);
-      document.getElementById('auth-error').style.color = '#2ecc71';
-      document.getElementById('auth-error').textContent = 'ثبت نام شد! حالا وارد شو.';
+
+      // Check if user needs email confirmation
+      if (data.user && !data.session) {
+        showSuccess('ثبت نام شد! حالا وارد شو.');
+        // Switch to login tab
+        switchTab('login');
+        document.getElementById('login-email').value = email;
+        document.getElementById('login-password').value = password;
+      } else if (data.session) {
+        // Auto logged in
+        await loadUser();
+      }
     }
 
     async function doLogin() {
-      const email = document.getElementById('login-email').value;
+      const email = document.getElementById('login-email').value.trim();
       const password = document.getElementById('login-password').value;
-      
-      console.log('Logging in...');
-      
-      const { data, error } = await db.auth.signInWithPassword({ email, password });
-      
-      if (error) {
-        console.error('Login error:', error);
-        document.getElementById('auth-error').textContent = error.message;
+
+      if (!email || !password) {
+        showError('ایمیل و رمز رو پر کن');
         return;
       }
-      
+
+      showLoading('در حال ورود...');
+
+      const { data, error } = await db.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        console.error('Login error:', error);
+        showError(error.message);
+        return;
+      }
+
       console.log('Login success');
       await loadUser();
     }
 
     async function loadUser() {
       const { data: { user } } = await db.auth.getUser();
-      if (!user) return;
-      
-      const { data: profile } = await db
+      if (!user) {
+        hideLoading();
+        return;
+      }
+
+      // Wait a bit for trigger to create profile
+      await new Promise(r => setTimeout(r, 500));
+
+      let { data: profile } = await db
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
-      
+
+      // If profile doesn't exist, create it manually
+      if (!profile) {
+        console.log('Profile not found, creating...');
+        const username = user.user_metadata?.username || user.email.split('@')[0];
+        const displayName = user.user_metadata?.display_name || username;
+
+        const { data: newProfile } = await db
+          .from('profiles')
+          .insert({
+            id: user.id,
+            username,
+            display_name: displayName,
+            role: 'user'
+          })
+          .select()
+          .single();
+
+        profile = newProfile;
+      }
+
       if (profile) {
         currentUser = profile;
-        document.getElementById('auth-screen').style.display = 'none';
-        document.getElementById('app-screen').style.display = 'flex';
-        document.getElementById('sidebar-username').textContent = profile.display_name || profile.username;
-        document.getElementById('user-avatar').textContent = (profile.display_name || profile.username).charAt(0).toUpperCase();
-        document.getElementById('sidebar-role').textContent = profile.role;
-        loadRooms();
+        showApp();
+        hideLoading();
       }
     }
 
     async function doLogout() {
+      if (messageSubscription) {
+        db.removeChannel(messageSubscription);
+        messageSubscription = null;
+      }
+      cleanupMedia();
       await db.auth.signOut();
       currentUser = null;
+      currentRoom = null;
       document.getElementById('auth-screen').style.display = 'flex';
       document.getElementById('app-screen').style.display = 'none';
     }
 
     // ============================================
-    // Rooms
+    // UI HELPERS
+    // ============================================
+    function showError(msg) {
+      const el = document.getElementById('auth-error');
+      el.textContent = msg;
+      el.style.color = '#e74c3c';
+      hideLoading();
+    }
+
+    function showSuccess(msg) {
+      const el = document.getElementById('auth-error');
+      el.textContent = msg;
+      el.style.color = '#2ecc71';
+      hideLoading();
+    }
+
+    function showLoading(msg) {
+      document.getElementById('auth-error').textContent = msg;
+      document.getElementById('auth-error').style.color = '#f39c12';
+    }
+
+    function hideLoading() {
+      document.getElementById('auth-error').textContent = '';
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+      document.getElementById('login-form').style.display = tab === 'login' ? 'flex' : 'none';
+      document.getElementById('register-form').style.display = tab === 'register' ? 'flex' : 'none';
+      document.getElementById('auth-error').textContent = '';
+    }
+
+    function showApp() {
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('app-screen').style.display = 'flex';
+      
+      // Update user info
+      document.getElementById('sidebar-username').textContent = currentUser.display_name || currentUser.username;
+      document.getElementById('user-avatar').textContent = (currentUser.display_name || currentUser.username).charAt(0).toUpperCase();
+      
+      const roleEl = document.getElementById('sidebar-role');
+      roleEl.textContent = currentUser.role === 'owner' ? 'مالک' : currentUser.role === 'admin' ? 'ادمین' : 'کاربر';
+      roleEl.className = `role-badge ${currentUser.role}`;
+
+      // Show/hide admin buttons
+      const isAdmin = ['owner', 'admin'].includes(currentUser.role);
+      document.querySelectorAll('.admin-only').forEach(el => {
+        el.style.display = isAdmin ? 'block' : 'none';
+      });
+
+      loadRooms();
+      loadUsers();
+    }
+
+    // ============================================
+    // ROOMS
     // ============================================
     async function loadRooms() {
-      const { data } = await db.from('rooms').select('*').order('created_at');
-      if (!data) return;
-      
+      const { data, error } = await db.from('rooms').select('*').order('created_at');
+      if (error) {
+        console.error('Load rooms error:', error);
+        return;
+      }
+
       const textList = document.getElementById('text-rooms-list');
       const voiceList = document.getElementById('voice-rooms-list');
       textList.innerHTML = '';
       voiceList.innerHTML = '';
-      
-      data.forEach(room => {
-        const li = document.createElement('li');
-        li.innerHTML = `<span>${room.type === 'voice' ? '🔊' : '💬'}</span> ${room.name}`;
-        li.onclick = () => openRoom(room.id, room.name, room.type);
-        if (room.type === 'voice') voiceList.appendChild(li);
-        else textList.appendChild(li);
-      });
+
+      if (data) {
+        data.forEach(room => {
+          const li = document.createElement('li');
+          li.dataset.id = room.id;
+          li.innerHTML = `
+            <span class="room-icon">${room.type === 'voice' ? '🔊' : '💬'}</span>
+            <span class="room-name">${room.name}</span>
+          `;
+          li.onclick = () => openRoom(room.id, room.name, room.type);
+          if (room.type === 'voice') voiceList.appendChild(li);
+          else textList.appendChild(li);
+        });
+      }
     }
 
+    async function createRoom() {
+      const name = document.getElementById('new-room-name').value.trim();
+      const type = document.getElementById('new-room-type').value;
+      if (!name) return;
+
+      const { error } = await db.from('rooms').insert({
+        name,
+        type,
+        created_by: currentUser.id
+      });
+
+      if (error) {
+        console.error('Create room error:', error);
+        alert('خطا در ساخت اتاق: ' + error.message);
+        return;
+      }
+
+      document.getElementById('create-room-modal').style.display = 'none';
+      document.getElementById('new-room-name').value = '';
+      loadRooms();
+    }
+
+    // ============================================
+    // MESSAGES
+    // ============================================
     async function openRoom(id, name, type) {
+      // Unsubscribe from previous room
+      if (messageSubscription) {
+        db.removeChannel(messageSubscription);
+        messageSubscription = null;
+      }
+
       currentRoom = id;
+      currentRoomType = type;
+
+      // Update UI
       document.getElementById('welcome-screen').style.display = 'none';
       document.getElementById('chat-screen').style.display = 'flex';
       document.getElementById('current-room-name').textContent = name;
+
+      // Show/hide input based on room type
       document.getElementById('message-input-area').style.display = type === 'text' ? 'flex' : 'none';
-      
+      document.getElementById('voice-controls').style.display = type === 'voice' ? 'flex' : 'none';
+
+      // Highlight active room
+      document.querySelectorAll('.room-list li').forEach(li => li.classList.remove('active'));
+      document.querySelector(`.room-list li[data-id="${id}"]`)?.classList.add('active');
+
+      // Load messages for text rooms
       if (type === 'text') {
-        const { data } = await db.from('messages')
-          .select('*, profiles:user_id (username, display_name, role)')
-          .eq('room_id', id)
-          .order('created_at')
-          .limit(50);
-        
-        const container = document.getElementById('messages-container');
-        container.innerHTML = '';
-        if (data) data.forEach(msg => addMessage(msg));
+        await loadMessages(id);
+        document.getElementById('message-input').focus();
       }
-      
+
       // Subscribe to new messages
-      db.channel('room:' + id)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `room_id=eq.${id}` }, payload => {
-          db.from('messages').select('*, profiles:user_id (username, display_name, role)').eq('id', payload.new.id).single().then(({ data }) => {
-            if (data) addMessage(data);
-          });
+      messageSubscription = db
+        .channel('room:' + id)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `room_id=eq.${id}`
+        }, async (payload) => {
+          // Fetch full message with profile
+          const { data } = await db
+            .from('messages')
+            .select('*, profiles:user_id (id, username, display_name, role)')
+            .eq('id', payload.new.id)
+            .single();
+
+          if (data) addMessage(data);
         })
         .subscribe();
+    }
+
+    async function loadMessages(roomId) {
+      const { data, error } = await db
+        .from('messages')
+        .select('*, profiles:user_id (id, username, display_name, role)')
+        .eq('room_id', roomId)
+        .order('created_at', { ascending: true })
+        .limit(100);
+
+      const container = document.getElementById('messages-container');
+      container.innerHTML = '';
+
+      if (data) {
+        data.forEach(msg => addMessage(msg));
+        container.scrollTop = container.scrollHeight;
+      }
     }
 
     function addMessage(msg) {
@@ -236,14 +462,32 @@
       const div = document.createElement('div');
       const isOwn = msg.user_id === currentUser.id;
       const user = msg.profiles;
+      const roleClass = user?.role || 'user';
+      const roleName = user?.role === 'owner' ? 'مالک' : user?.role === 'admin' ? 'ادمین' : '';
+
+      let contentHtml = '';
+      if (msg.type === 'text') {
+        contentHtml = `<div class="message-text">${escapeHtml(msg.content)}</div>`;
+      } else if (msg.type === 'image') {
+        contentHtml = `<img src="${msg.file_url}" class="message-image" alt="image" onclick="window.open(this.src)">`;
+      } else if (msg.type === 'voice') {
+        contentHtml = `<audio controls class="message-audio" src="${msg.file_url}"></audio>`;
+      } else if (msg.type === 'file') {
+        contentHtml = `<a href="${msg.file_url}" class="message-file" target="_blank">📎 ${msg.file_name || 'فایل'}</a>`;
+      }
+
+      const time = new Date(msg.created_at).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+
       div.className = `message ${isOwn ? 'own' : ''}`;
       div.innerHTML = `
-        <div class="message-avatar">${(user?.display_name || '?').charAt(0)}</div>
+        <div class="message-avatar">${(user?.display_name || user?.username || '?').charAt(0).toUpperCase()}</div>
         <div class="message-content">
           <div class="message-header">
-            <span class="message-username">${user?.display_name || 'ناشناس'}</span>
+            <span class="message-username">${user?.display_name || user?.username || 'ناشناس'}</span>
+            ${roleName ? `<span class="message-role role-badge ${roleClass}">${roleName}</span>` : ''}
+            <span class="message-time">${time}</span>
           </div>
-          <div class="message-text">${msg.content || ''}</div>
+          ${contentHtml}
         </div>
       `;
       container.appendChild(div);
@@ -254,41 +498,205 @@
       const input = document.getElementById('message-input');
       const content = input.value.trim();
       if (!content || !currentRoom) return;
-      
-      await db.from('messages').insert({
+
+      const { error } = await db.from('messages').insert({
         room_id: currentRoom,
         user_id: currentUser.id,
         type: 'text',
         content
       });
-      
+
+      if (error) {
+        console.error('Send message error:', error);
+      }
+
       input.value = '';
     }
 
     // ============================================
-    // Event Listeners
+    // FILE UPLOAD
+    // ============================================
+    async function uploadFile(file) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      const { data, error } = await db.storage
+        .from('uploads')
+        .upload(fileName, file);
+
+      if (error) {
+        console.error('Upload error:', error);
+        alert('خطا در آپلود فایل');
+        return null;
+      }
+
+      const { data: urlData } = db.storage
+        .from('uploads')
+        .getPublicUrl(fileName);
+
+      return {
+        url: urlData.publicUrl,
+        name: file.name,
+        size: file.size
+      };
+    }
+
+    // ============================================
+    // USERS
+    // ============================================
+    async function loadUsers() {
+      const { data } = await db.from('profiles').select('id, username, display_name, role');
+      const list = document.getElementById('users-list');
+      list.innerHTML = '';
+
+      if (data) {
+        data.forEach(user => {
+          const li = document.createElement('li');
+          const roleIcon = user.role === 'owner' ? '👑' : user.role === 'admin' ? '⭐' : '';
+          li.innerHTML = `
+            <span class="online-dot"></span>
+            <span>${user.display_name || user.username} ${roleIcon}</span>
+          `;
+          list.appendChild(li);
+        });
+      }
+    }
+
+    // ============================================
+    // VOICE & SCREEN SHARE (WebRTC)
+    // ============================================
+    async function joinVoice() {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        document.getElementById('join-voice-btn').style.display = 'none';
+        document.getElementById('leave-voice-btn').style.display = 'inline-block';
+        document.getElementById('share-screen-btn').style.display = 'inline-block';
+        document.getElementById('media-panel').style.display = 'block';
+      } catch (err) {
+        alert('دسترسی به میکروفون رد شد');
+      }
+    }
+
+    function leaveVoice() {
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+      }
+      if (screenStream) {
+        screenStream.getTracks().forEach(t => t.stop());
+        screenStream = null;
+      }
+      peers.forEach(pc => pc.close());
+      peers.clear();
+
+      document.getElementById('join-voice-btn').style.display = 'inline-block';
+      document.getElementById('leave-voice-btn').style.display = 'none';
+      document.getElementById('share-screen-btn').style.display = 'none';
+      document.getElementById('media-panel').style.display = 'none';
+      document.getElementById('remote-video').srcObject = null;
+    }
+
+    async function shareScreen() {
+      try {
+        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        document.getElementById('remote-video').srcObject = screenStream;
+        screenStream.getVideoTracks()[0].onended = () => {
+          screenStream = null;
+          document.getElementById('remote-video').srcObject = localStream;
+        };
+      } catch (err) {
+        console.error('Screen share failed:', err);
+      }
+    }
+
+    function toggleMute() {
+      if (localStream) {
+        const audio = localStream.getAudioTracks()[0];
+        if (audio) {
+          audio.enabled = !audio.enabled;
+          document.getElementById('mute-btn').textContent = audio.enabled ? '🎤' : '🔇';
+        }
+      }
+    }
+
+    // ============================================
+    // HELPERS
+    // ============================================
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ============================================
+    // EVENT LISTENERS
     // ============================================
     document.addEventListener('DOMContentLoaded', () => {
-      // Tabs
+      console.log('App loaded');
+
+      // Tab switching
       document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          const tab = btn.dataset.tab;
-          document.getElementById('login-form').style.display = tab === 'login' ? 'flex' : 'none';
-          document.getElementById('register-form').style.display = tab === 'register' ? 'flex' : 'none';
-          document.getElementById('auth-error').textContent = '';
-        });
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
       });
 
       // Forms
       document.getElementById('login-form').onsubmit = (e) => { e.preventDefault(); doLogin(); };
       document.getElementById('register-form').onsubmit = (e) => { e.preventDefault(); doRegister(); };
       document.getElementById('logout-btn').onclick = doLogout;
-      document.getElementById('send-btn').onclick = sendMessage;
-      document.getElementById('message-input').onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
 
-      // Check if logged in
+      // Messages
+      document.getElementById('send-btn').onclick = sendMessage;
+      document.getElementById('message-input').onkeydown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+      };
+
+      // File upload
+      document.getElementById('upload-btn').onclick = () => document.getElementById('file-input').click();
+      document.getElementById('file-input').onchange = async (e) => {
+        if (e.target.files[0] && currentRoom) {
+          const uploaded = await uploadFile(e.target.files[0]);
+          if (uploaded) {
+            let type = 'file';
+            if (e.target.files[0].type.startsWith('image/')) type = 'image';
+            else if (e.target.files[0].type.startsWith('audio/')) type = 'voice';
+
+            await db.from('messages').insert({
+              room_id: currentRoom,
+              user_id: currentUser.id,
+              type,
+              content: uploaded.name,
+              file_url: uploaded.url,
+              file_name: uploaded.name,
+              file_size: uploaded.size
+            });
+          }
+          e.target.value = '';
+        }
+      };
+
+      // Room creation
+      document.getElementById('add-text-room').onclick = () => {
+        document.getElementById('new-room-type').value = 'text';
+        document.getElementById('create-room-modal').style.display = 'flex';
+      };
+      document.getElementById('add-voice-room').onclick = () => {
+        document.getElementById('new-room-type').value = 'voice';
+        document.getElementById('create-room-modal').style.display = 'flex';
+      };
+      document.getElementById('confirm-create-room').onclick = createRoom;
+      document.getElementById('cancel-create-room').onclick = () => {
+        document.getElementById('create-room-modal').style.display = 'none';
+      };
+
+      // Voice
+      document.getElementById('join-voice-btn').onclick = joinVoice;
+      document.getElementById('leave-voice-btn').onclick = leaveVoice;
+      document.getElementById('share-screen-btn').onclick = shareScreen;
+      document.getElementById('mute-btn').onclick = toggleMute;
+      document.getElementById('end-call-btn').onclick = leaveVoice;
+      document.getElementById('close-media-btn').onclick = leaveVoice;
+
+      // Check if already logged in
       loadUser();
     });
   </script>
