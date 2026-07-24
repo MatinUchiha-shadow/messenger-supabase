@@ -4,7 +4,15 @@
 const SUPABASE_URL = 'https://dvhjswspljxbjxngetdc.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_5ojtC3p6Jt4blaXnYn_Cmw_AjxkVihX';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Initialize Supabase
+let supabase;
+try {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log('Supabase initialized:', supabase);
+} catch (err) {
+  console.error('Failed to initialize Supabase:', err);
+  document.getElementById('auth-error').textContent = 'خطا در اتصال به سرور';
+}
 
 // ============================================
 // App State
@@ -26,6 +34,7 @@ const App = {
 // Auth Functions
 // ============================================
 async function register(username, email, password, displayName) {
+  console.log('Registering:', { username, email });
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -36,15 +45,18 @@ async function register(username, email, password, displayName) {
       }
     }
   });
+  console.log('Register result:', { data, error });
   if (error) throw error;
   return data;
 }
 
 async function login(email, password) {
+  console.log('Logging in:', { email });
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password
   });
+  console.log('Login result:', { data, error });
   if (error) throw error;
   return data;
 }
@@ -88,13 +100,6 @@ async function createRoom(name, type) {
     .single();
   if (error) throw error;
   return data;
-}
-
-async function joinRoom(roomId) {
-  const { error } = await supabase
-    .from('room_members')
-    .insert({ room_id: roomId, user_id: App.currentUser.id });
-  // Ignore duplicate error
 }
 
 // ============================================
@@ -164,7 +169,6 @@ function subscribeToMessages(roomId) {
       table: 'messages',
       filter: `room_id=eq.${roomId}`
     }, async (payload) => {
-      // Fetch full message with profile
       const { data } = await supabase
         .from('messages')
         .select('*, profiles:user_id (id, username, display_name, role)')
@@ -177,136 +181,6 @@ function subscribeToMessages(roomId) {
       }
     })
     .subscribe();
-}
-
-function subscribeToOnlineUsers() {
-  return supabase
-    .channel('online')
-    .on('presence', { event: 'sync' }, () => {
-      const state = supabase.channel('online').presenceState();
-      App.onlineUsers = new Set(Object.keys(state));
-      updateOnlineUsersList();
-    })
-    .on('presence', { event: 'join' }, ({ key }) => {
-      App.onlineUsers.add(key);
-      updateOnlineUsersList();
-    })
-    .on('presence', { event: 'leave' }, ({ key }) => {
-      App.onlineUsers.delete(key);
-      updateOnlineUsersList();
-    })
-    .subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        await supabase.channel('online').track({
-          user_id: App.currentUser.id,
-          username: App.currentUser.username,
-          online_at: new Date().toISOString()
-        });
-      }
-    });
-}
-
-// ============================================
-// WebRTC (Simple signaling via Supabase Realtime)
-// ============================================
-let signalingChannel = null;
-
-function setupSignaling(roomId) {
-  signalingChannel = supabase
-    .channel(`signaling:${roomId}`)
-    .on('broadcast', { event: 'webrtc_offer' }, async ({ payload }) => {
-      if (payload.from === App.currentUser.id) return;
-      await handleOffer(payload.from, payload.offer);
-    })
-    .on('broadcast', { event: 'webrtc_answer' }, async ({ payload }) => {
-      if (payload.from === App.currentUser.id) return;
-      await handleAnswer(payload.from, payload.answer);
-    })
-    .on('broadcast', { event: 'webrtc_ice' }, async ({ payload }) => {
-      if (payload.from === App.currentUser.id) return;
-      await handleIceCandidate(payload.from, payload.candidate);
-    })
-    .subscribe();
-}
-
-async function createPeer(peerId, isInitiator = false) {
-  const config = {
-    iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' }
-    ]
-  };
-
-  const pc = new RTCPeerConnection(config);
-  App.peers.set(peerId, pc);
-
-  if (App.localStream) {
-    App.localStream.getTracks().forEach(track => pc.addTrack(track, App.localStream));
-  }
-
-  pc.onicecandidate = (event) => {
-    if (event.candidate) {
-      signalingChannel.send({
-        type: 'broadcast',
-        event: 'webrtc_ice',
-        payload: {
-          from: App.currentUser.id,
-          target: peerId,
-          candidate: event.candidate
-        }
-      });
-    }
-  };
-
-  pc.ontrack = (event) => {
-    document.getElementById('remote-video').srcObject = event.streams[0];
-  };
-
-  if (isInitiator) {
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    signalingChannel.send({
-      type: 'broadcast',
-      event: 'webrtc_offer',
-      payload: {
-        from: App.currentUser.id,
-        target: peerId,
-        offer
-      }
-    });
-  }
-
-  return pc;
-}
-
-async function handleOffer(peerId, offer) {
-  const pc = await createPeer(peerId, false);
-  await pc.setRemoteDescription(new RTCSessionDescription(offer));
-  const answer = await pc.createAnswer();
-  await pc.setLocalDescription(answer);
-  signalingChannel.send({
-    type: 'broadcast',
-    event: 'webrtc_answer',
-    payload: {
-      from: App.currentUser.id,
-      target: peerId,
-      answer
-    }
-  });
-}
-
-async function handleAnswer(peerId, answer) {
-  const pc = App.peers.get(peerId);
-  if (pc) {
-    await pc.setRemoteDescription(new RTCSessionDescription(answer));
-  }
-}
-
-async function handleIceCandidate(peerId, candidate) {
-  const pc = App.peers.get(peerId);
-  if (pc) {
-    await pc.addIceCandidate(new RTCIceCandidate(candidate));
-  }
 }
 
 // ============================================
@@ -371,7 +245,6 @@ async function joinRoomUI(roomId, roomName, roomType) {
     document.getElementById('message-input').focus();
   }
 
-  // Subscribe to messages
   subscribeToMessages(roomId);
 }
 
@@ -440,19 +313,15 @@ function updateOnlineUsersList() {
 // ============================================
 async function joinVoice() {
   if (!App.currentRoom || App.currentRoomType !== 'voice') return;
-
   try {
     App.localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     App.inVoice = true;
     App.currentVoiceRoom = App.currentRoom;
-
     document.getElementById('join-voice-btn').style.display = 'none';
     document.getElementById('leave-voice-btn').style.display = 'inline-block';
     document.getElementById('share-screen-btn').style.display = 'inline-block';
     document.getElementById('media-panel').style.display = 'block';
     document.getElementById('media-title').textContent = 'تماس صوتی';
-
-    setupSignaling(App.currentRoom);
   } catch (err) {
     console.error('Failed to get microphone:', err);
     alert('دسترسی به میکروفون رد شد');
@@ -460,14 +329,9 @@ async function joinVoice() {
 }
 
 function leaveVoice() {
-  if (signalingChannel) {
-    supabase.removeChannel(signalingChannel);
-    signalingChannel = null;
-  }
   cleanupMedia();
   App.inVoice = false;
   App.currentVoiceRoom = null;
-
   document.getElementById('join-voice-btn').style.display = 'inline-block';
   document.getElementById('leave-voice-btn').style.display = 'none';
   document.getElementById('share-screen-btn').style.display = 'none';
@@ -535,9 +399,12 @@ function formatSize(bytes) {
 // Event Listeners
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM loaded');
+  
   // Auth tabs
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      console.log('Tab clicked:', btn.dataset.tab);
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const tab = btn.dataset.tab;
@@ -550,6 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Login
   document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    console.log('Login form submitted');
     try {
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
@@ -560,9 +428,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('app-screen').style.display = 'flex';
         updateUserInfo();
         renderRooms();
-        subscribeToOnlineUsers();
       }
     } catch (err) {
+      console.error('Login error:', err);
       document.getElementById('auth-error').textContent = err.message;
     }
   });
@@ -570,15 +438,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // Register
   document.getElementById('register-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    console.log('Register form submitted');
     try {
       const username = document.getElementById('reg-username').value;
       const email = document.getElementById('reg-email').value;
       const password = document.getElementById('reg-password').value;
       const displayName = document.getElementById('reg-displayname').value;
       await register(username, email, password, displayName);
-      document.getElementById('auth-error').textContent = 'ایمیل تأییدیه رو چک کنید!';
+      document.getElementById('auth-error').textContent = 'ثبت نام انجام شد! ایمیل تأییدیه رو چک کنید.';
+      document.getElementById('auth-error').style.color = '#2ecc71';
     } catch (err) {
+      console.error('Register error:', err);
       document.getElementById('auth-error').textContent = err.message;
+      document.getElementById('auth-error').style.color = '#e74c3c';
     }
   });
 
@@ -659,7 +531,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('app-screen').style.display = 'flex';
       updateUserInfo();
       renderRooms();
-      subscribeToOnlineUsers();
     }
   });
 });
