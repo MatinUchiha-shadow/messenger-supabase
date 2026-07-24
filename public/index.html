@@ -174,57 +174,72 @@
       }
 
       showLoading('در حال ثبت نام...');
-      console.log('Starting registration...');
 
       try {
+        // Step 1: Sign up
         const { data, error } = await db.auth.signUp({
           email,
           password,
           options: { data: { username, display_name: displayName } }
         });
 
-        console.log('Registration response:', JSON.stringify({ data, error }));
-
         if (error) {
-          console.error('Register error:', error);
           showError('خطا: ' + error.message);
           return;
         }
 
-        if (data.user) {
-          console.log('User created:', data.user.id);
-          
-          if (data.session) {
-            // Auto logged in
-            console.log('Auto login...');
-            await loadUser();
-          } else if (data.user.identities && data.user.identities.length === 0) {
-            // Email already exists
-            showError('این ایمیل قبلاً ثبت نام شده. وارد شو.');
-            switchTab('login');
-            document.getElementById('login-email').value = email;
-          } else {
-            // Need email confirmation or auto confirmed
-            console.log('User created, trying to login...');
-            
-            // Try to login directly
-            const { data: loginData, error: loginError } = await db.auth.signInWithPassword({
-              email,
-              password
+        if (!data.user) {
+          showError('خطا در ثبت نام');
+          return;
+        }
+
+        // Step 2: Login immediately
+        const { error: loginError } = await db.auth.signInWithPassword({ email, password });
+        
+        if (loginError) {
+          showSuccess('ثبت نام شد! حالا وارد شو.');
+          switchTab('login');
+          document.getElementById('login-email').value = email;
+          document.getElementById('login-password').value = password;
+          return;
+        }
+
+        // Step 3: Create profile manually
+        const userId = data.user.id;
+        
+        // Check if profile exists
+        const { data: existingProfile } = await db
+          .from('profiles')
+          .select('id')
+          .eq('id', userId)
+          .single();
+
+        if (!existingProfile) {
+          // Count users to determine role
+          const { count } = await db
+            .from('profiles')
+            .select('*', { count: 'exact', head: true });
+
+          const role = count === 0 ? 'owner' : 'user';
+
+          // Create profile
+          const { error: profileError } = await db
+            .from('profiles')
+            .insert({
+              id: userId,
+              username: username,
+              display_name: displayName,
+              role: role
             });
-            
-            if (loginError) {
-              console.log('Auto login failed, need email confirmation');
-              showSuccess('ثبت نام شد! اگه ایمیل تأیید فعاله، ایمیلت رو چک کن.');
-              switchTab('login');
-              document.getElementById('login-email').value = email;
-              document.getElementById('login-password').value = password;
-            } else {
-              console.log('Auto login success');
-              await loadUser();
-            }
+
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
           }
         }
+
+        // Step 4: Load user and show app
+        await loadUser();
+
       } catch (err) {
         console.error('Registration exception:', err);
         showError('خطای غیرمنتظره: ' + err.message);
