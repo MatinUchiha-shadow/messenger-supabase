@@ -1446,40 +1446,56 @@ window.openMyProfile = function() { if (myProfile) openProfile(myProfile.display
 window.closeProfile = function() { $('profile-overlay').classList.remove('show'); };
 window.closeCallPanel = function() { leaveVoice(); };
 
-window.toggleFullscreen = function() {
-  // Find the screen share video in the grid
+var fsOverlay = null;
+window.toggleFullscreen = function(e) {
+  if (e) e.stopPropagation();
+  // If fullscreen overlay exists, close it
+  if (fsOverlay) { closeFullscreen(); return; }
+  // Find the screen share video
   var screenVideo = null;
   var tiles = document.querySelectorAll('.call-tile');
   for (var i = 0; i < tiles.length; i++) {
     var v = tiles[i].querySelector('video');
-    if (v && v.srcObject && v.srcObject.getVideoTracks().length > 0) {
+    if (v && v.srcObject && v.srcObject.getVideoTracks && v.srcObject.getVideoTracks().length > 0) {
       screenVideo = v;
       break;
     }
   }
-  // Fallback: use remoteVideo
   if (!screenVideo) screenVideo = $('remoteVideo');
   if (!screenVideo || !screenVideo.srcObject) { toast('اشتراک صفحه فعال نیست'); return; }
-
-  var isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement;
-  if (!isFs) {
-    if (screenVideo.requestFullscreen) screenVideo.requestFullscreen();
-    else if (screenVideo.webkitRequestFullscreen) screenVideo.webkitRequestFullscreen();
-    else if (screenVideo.mozRequestFullScreen) screenVideo.mozRequestFullScreen();
-    $('fullscreenBtn').innerHTML = '<i class="fas fa-compress"></i>';
-  } else {
+  // Create fullscreen overlay
+  fsOverlay = document.createElement('div');
+  fsOverlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s';
+  var vid = document.createElement('video');
+  vid.autoplay = true; vid.playsInline = true;
+  vid.srcObject = screenVideo.srcObject;
+  vid.style.cssText = 'width:100%;height:100%;object-fit:contain';
+  fsOverlay.appendChild(vid);
+  // Close button
+  var closeBtn = document.createElement('button');
+  closeBtn.innerHTML = '<i class="fas fa-compress"></i>';
+  closeBtn.style.cssText = 'position:absolute;top:16px;left:16px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:18px;cursor:pointer;z-index:1;display:flex;align-items:center;justify-content:center';
+  closeBtn.onclick = closeFullscreen;
+  fsOverlay.appendChild(closeBtn);
+  // Click overlay to close
+  fsOverlay.onclick = function(ev) { if (ev.target === fsOverlay) closeFullscreen(); };
+  document.body.appendChild(fsOverlay);
+  // Try native fullscreen on the overlay
+  if (fsOverlay.requestFullscreen) fsOverlay.requestFullscreen().catch(function(){});
+  else if (fsOverlay.webkitRequestFullscreen) fsOverlay.webkitRequestFullscreen();
+  $('fullscreenBtn').innerHTML = '<i class="fas fa-compress"></i>';
+};
+function closeFullscreen() {
+  if (document.fullscreenElement || document.webkitFullscreenElement) {
     if (document.exitFullscreen) document.exitFullscreen();
     else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-    else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
-    $('fullscreenBtn').innerHTML = '<i class="fas fa-expand"></i>';
   }
-};
-document.addEventListener('fullscreenchange', handleFsChange);
-document.addEventListener('webkitfullscreenchange', handleFsChange);
-function handleFsChange() {
-  var isFs = document.fullscreenElement || document.webkitFullscreenElement;
-  if (!isFs && $('fullscreenBtn')) $('fullscreenBtn').innerHTML = '<i class="fas fa-expand"></i>';
+  if (fsOverlay) { fsOverlay.remove(); fsOverlay = null; }
+  if ($('fullscreenBtn')) $('fullscreenBtn').innerHTML = '<i class="fas fa-expand"></i>';
 }
+document.addEventListener('fullscreenchange', function() {
+  if (!document.fullscreenElement && !document.webkitFullscreenElement && fsOverlay) closeFullscreen();
+});
 
 function closeSidebar() { $('sidebar').classList.remove('open'); $('sidebarOverlay').classList.remove('show'); }
 $('menuBtn').onclick = function() { $('sidebar').classList.add('open'); $('sidebarOverlay').classList.add('show'); };
