@@ -979,6 +979,32 @@ async function sendMedia(inp, cap) {
   } catch(e) { toast('❌ ' + e.message); }
 }
 
+// AUTO-CLEANUP: Delete uploaded files older than 3 hours (keeps profile avatars)
+async function cleanupOldFiles() {
+  var THREE_HOURS = 3 * 60 * 60 * 1000;
+  var cutoff = Date.now() - THREE_HOURS;
+  var buckets = ['chat-images', 'chat-videos'];
+  for (var i = 0; i < buckets.length; i++) {
+    try {
+      var result = await db.storage.from(buckets[i]).list('');
+      if (result.error || !result.data) continue;
+      var files = result.data;
+      for (var j = 0; j < files.length; j++) {
+        var f = files[j];
+        // Extract timestamp from filename (format: timestamp.ext)
+        var ts = parseInt(f.name.split('.')[0], 10);
+        if (!isNaN(ts) && ts < cutoff) {
+          await db.storage.from(buckets[i]).remove([f.name]);
+        }
+      }
+    } catch(e) {}
+  }
+}
+
+// Run cleanup every 5 minutes + on page load
+cleanupOldFiles();
+setInterval(cleanupOldFiles, 5 * 60 * 1000);
+
 // VOICE
 let callTimerInterval = null, callSeconds = 0;
 

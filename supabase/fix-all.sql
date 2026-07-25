@@ -28,3 +28,8 @@ CREATE POLICY "avatars_all" ON storage.objects FOR ALL USING (bucket_id = 'avata
 CREATE POLICY "uploads_all" ON storage.objects FOR ALL USING (bucket_id = 'uploads') WITH CHECK (bucket_id = 'uploads');
 CREATE POLICY "chat-images_all" ON storage.objects FOR ALL USING (bucket_id = 'chat-images') WITH CHECK (bucket_id = 'chat-images');
 CREATE POLICY "chat-videos_all" ON storage.objects FOR ALL USING (bucket_id = 'chat-videos') WITH CHECK (bucket_id = 'chat-videos');
+
+-- 5. Auto-cleanup function: Delete old chat media files (called by cron or client)
+-- This runs as a Supabase Edge Function or can be called manually
+-- Files older than 3 hours are deleted from chat-images and chat-videos buckets
+-- Profile avatars are NOT affected (different bucket)
