@@ -323,7 +323,9 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
   .msg-c{max-width:82%}
   input,textarea{font-size:16px!important}
   .room-item,.dm-item{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
-  #input-bar{padding-bottom:env(safe-area-inset-bottom,12px)}
+  #input-bar{padding-bottom:env(safe-area-inset-bottom,8px)}
+  #input-bar.show{display:flex!important}
+  #messages{padding-bottom:8px}
 }
 </style>
 </head>
@@ -1094,12 +1096,15 @@ async function createPeer(pid, init) {
     var stream = e.streams[0];
     var hasVideo = stream.getVideoTracks().length > 0;
     if (hasVideo) {
-      // Screen share - show in peer's tile
-      renderCallGrid(); // Ensure tile exists
-      var tile = document.getElementById('tile-' + pid);
-      if (tile) {
-        var existingVideo = tile.querySelector('video');
-        if (!existingVideo) {
+      // Ensure peer is in voiceMembers and tile exists
+      if (!voiceMembers.has(pid)) {
+        voiceMembers.set(pid, { username: 'کاربر' });
+      }
+      renderCallGrid();
+      // Use setTimeout to ensure DOM is updated
+      setTimeout(function() {
+        var tile = document.getElementById('tile-' + pid);
+        if (tile && !tile.querySelector('video')) {
           var v = document.createElement('video');
           v.autoplay = true; v.playsInline = true;
           tile.insertBefore(v, tile.firstChild);
@@ -1110,8 +1115,9 @@ async function createPeer(pid, init) {
           label.textContent = (voiceMembers.get(pid) || {}).username || 'اشتراک صفحه';
           tile.appendChild(label);
         }
-        tile.querySelector('video').srcObject = stream;
-      }
+        var vid = tile && tile.querySelector('video');
+        if (vid) vid.srcObject = stream;
+      }, 100);
     } else {
       $('remoteAudio').srcObject = stream;
     }
@@ -1182,18 +1188,21 @@ window.shareScreen = async function() {
       var v = document.createElement('video');
       v.autoplay = true; v.playsInline = true; v.muted = true;
       selfTile.insertBefore(v, selfTile.firstChild);
-      selfTile.querySelector('.tile-av').style.display = 'none';
+      var av = selfTile.querySelector('.tile-av');
+      if (av) av.style.display = 'none';
       v.srcObject = screenStream;
     }
-    // Update button
-    var btn = $('callScreenBtn');
-    if (btn) { btn.className = 'call-ctrl screen active'; }
-    // Add screen track to all existing peers
+    $('callScreenBtn').className = 'call-ctrl screen active';
+    // Send screen video to all peers
     var videoTrack = screenStream.getVideoTracks()[0];
     peers.forEach(function(pc) {
-      var sender = pc.getSenders().find(function(s) { return s.track && s.track.kind === 'video'; });
-      if (sender) sender.replaceTrack(videoTrack);
-      else pc.addTrack(videoTrack, screenStream);
+      var videoSender = pc.getSenders().find(function(s) { return s.track && s.track.kind === 'video'; });
+      if (videoSender) { videoSender.replaceTrack(videoTrack); }
+      else {
+        // No video sender yet - add video track with its own stream
+        var screenMS = new MediaStream([videoTrack]);
+        pc.addTrack(videoTrack, screenMS);
+      }
     });
     videoTrack.onended = function() { stopScreenShare(); };
     toast('🖥 صفحه اشتراک گذاشته شد');
@@ -1288,8 +1297,19 @@ loadSession();
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', function() {
     var vh = window.visualViewport.height;
-    document.documentElement.style.setProperty('--app-vh', vh + 'px');
-    $('messages') && ($('messages').scrollTop = $('messages').scrollHeight);
+    document.documentElement.style.height = vh + 'px';
+    document.body.style.height = vh + 'px';
+    var inputBar = $('input-bar');
+    if (inputBar && inputBar.classList.contains('show')) {
+      inputBar.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+  });
+  // Also handle scroll into view when input is focused
+  $('msg-input') && $('msg-input').addEventListener('focus', function() {
+    setTimeout(function() {
+      var inputBar = $('input-bar');
+      if (inputBar) inputBar.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 300);
   });
 }
 </script>
