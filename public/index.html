@@ -503,9 +503,9 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
   </div>
   <div class="call-grid" id="callGrid"></div>
   <div class="call-controls">
-    <button class="call-ctrl mic" id="callMuteBtn" onclick="toggleMute()" title="میکروفون"><i class="fas fa-microphone"></i></button>
-    <button class="call-ctrl screen" id="callScreenBtn" onclick="shareScreen()" title="اشتراک صفحه"><i class="fas fa-desktop"></i></button>
-    <button class="call-ctrl" id="fullscreenBtn" onclick="toggleFullscreen()" title="تمام‌صفحه" style="background:var(--bg3,#1e2c3a);color:#fff"><i class="fas fa-expand"></i></button>
+    <button class="call-ctrl mic" id="callMuteBtn" onclick="event.stopPropagation();toggleMute()" title="میکروفون"><i class="fas fa-microphone"></i></button>
+    <button class="call-ctrl screen" id="callScreenBtn" onclick="event.stopPropagation();shareScreen()" title="اشتراک صفحه"><i class="fas fa-desktop"></i></button>
+    <button class="call-ctrl" id="fullscreenBtn" onclick="event.stopPropagation();toggleFullscreen()" title="تمام‌صفحه" style="background:var(--bg3,#1e2c3a);color:#fff"><i class="fas fa-expand"></i></button>
     <button class="call-ctrl leave" onclick="leaveVoice()" title="پایان"><i class="fas fa-phone-slash"></i></button>
   </div>
 </div>
@@ -1081,9 +1081,14 @@ async function joinVoice() {
     myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     voiceChannel = db.channel('voice:' + curRoom);
     voiceChannel.on('broadcast', { event: 'join' }, async function(payload) {
-      // Someone new joined - add them, create peer, and announce yourself back
       if (payload.payload.userId === me.id) return;
-      voiceMembers.set(payload.payload.userId, { username: payload.payload.username });
+      // Fetch their profile to get avatar
+      var avatarUrl = null;
+      try {
+        var profResult = await db.from('profiles').select('avatar_url').eq('id', payload.payload.userId).single();
+        if (profResult.data) avatarUrl = profResult.data.avatar_url;
+      } catch(e) {}
+      voiceMembers.set(payload.payload.userId, { username: payload.payload.username, avatar_url: avatarUrl });
       toast('🎙 ' + payload.payload.username + ' وارد صدا شد');
       renderCallGrid();
       // Create peer as initiator
@@ -1095,12 +1100,11 @@ async function joinVoice() {
         }
       }, 300);
       // Announce yourself back so they can see you
-      await voiceChannel.send({ type: 'broadcast', event: 'here', payload: { userId: me.id, username: myProfile.display_name || myProfile.username } });
+      await voiceChannel.send({ type: 'broadcast', event: 'here', payload: { userId: me.id, username: myProfile.display_name || myProfile.username, avatar_url: myProfile.avatar_url || null } });
     }).on('broadcast', { event: 'here' }, async function(payload) {
-      // An existing member announced themselves - add them and connect
       if (payload.payload.userId === me.id) return;
-      if (voiceMembers.has(payload.payload.userId)) return; // Already known
-      voiceMembers.set(payload.payload.userId, { username: payload.payload.username });
+      if (voiceMembers.has(payload.payload.userId)) return;
+      voiceMembers.set(payload.payload.userId, { username: payload.payload.username, avatar_url: payload.payload.avatar_url || null });
       toast('🎙 ' + payload.payload.username + ' وارد صدا شد');
       renderCallGrid();
       // Don't create peer here - wait for their offer or create as non-initiator
@@ -1155,7 +1159,7 @@ async function joinVoice() {
         voiceMembers.set(me.id, { username: myProfile.display_name || myProfile.username });
         showCallPanel();
         // Announce join - existing members will respond with 'here'
-        await voiceChannel.send({ type: 'broadcast', event: 'join', payload: { userId: me.id, username: myProfile.display_name || myProfile.username } });
+        await voiceChannel.send({ type: 'broadcast', event: 'join', payload: { userId: me.id, username: myProfile.display_name || myProfile.username, avatar_url: myProfile.avatar_url || null } });
       }
     });
   } catch(e) { toast('❌ میکروفون'); }
@@ -1198,7 +1202,8 @@ function renderCallGrid() {
   selfTile.id = 'tile-' + me.id;
   selfTile.style.cursor = 'pointer';
   selfTile.onclick = function() { openProfile(myProfile.display_name || myProfile.username); };
-  selfTile.innerHTML = '<div class="tile-mic" id="mic-indicator-' + me.id + '"><i class="fas fa-microphone"></i></div><div class="tile-av">' + (myProfile.display_name || '?').charAt(0).toUpperCase() + '</div><div class="tile-name">' + esc(myProfile.display_name || '') + '</div><div class="tile-status">شما</div>';
+  var selfAvatar = myProfile.avatar_url ? '<img src="' + esc(myProfile.avatar_url) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : (myProfile.display_name || '?').charAt(0).toUpperCase();
+  selfTile.innerHTML = '<div class="tile-mic" id="mic-indicator-' + me.id + '"><i class="fas fa-microphone"></i></div><div class="tile-av">' + selfAvatar + '</div><div class="tile-name">' + esc(myProfile.display_name || '') + '</div><div class="tile-status">شما</div>';
   grid.appendChild(selfTile);
   // Add peer tiles
   voiceMembers.forEach(function(m, uid) {
@@ -1208,7 +1213,8 @@ function renderCallGrid() {
     tile.id = 'tile-' + uid;
     tile.style.cursor = 'pointer';
     tile.onclick = (function(username) { return function() { openProfile(username); }; })(m.username);
-    tile.innerHTML = '<div class="tile-mic" id="mic-indicator-' + uid + '"><i class="fas fa-microphone"></i></div><div class="tile-av" style="background:linear-gradient(135deg,var(--accent2),var(--accent))">' + (m.username || '?').charAt(0).toUpperCase() + '</div><div class="tile-name">' + esc(m.username || '') + '</div><div class="tile-status">در تماس</div>';
+    var peerAvatar = m.avatar_url ? '<img src="' + esc(m.avatar_url) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : (m.username || '?').charAt(0).toUpperCase();
+    tile.innerHTML = '<div class="tile-mic" id="mic-indicator-' + uid + '"><i class="fas fa-microphone"></i></div><div class="tile-av" style="background:linear-gradient(135deg,var(--accent2),var(--accent))">' + peerAvatar + '</div><div class="tile-name">' + esc(m.username || '') + '</div><div class="tile-status">در تماس</div>';
     grid.appendChild(tile);
   });
 }
