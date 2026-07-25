@@ -372,6 +372,7 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
     <div class="chat-actions" id="voiceActions" style="display:none">
       <button class="vb-join" id="joinVoiceBtn" onclick="joinVoice()"><i class="fas fa-microphone"></i> ورود</button>
       <button class="vb-join leave" id="leaveVoiceBtn" style="display:none" onclick="leaveVoice()"><i class="fas fa-microphone-slash"></i> خروج</button>
+      <button class="icon-btn" id="shareScreenBtn" style="display:none" onclick="shareScreen()" title="اشتراک صفحه"><i class="fas fa-desktop"></i></button>
     </div>
   </div>
   <div id="voice-bar"><div style="flex:1"><div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:3px">🔊 صوتی</div><div class="vb-members" id="vbMembers"><span style="font-size:11px;color:var(--muted)">خالی</span></div></div></div>
@@ -427,6 +428,15 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
       <div class="tp-actions"><button class="tp-btn" onclick="resetTheme()">بازنشانی</button><button class="tp-btn primary" onclick="closeThemePanel()">ذخیره</button></div>
     </div>
   </div>
+</div>
+
+<!-- SCREEN SHARE PANEL -->
+<div id="screenPanel" style="position:fixed;bottom:80px;right:16px;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;z-index:100;display:none;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+  <div style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)">
+    <span style="font-size:12px;font-weight:600"><i class="fas fa-desktop" style="color:var(--accent);margin-left:4px"></i> اشتراک صفحه</span>
+    <button class="icon-btn" onclick="stopScreenShare()" style="width:24px;height:24px;font-size:10px"><i class="fas fa-times"></i></button>
+  </div>
+  <video id="screenVideo" autoplay playsinline muted style="width:100%;max-height:200px;background:#000;display:block"></video>
 </div>
 
 <div id="toast"></div>
@@ -947,7 +957,7 @@ async function joinVoice() {
       renderVoiceMembers();
     }).subscribe(async function(status) {
       if (status === 'SUBSCRIBED') {
-        $('joinVoiceBtn').style.display = 'none'; $('leaveVoiceBtn').style.display = 'inline-flex';
+        $('joinVoiceBtn').style.display = 'none'; $('leaveVoiceBtn').style.display = 'inline-flex'; $('shareScreenBtn').style.display = 'flex';
         voiceMembers.set(me.id, { username: myProfile.display_name || myProfile.username });
         renderVoiceMembers();
         await voiceChannel.send({ type: 'broadcast', event: 'join', payload: { userId: me.id, username: myProfile.display_name || myProfile.username } });
@@ -960,7 +970,7 @@ function leaveVoice() {
   if (voiceChannel) { voiceChannel.send({ type: 'broadcast', event: 'leave', payload: { userId: me.id } }); db.removeChannel(voiceChannel); voiceChannel = null; }
   if (myStream) { myStream.getTracks().forEach(function(t) { t.stop(); }); myStream = null; }
   peers.forEach(function(pc) { pc.close(); }); peers.clear(); voiceMembers.clear();
-  $('joinVoiceBtn').style.display = 'inline-flex'; $('leaveVoiceBtn').style.display = 'none';
+  $('joinVoiceBtn').style.display = 'inline-flex'; $('leaveVoiceBtn').style.display = 'none'; $('shareScreenBtn').style.display = 'none';
   $('vbMembers').innerHTML = '<span style="font-size:11px;color:var(--muted)">خالی</span>';
 }
 
@@ -1000,6 +1010,51 @@ function renderVoiceMembers() {
   });
   if (!voiceMembers.size) $('vbMembers').innerHTML = '<span style="font-size:11px;color:var(--muted)">خالی</span>';
 }
+
+// SCREEN SHARE
+let screenStream = null;
+
+window.shareScreen = async function() {
+  try {
+    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+    $('screenVideo').srcObject = screenStream;
+    $('screenPanel').style.display = 'block';
+    $('shareScreenBtn').style.display = 'none';
+
+    // Add screen track to all existing peers
+    var videoTrack = screenStream.getVideoTracks()[0];
+    peers.forEach(function(pc) {
+      var sender = pc.getSenders().find(function(s) { return s.track && s.track.kind === 'video'; });
+      if (sender) sender.replaceTrack(videoTrack);
+      else pc.addTrack(videoTrack, screenStream);
+    });
+
+    videoTrack.onended = function() { stopScreenShare(); };
+    toast('🖥 صفحه اشتراک گذاشته شد');
+  } catch(e) {
+    if (e.name !== 'AbortError') toast('❌ اشتراک صفحه رد شد');
+  }
+};
+
+window.stopScreenShare = function() {
+  if (screenStream) {
+    screenStream.getTracks().forEach(function(t) { t.stop(); });
+    screenStream = null;
+  }
+  $('screenPanel').style.display = 'none';
+  $('shareScreenBtn').style.display = 'none';
+  $('screenVideo').srcObject = null;
+
+  // Restore audio-only tracks to peers
+  if (myStream) {
+    var audioTrack = myStream.getAudioTracks()[0];
+    peers.forEach(function(pc) {
+      var sender = pc.getSenders().find(function(s) { return s.track && s.track.kind === 'audio'; });
+      if (sender && audioTrack) sender.replaceTrack(audioTrack);
+    });
+  }
+  toast('🖥 اشتراک صفحه متوقف شد');
+};
 
 // PROFILE
 window.openProfile = async function(name) {
