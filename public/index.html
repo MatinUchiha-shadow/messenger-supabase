@@ -85,7 +85,7 @@ body[data-theme="blackhole"] .btn-send{background:linear-gradient(135deg,#ff6a00
 #app::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0}
 
 /* ═══ SIDEBAR ═══ */
-.sidebar{width:260px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;z-index:10;transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.sidebar{width:260px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;z-index:60;transition:transform .3s cubic-bezier(.4,0,.2,1)}
 .sb-head{padding:14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .avatar{width:38px;height:38px;border-radius:11px;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;background:var(--panel);color:var(--text);flex-shrink:0;cursor:pointer;transition:transform .15s;overflow:hidden}
 .avatar:hover{transform:scale(1.08)}.avatar img{width:100%;height:100%;object-fit:cover;border-radius:inherit}
@@ -270,11 +270,14 @@ body[data-theme="blackhole"] .btn-send{background:linear-gradient(135deg,#ff6a00
 
 /* ═══ MOBILE ═══ */
 .menu-btn{display:none;position:fixed;top:12px;right:12px;z-index:55}
-.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:55;backdrop-filter:blur(2px)}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:55}
 .sidebar-overlay.show{display:block}
 @media(max-width:768px){
-  .sidebar{position:fixed;right:0;top:0;height:100%;width:260px;transform:translateX(100%)}.sidebar.open{transform:translateX(0)}
+  .sidebar{position:fixed;right:0;top:0;height:100%;width:260px;transform:translateX(100%);z-index:60;transition:transform .3s cubic-bezier(.4,0,.2,1);-webkit-overflow-scrolling:touch;touch-action:pan-y}
+  .sidebar.open{transform:translateX(0)}
   .menu-btn{display:flex}.msg-content{max-width:82%}input,textarea{font-size:16px!important}
+  .room-item,.dm-item{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .sidebar-overlay{touch-action:manipulation}
 }
 </style>
 </head>
