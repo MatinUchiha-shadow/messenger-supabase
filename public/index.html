@@ -773,7 +773,8 @@ async function openRoom(id, name, type) {
   if (msgSub) { await db.removeChannel(msgSub); msgSub = null; }
   if (dmSub) { await db.removeChannel(dmSub); dmSub = null; }
   curRoom = id; curType = type; curDm = null;
-  $('welcome').style.display = 'none'; $('messages').style.display = 'flex'; $('chatHeader').style.display = 'flex';
+  $('welcome').style.display = 'none';
+  $('chatHeader').style.display = 'flex';
   $('roomTitle').textContent = name;
   const b = $('roomBadge'); b.textContent = type === 'voice' ? 'صوتی' : 'گروه'; b.className = 'chat-badge' + (type === 'voice' ? ' voice' : '');
   $('input-bar').classList.toggle('show', type === 'text');
@@ -783,9 +784,11 @@ async function openRoom(id, name, type) {
   const activeEl = document.querySelector('.room-item[data-id="' + id + '"]');
   if (activeEl) activeEl.classList.add('active');
   if (window.innerWidth <= 768) closeSidebar();
+  // ALWAYS clear messages first
+  $('messages').innerHTML = '';
   if (type === 'text') {
+    $('messages').style.display = 'flex';
     const { data } = await db.from('messages').select('*, profiles:user_id (id,username,display_name,role,avatar_url)').eq('room_id', id).order('created_at').limit(100);
-    $('messages').innerHTML = '';
     if (data) data.forEach(function(m) { addMsg(m); });
     scrollBottom();
     lastMsgTime = data && data.length ? data[data.length - 1].created_at : null;
@@ -793,6 +796,10 @@ async function openRoom(id, name, type) {
       const { data: msg } = await db.from('messages').select('*, profiles:user_id (id,username,display_name,role,avatar_url)').eq('id', p.new.id).single();
       if (msg) addMsg(msg);
     }).subscribe();
+  } else {
+    // Voice room - show welcome message
+    $('messages').style.display = 'flex';
+    $('messages').innerHTML = '<div class="empty"><div class="empty-icon">🔊</div><div class="empty-txt">اتاق صوتی فعاله</div></div>';
   }
 }
 
@@ -1085,22 +1092,25 @@ function renderCallGrid() {
 async function createPeer(pid, init) {
   var pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }, { urls: 'stun:stun2.l.google.com:19302' }] });
   peers.set(pid, pc);
-  if (myStream) myStream.getTracks().forEach(function(t) { pc.addTrack(t, myStream); });
-  // Add screen share track if active
+  // Add audio track
+  if (myStream) myStream.getAudioTracks().forEach(function(t) { pc.addTrack(t, myStream); });
+  // Add screen share video track if active
   if (screenStream && screenStream.getVideoTracks().length > 0) {
     pc.addTrack(screenStream.getVideoTracks()[0], screenStream);
   }
   pc.onicecandidate = function(e) { if (e.candidate && voiceChannel) voiceChannel.send({ type: 'broadcast', event: 'ice', payload: { from: me.id, to: pid, candidate: e.candidate } }); };
+  // Store remote streams per peer
+  var remoteAudioStream = null, remoteVideoStream = null;
   pc.ontrack = function(e) {
     if (!e.streams || !e.streams[0]) return;
+    var track = e.track;
     var stream = e.streams[0];
-    var hasVideo = stream.getVideoTracks().length > 0;
-    if (hasVideo) {
-      // Screen share received - ensure peer exists and show video
+    if (track.kind === 'video') {
+      // Screen share video received
+      remoteVideoStream = stream;
       if (!voiceMembers.has(pid)) voiceMembers.set(pid, { username: 'کاربر' });
-      // Ensure tile exists in DOM
+      renderCallGrid();
       var tile = document.getElementById('tile-' + pid);
-      if (!tile) { renderCallGrid(); tile = document.getElementById('tile-' + pid); }
       if (tile) {
         var vid = tile.querySelector('video');
         if (!vid) {
@@ -1117,6 +1127,8 @@ async function createPeer(pid, init) {
         vid.srcObject = stream;
       }
     } else {
+      // Audio track
+      remoteAudioStream = stream;
       $('remoteAudio').srcObject = stream;
     }
     var micInd = document.getElementById('mic-indicator-' + pid);
@@ -1132,7 +1144,6 @@ async function createPeer(pid, init) {
 
 async function handleOffer(from, offer) {
   if (peers.has(from)) return;
-  // Ensure person is in voiceMembers and tile exists
   if (!voiceMembers.has(from)) {
     voiceMembers.set(from, { username: 'کاربر' });
     renderCallGrid();
@@ -1141,10 +1152,6 @@ async function handleOffer(from, offer) {
   await pc.setRemoteDescription(new RTCSessionDescription(offer));
   var a = await pc.createAnswer(); await pc.setLocalDescription(a);
   voiceChannel.send({ type: 'broadcast', event: 'answer', payload: { from: me.id, to: from, answer: a } });
-  // Add screen share track if active
-  if (screenStream && screenStream.getVideoTracks().length > 0) {
-    pc.addTrack(screenStream.getVideoTracks()[0], screenStream);
-  }
 }
 
 async function handleAnswer(from, answer) { var pc = peers.get(from); if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer)); }
