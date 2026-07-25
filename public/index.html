@@ -73,7 +73,7 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .auth-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
 
 /* APP */
-#app{display:none;height:100vh;width:100vw;position:relative;z-index:2}
+#app{display:none;height:100vh;height:100dvh;width:100vw;position:relative;z-index:2}
 #app.show{display:flex}
 #app::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0}
 
@@ -110,7 +110,7 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .btn-logout:hover{background:var(--red);color:#fff}
 
 /* MAIN */
-.main{flex:1;display:flex;flex-direction:column;background:var(--bg);min-width:0;position:relative;z-index:1}
+.main{flex:1;display:flex;flex-direction:column;background:var(--bg);min-width:0;position:relative;z-index:1;overflow:hidden;min-height:0}
 .chat-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--surface);flex-shrink:0}
 .chat-title{display:flex;align-items:center;gap:8px;min-width:0}
 .chat-title h2{font:600 14px inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -204,8 +204,8 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 @media(max-width:768px){.call-tile{width:140px;height:110px}.call-tile .tile-av{width:44px;height:44px;font-size:18px}.call-screen{max-width:100%}}
 
 /* INPUT */
-#input-bar{padding:8px 12px 12px;background:var(--surface);border-top:1px solid var(--border);display:none;flex-direction:column;gap:6px;flex-shrink:0;min-height:56px}
-#input-bar.show{display:flex}
+#input-bar{padding:8px 12px 12px;background:var(--surface);border-top:1px solid var(--border);display:none;flex-direction:column;gap:6px;flex-shrink:0;min-height:56px;position:relative;z-index:5}
+#input-bar.show{display:flex!important}
 .reply-bar{display:flex;align-items:center;gap:8px;padding:6px 12px;background:rgba(124,109,250,.06);border-top:1px solid rgba(124,109,250,.15)}
 .reply-bar-content{flex:1;min-width:0}
 .reply-bar-name{font-size:10px;color:var(--accent);font-weight:600}
@@ -1096,28 +1096,26 @@ async function createPeer(pid, init) {
     var stream = e.streams[0];
     var hasVideo = stream.getVideoTracks().length > 0;
     if (hasVideo) {
-      // Ensure peer is in voiceMembers and tile exists
-      if (!voiceMembers.has(pid)) {
-        voiceMembers.set(pid, { username: 'کاربر' });
-      }
-      renderCallGrid();
-      // Use setTimeout to ensure DOM is updated
-      setTimeout(function() {
-        var tile = document.getElementById('tile-' + pid);
-        if (tile && !tile.querySelector('video')) {
-          var v = document.createElement('video');
-          v.autoplay = true; v.playsInline = true;
-          tile.insertBefore(v, tile.firstChild);
+      // Screen share received - ensure peer exists and show video
+      if (!voiceMembers.has(pid)) voiceMembers.set(pid, { username: 'کاربر' });
+      // Ensure tile exists in DOM
+      var tile = document.getElementById('tile-' + pid);
+      if (!tile) { renderCallGrid(); tile = document.getElementById('tile-' + pid); }
+      if (tile) {
+        var vid = tile.querySelector('video');
+        if (!vid) {
+          vid = document.createElement('video');
+          vid.autoplay = true; vid.playsInline = true;
+          tile.insertBefore(vid, tile.firstChild);
           var av = tile.querySelector('.tile-av');
           if (av) av.style.display = 'none';
-          var label = document.createElement('div');
-          label.className = 'tile-name-overlay';
-          label.textContent = (voiceMembers.get(pid) || {}).username || 'اشتراک صفحه';
-          tile.appendChild(label);
+          var lbl = document.createElement('div');
+          lbl.className = 'tile-name-overlay';
+          lbl.textContent = (voiceMembers.get(pid) || {}).username;
+          tile.appendChild(lbl);
         }
-        var vid = tile && tile.querySelector('video');
-        if (vid) vid.srcObject = stream;
-      }, 100);
+        vid.srcObject = stream;
+      }
     } else {
       $('remoteAudio').srcObject = stream;
     }
@@ -1261,22 +1259,42 @@ window.openProfile = async function(name) {
 window.toggleNE = function() { var e = $('pf-ne'); if (!e) return; e.style.display = e.style.display === 'none' ? 'flex' : 'none'; if (e.style.display === 'flex') { $('pf-ni').focus(); $('pf-ni').select(); } };
 window.saveName = async function() { var n = $('pf-ni').value.trim(); if (!n || n.length > 20) return; try { await db.from('profiles').update({ display_name: n }).eq('id', me.id); myProfile.display_name = n; $('hname').textContent = n + (myProfile.role === 'owner' ? ' 👑' : ''); openProfile(n); toast('✅'); } catch(e) { toast('❌'); } };
 window.toggleBio = function() { var d = $('pf-bd'), e = $('pf-be'); if (!e) return; var s = e.style.display === 'none'; e.style.display = s ? 'flex' : 'none'; if (d) d.style.display = s ? 'none' : 'block'; };
-window.saveBio = async function() { var bioEl = $('pf-bi'); var bio = (bioEl ? bioEl.value : '').trim().slice(0, 120); try { await db.from('profiles').update({ bio: bio }).eq('id', me.id); myProfile.bio = bio; openProfile(myProfile.display_name || myProfile.username); toast('✅'); } catch(e) { toast('❌'); } };
+window.saveBio = async function() {
+  var bioEl = $('pf-bi');
+  var bio = (bioEl ? bioEl.value : '').trim().slice(0, 120);
+  try {
+    var result = await db.from('profiles').update({ bio: bio }).eq('id', me.id);
+    if (result.error) {
+      if (result.error.message && result.error.message.includes('column')) {
+        toast('❌ ستون bio وجود نداره! SQL اجرا کن');
+      } else { toast('❌ ' + (result.error.message || 'خطا')); }
+      return;
+    }
+    myProfile.bio = bio;
+    openProfile(myProfile.display_name || myProfile.username);
+    toast('✅');
+  } catch(e) { toast('❌ ' + (e.message || 'خطا')); }
+};
 window.uploadAvatar = async function(input) {
   var f = input.files[0]; if (!f || f.size > 5 * 1024 * 1024) { toast('حداکثر ۵MB'); return; }
   try {
     toast('⏳');
     var ext = f.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '');
     var path = 'avatar_' + me.id + '.' + ext;
-    var upErr = (await db.storage.from('avatars').upload(path, f, { upsert: true })).error;
-    if (upErr) throw upErr;
+    var result = await db.storage.from('avatars').upload(path, f, { upsert: true });
+    if (result.error) {
+      if (result.error.message && result.error.message.includes('Bucket not found')) {
+        toast('❌ bucket وجود نداره! SQL اجرا کن');
+      } else { toast('❌ ' + (result.error.message || 'خطا')); }
+      return;
+    }
     var ud = db.storage.from('avatars').getPublicUrl(path);
     await db.from('profiles').update({ avatar_url: ud.data.publicUrl }).eq('id', me.id);
     myProfile.avatar_url = ud.data.publicUrl;
     rAv($('hav'), myProfile);
     openProfile(myProfile.display_name || myProfile.username);
     toast('✅');
-  } catch(e) { toast('❌'); }
+  } catch(e) { toast('❌ ' + (e.message || 'خطا')); }
 };
 window.openMyProfile = function() { if (myProfile) openProfile(myProfile.display_name || myProfile.username); };
 window.closeProfile = function() { $('profile-overlay').classList.remove('show'); };
@@ -1299,19 +1317,19 @@ if (window.visualViewport) {
     var vh = window.visualViewport.height;
     document.documentElement.style.height = vh + 'px';
     document.body.style.height = vh + 'px';
-    var inputBar = $('input-bar');
-    if (inputBar && inputBar.classList.contains('show')) {
-      inputBar.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }
+    var app = $('app');
+    if (app) app.style.height = vh + 'px';
   });
-  // Also handle scroll into view when input is focused
-  $('msg-input') && $('msg-input').addEventListener('focus', function() {
+}
+// Ensure input is visible when focused
+document.addEventListener('focusin', function(e) {
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
     setTimeout(function() {
       var inputBar = $('input-bar');
       if (inputBar) inputBar.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }, 300);
-  });
-}
+    }, 400);
+  }
+});
 </script>
 </body>
 </html>
