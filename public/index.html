@@ -173,7 +173,7 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .vb-join.leave{background:rgba(229,51,74,.1);color:var(--red);border-color:rgba(229,51,74,.25)}
 
 /* INPUT */
-#input-bar{padding:8px 12px 12px;background:var(--surface);border-top:1px solid var(--border);display:none;flex-direction:column;gap:6px;flex-shrink:0}
+#input-bar{padding:8px 12px 12px;background:var(--surface);border-top:1px solid var(--border);display:none;flex-direction:column;gap:6px;flex-shrink:0;min-height:56px}
 #input-bar.show{display:flex}
 .reply-bar{display:flex;align-items:center;gap:8px;padding:6px 12px;background:rgba(124,109,250,.06);border-top:1px solid rgba(124,109,250,.15)}
 .reply-bar-content{flex:1;min-width:0}
@@ -292,6 +292,7 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
   .msg-c{max-width:82%}
   input,textarea{font-size:16px!important}
   .room-item,.dm-item{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  #input-bar{padding-bottom:env(safe-area-inset-bottom,12px)}
 }
 </style>
 </head>
@@ -441,6 +442,7 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 
 <div id="toast"></div>
 <audio id="remoteAudio" autoplay playsinline style="display:none"></audio>
+<video id="remoteVideo" autoplay playsinline style="display:none;position:fixed;bottom:80px;left:16px;width:300px;max-height:200px;border-radius:12px;z-index:100;border:2px solid var(--border);background:#000;box-shadow:0 8px 32px rgba(0,0,0,.5)"></video>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -939,7 +941,14 @@ async function joinVoice() {
       voiceMembers.set(payload.payload.userId, { username: payload.payload.username });
       toast('🎙 ' + payload.payload.username + ' وارد صدا شد');
       renderVoiceMembers();
-      setTimeout(function() { createPeer(payload.payload.userId, true); }, 500);
+      setTimeout(function() {
+        createPeer(payload.payload.userId, true).then(function(pc) {
+          // If screen sharing is active, add screen track to new peer
+          if (screenStream && screenStream.getVideoTracks().length > 0) {
+            pc.addTrack(screenStream.getVideoTracks()[0], screenStream);
+          }
+        });
+      }, 500);
     }).on('broadcast', { event: 'offer' }, async function(payload) {
       if (payload.payload.to !== me.id) return;
       await handleOffer(payload.payload.from, payload.payload.offer);
@@ -979,7 +988,13 @@ async function createPeer(pid, init) {
   peers.set(pid, pc);
   if (myStream) myStream.getTracks().forEach(function(t) { pc.addTrack(t, myStream); });
   pc.onicecandidate = function(e) { if (e.candidate && voiceChannel) voiceChannel.send({ type: 'broadcast', event: 'ice', payload: { from: me.id, to: pid, candidate: e.candidate } }); };
-  pc.ontrack = function(e) { if (e.streams && e.streams[0]) $('remoteAudio').srcObject = e.streams[0]; };
+  pc.ontrack = function(e) {
+    if (!e.streams || !e.streams[0]) return;
+    var stream = e.streams[0];
+    var hasVideo = stream.getVideoTracks().length > 0;
+    if (hasVideo) { $('remoteVideo').srcObject = stream; $('remoteVideo').style.display = 'block'; }
+    else { $('remoteAudio').srcObject = stream; }
+  };
   pc.onconnectionstatechange = function() { if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') { pc.close(); peers.delete(pid); renderVoiceMembers(); } };
   if (init) {
     var o = await pc.createOffer(); await pc.setLocalDescription(o);
@@ -1107,6 +1122,15 @@ function toast(t) { var el = $('toast'); el.textContent = t; el.classList.add('s
 
 applyTheme(curTheme);
 loadSession();
+
+// Fix Android keyboard - keep input visible
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', function() {
+    var vh = window.visualViewport.height;
+    document.documentElement.style.setProperty('--app-vh', vh + 'px');
+    $('messages') && ($('messages').scrollTop = $('messages').scrollHeight);
+  });
+}
 </script>
 </body>
 </html>
