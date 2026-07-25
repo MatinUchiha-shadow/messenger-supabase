@@ -978,19 +978,36 @@ async function joinVoice() {
     myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     voiceChannel = db.channel('voice:' + curRoom);
     voiceChannel.on('broadcast', { event: 'join' }, async function(payload) {
+      // Someone new joined - add them, create peer, and announce yourself back
       if (payload.payload.userId === me.id) return;
       voiceMembers.set(payload.payload.userId, { username: payload.payload.username });
       toast('🎙 ' + payload.payload.username + ' وارد صدا شد');
       renderCallGrid();
-      setTimeout(function() {
-        createPeer(payload.payload.userId, true).then(function(pc) {
-          if (screenStream && screenStream.getVideoTracks().length > 0) {
-            pc.addTrack(screenStream.getVideoTracks()[0], screenStream);
-          }
-        });
-      }, 500);
+      // Create peer as initiator
+      setTimeout(async function() {
+        var pc = await createPeer(payload.payload.userId, true);
+        // Add screen share track if active
+        if (screenStream && screenStream.getVideoTracks().length > 0) {
+          pc.addTrack(screenStream.getVideoTracks()[0], screenStream);
+        }
+      }, 300);
+      // Announce yourself back so they can see you
+      await voiceChannel.send({ type: 'broadcast', event: 'here', payload: { userId: me.id, username: myProfile.display_name || myProfile.username } });
+    }).on('broadcast', { event: 'here' }, async function(payload) {
+      // An existing member announced themselves - add them and connect
+      if (payload.payload.userId === me.id) return;
+      if (voiceMembers.has(payload.payload.userId)) return; // Already known
+      voiceMembers.set(payload.payload.userId, { username: payload.payload.username });
+      toast('🎙 ' + payload.payload.username + ' وارد صدا شد');
+      renderCallGrid();
+      // Don't create peer here - wait for their offer or create as non-initiator
     }).on('broadcast', { event: 'offer' }, async function(payload) {
       if (payload.payload.to !== me.id) return;
+      // Make sure we know about this person
+      if (!voiceMembers.has(payload.payload.from)) {
+        voiceMembers.set(payload.payload.from, { username: 'کاربر' });
+        renderCallGrid();
+      }
       await handleOffer(payload.payload.from, payload.payload.offer);
     }).on('broadcast', { event: 'answer' }, async function(payload) {
       if (payload.payload.to !== me.id) return;
@@ -1008,6 +1025,7 @@ async function joinVoice() {
       if (status === 'SUBSCRIBED') {
         voiceMembers.set(me.id, { username: myProfile.display_name || myProfile.username });
         showCallPanel();
+        // Announce join - existing members will respond with 'here'
         await voiceChannel.send({ type: 'broadcast', event: 'join', payload: { userId: me.id, username: myProfile.display_name || myProfile.username } });
       }
     });
@@ -1066,13 +1084,18 @@ async function createPeer(pid, init) {
   var pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }, { urls: 'stun:stun2.l.google.com:19302' }] });
   peers.set(pid, pc);
   if (myStream) myStream.getTracks().forEach(function(t) { pc.addTrack(t, myStream); });
+  // Add screen share track if active
+  if (screenStream && screenStream.getVideoTracks().length > 0) {
+    pc.addTrack(screenStream.getVideoTracks()[0], screenStream);
+  }
   pc.onicecandidate = function(e) { if (e.candidate && voiceChannel) voiceChannel.send({ type: 'broadcast', event: 'ice', payload: { from: me.id, to: pid, candidate: e.candidate } }); };
   pc.ontrack = function(e) {
     if (!e.streams || !e.streams[0]) return;
     var stream = e.streams[0];
     var hasVideo = stream.getVideoTracks().length > 0;
     if (hasVideo) {
-      // Screen share - show in call grid
+      // Screen share - show in peer's tile
+      renderCallGrid(); // Ensure tile exists
       var tile = document.getElementById('tile-' + pid);
       if (tile) {
         var existingVideo = tile.querySelector('video');
@@ -1080,7 +1103,8 @@ async function createPeer(pid, init) {
           var v = document.createElement('video');
           v.autoplay = true; v.playsInline = true;
           tile.insertBefore(v, tile.firstChild);
-          tile.querySelector('.tile-av').style.display = 'none';
+          var av = tile.querySelector('.tile-av');
+          if (av) av.style.display = 'none';
           var label = document.createElement('div');
           label.className = 'tile-name-overlay';
           label.textContent = (voiceMembers.get(pid) || {}).username || 'اشتراک صفحه';
@@ -1088,13 +1112,9 @@ async function createPeer(pid, init) {
         }
         tile.querySelector('video').srcObject = stream;
       }
-      // Also show in screen panel for self
-      $('remoteVideo').srcObject = stream;
-      $('remoteVideo').style.display = 'block';
     } else {
       $('remoteAudio').srcObject = stream;
     }
-    // Update mic indicator
     var micInd = document.getElementById('mic-indicator-' + pid);
     if (micInd) micInd.className = 'tile-mic';
   };
@@ -1108,10 +1128,19 @@ async function createPeer(pid, init) {
 
 async function handleOffer(from, offer) {
   if (peers.has(from)) return;
+  // Ensure person is in voiceMembers and tile exists
+  if (!voiceMembers.has(from)) {
+    voiceMembers.set(from, { username: 'کاربر' });
+    renderCallGrid();
+  }
   var pc = await createPeer(from, false);
   await pc.setRemoteDescription(new RTCSessionDescription(offer));
   var a = await pc.createAnswer(); await pc.setLocalDescription(a);
   voiceChannel.send({ type: 'broadcast', event: 'answer', payload: { from: me.id, to: from, answer: a } });
+  // Add screen share track if active
+  if (screenStream && screenStream.getVideoTracks().length > 0) {
+    pc.addTrack(screenStream.getVideoTracks()[0], screenStream);
+  }
 }
 
 async function handleAnswer(from, answer) { var pc = peers.get(from); if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer)); }
