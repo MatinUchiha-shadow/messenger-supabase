@@ -189,6 +189,8 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .call-tile .tile-mic.muted{color:var(--red)}
 .call-tile video{width:100%;height:100%;object-fit:cover;border-radius:14px;position:absolute;inset:0}
 .call-tile .tile-name-overlay{position:absolute;bottom:8px;left:8px;right:8px;font-size:11px;font-weight:600;color:#fff;background:rgba(0,0,0,.5);padding:4px 8px;border-radius:6px;text-align:center;backdrop-filter:blur(4px)}
+.call-tile.screen-sharing{width:100%;max-width:640px;height:360px;flex-grow:1}
+.call-tile.screen-sharing video{object-fit:contain;border-radius:14px}
 .call-screen{width:100%;max-width:640px;border-radius:12px;overflow:hidden;background:#000;margin-bottom:12px;position:relative}
 .call-screen video{width:100%;display:block;border-radius:12px}
 .call-screen-label{position:absolute;top:8px;left:8px;font-size:11px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:4px 10px;border-radius:6px;backdrop-filter:blur(4px)}
@@ -226,6 +228,16 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .attach-btn:hover,.camera-btn:hover{background:var(--border);color:var(--text)}
 .media-preview{display:none;padding:4px 0;position:relative}
 .media-preview img,.media-preview video{max-width:160px;max-height:100px;border-radius:8px;display:block}
+.upload-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.upload-overlay.show{display:flex}
+.upload-card{background:var(--surface);border-radius:16px;padding:24px;width:280px;text-align:center;border:1px solid var(--border);animation:scaleIn .3s var(--ease)}
+.upload-icon{width:60px;height:60px;border-radius:50%;background:var(--accent-dim,rgba(124,109,250,.15));display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px;color:var(--accent);animation:uploadPulse 1.5s ease-in-out infinite}
+@keyframes uploadPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 var(--accent)}50%{transform:scale(1.05);box-shadow:0 0 0 10px rgba(124,109,250,0)}}
+.upload-text{font-size:14px;font-weight:600;margin-bottom:4px}
+.upload-sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+.upload-bar{height:4px;background:var(--panel);border-radius:99px;overflow:hidden;margin-bottom:8px}
+.upload-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;transition:width .3s;width:0%}
+.upload-pct{font-size:12px;color:var(--accent);font-weight:600}
 .cancel-media{position:absolute;top:-4px;right:-4px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 
 /* PROFILE */
@@ -478,6 +490,17 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
     <button class="call-ctrl mic" id="callMuteBtn" onclick="toggleMute()" title="میکروفون"><i class="fas fa-microphone"></i></button>
     <button class="call-ctrl screen" id="callScreenBtn" onclick="shareScreen()" title="اشتراک صفحه"><i class="fas fa-desktop"></i></button>
     <button class="call-ctrl leave" onclick="leaveVoice()" title="پایان"><i class="fas fa-phone-slash"></i></button>
+  </div>
+</div>
+
+<!-- UPLOAD OVERLAY -->
+<div class="upload-overlay" id="uploadOverlay">
+  <div class="upload-card">
+    <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+    <div class="upload-text" id="uploadText">در حال آپلود...</div>
+    <div class="upload-sub" id="uploadSub">لطفاً صبر کنید</div>
+    <div class="upload-bar"><div class="upload-bar-fill" id="uploadBarFill"></div></div>
+    <div class="upload-pct" id="uploadPct">0%</div>
   </div>
 </div>
 
@@ -965,18 +988,46 @@ async function sendMedia(inp, cap) {
   var ext = (file.name.split('.').pop() || (isV ? 'mp4' : 'jpg')).toLowerCase().replace(/[^a-z0-9]/g, '');
   var path = Date.now() + '.' + (ext || 'jpg');
   var bucket = isV ? 'chat-videos' : 'chat-images';
+  // Show upload overlay
+  var overlay = $('uploadOverlay');
+  var barFill = $('uploadBarFill');
+  var pctEl = $('uploadPct');
+  var textEl = $('uploadText');
+  var subEl = $('uploadSub');
+  overlay.classList.add('show');
+  barFill.style.width = '0%';
+  pctEl.textContent = '0%';
+  textEl.textContent = isV ? 'در حال آپلود ویدیو...' : 'در حال آپلود عکس...';
+  subEl.textContent = file.name;
+  // Animate progress
+  var progress = 0;
+  var progressInterval = setInterval(function() {
+    progress = Math.min(progress + Math.random() * 15, 90);
+    barFill.style.width = progress + '%';
+    pctEl.textContent = Math.round(progress) + '%';
+  }, 200);
   try {
-    toast('⏳');
     var upErr = (await db.storage.from(bucket).upload(path, file, { upsert: true })).error;
+    clearInterval(progressInterval);
     if (upErr) throw upErr;
+    barFill.style.width = '100%';
+    pctEl.textContent = '100%';
+    textEl.textContent = '✅ آپلود کامل شد';
+    subEl.textContent = 'در حال ارسال پیام...';
+    await new Promise(function(r) { setTimeout(r, 500); });
+    overlay.classList.remove('show');
     var ud = db.storage.from(bucket).getPublicUrl(path);
     var type = isV ? 'video' : file.type.startsWith('image/') ? 'image' : 'file';
     var md = { room_id: curRoom, user_id: me.id, type: type, content: cap || file.name, file_url: ud.data.publicUrl, file_name: file.name, file_size: file.size };
     if (replyToData) { md.reply_to_id = replyToData.id; md.reply_to_name = replyToData.name; md.reply_to_text = replyToData.text; }
     cancelReply();
     await db.from('messages').insert(md);
-    toast('✅');
-  } catch(e) { toast('❌ ' + e.message); }
+    toast('✅ ارسال شد');
+  } catch(e) {
+    clearInterval(progressInterval);
+    overlay.classList.remove('show');
+    toast('❌ ' + e.message);
+  }
 }
 
 // AUTO-CLEANUP: Delete uploaded files older than 3 hours (keeps profile avatars)
@@ -1213,9 +1264,10 @@ let screenStream = null;
 window.shareScreen = async function() {
   try {
     screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
-    // Show in self tile
+    // Show in self tile - make it BIG
     var selfTile = document.getElementById('tile-' + me.id);
     if (selfTile) {
+      selfTile.classList.add('screen-sharing');
       var v = document.createElement('video');
       v.autoplay = true; v.playsInline = true; v.muted = true;
       selfTile.insertBefore(v, selfTile.firstChild);
@@ -1224,17 +1276,22 @@ window.shareScreen = async function() {
       v.srcObject = screenStream;
     }
     $('callScreenBtn').className = 'call-ctrl screen active';
-    // Send screen video to all peers
+    // Send screen video to all peers with renegotiation
     var videoTrack = screenStream.getVideoTracks()[0];
-    peers.forEach(function(pc) {
+    var promises = [];
+    peers.forEach(function(pc, pid) {
       var videoSender = pc.getSenders().find(function(s) { return s.track && s.track.kind === 'video'; });
-      if (videoSender) { videoSender.replaceTrack(videoTrack); }
-      else {
-        // No video sender yet - add video track with its own stream
-        var screenMS = new MediaStream([videoTrack]);
-        pc.addTrack(videoTrack, screenMS);
+      if (videoSender) {
+        videoSender.replaceTrack(videoTrack);
+      } else {
+        pc.addTrack(videoTrack, screenStream);
       }
+      // Force renegotiation
+      promises.push(pc.createOffer().then(function(o) { return pc.setLocalDescription(o); }).then(function() {
+        voiceChannel.send({ type: 'broadcast', event: 'offer', payload: { from: me.id, to: pid, offer: pc.localDescription } });
+      }));
     });
+    await Promise.all(promises);
     videoTrack.onended = function() { stopScreenShare(); };
     toast('🖥 صفحه اشتراک گذاشته شد');
   } catch(e) {
