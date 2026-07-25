@@ -191,6 +191,8 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .call-tile .tile-name-overlay{position:absolute;bottom:8px;left:8px;right:8px;font-size:11px;font-weight:600;color:#fff;background:rgba(0,0,0,.5);padding:4px 8px;border-radius:6px;text-align:center;backdrop-filter:blur(4px)}
 .call-tile.screen-sharing{width:100%;max-width:640px;height:360px;flex-grow:1}
 .call-tile.screen-sharing video{object-fit:contain;border-radius:14px}
+.call-tile video:fullscreen{object-fit:contain;border-radius:0;background:#000}
+.call-tile video:fullscreen::-webkit-media-controls{display:none!important}
 .call-screen{width:100%;max-width:640px;border-radius:12px;overflow:hidden;background:#000;margin-bottom:12px;position:relative}
 .call-screen video{width:100%;display:block;border-radius:12px}
 .call-screen-label{position:absolute;top:8px;left:8px;font-size:11px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);padding:4px 10px;border-radius:6px;backdrop-filter:blur(4px)}
@@ -1194,6 +1196,8 @@ function renderCallGrid() {
   var selfTile = document.createElement('div');
   selfTile.className = 'call-tile is-me';
   selfTile.id = 'tile-' + me.id;
+  selfTile.style.cursor = 'pointer';
+  selfTile.onclick = function() { openProfile(myProfile.display_name || myProfile.username); };
   selfTile.innerHTML = '<div class="tile-mic" id="mic-indicator-' + me.id + '"><i class="fas fa-microphone"></i></div><div class="tile-av">' + (myProfile.display_name || '?').charAt(0).toUpperCase() + '</div><div class="tile-name">' + esc(myProfile.display_name || '') + '</div><div class="tile-status">شما</div>';
   grid.appendChild(selfTile);
   // Add peer tiles
@@ -1202,6 +1206,8 @@ function renderCallGrid() {
     var tile = document.createElement('div');
     tile.className = 'call-tile';
     tile.id = 'tile-' + uid;
+    tile.style.cursor = 'pointer';
+    tile.onclick = (function(username) { return function() { openProfile(username); }; })(m.username);
     tile.innerHTML = '<div class="tile-mic" id="mic-indicator-' + uid + '"><i class="fas fa-microphone"></i></div><div class="tile-av" style="background:linear-gradient(135deg,var(--accent2),var(--accent))">' + (m.username || '?').charAt(0).toUpperCase() + '</div><div class="tile-name">' + esc(m.username || '') + '</div><div class="tile-status">در تماس</div>';
     grid.appendChild(tile);
   });
@@ -1435,33 +1441,38 @@ window.closeProfile = function() { $('profile-overlay').classList.remove('show')
 window.closeCallPanel = function() { leaveVoice(); };
 
 window.toggleFullscreen = function() {
-  var panel = $('callPanel');
+  // Find the screen share video in the grid
+  var screenVideo = null;
+  var tiles = document.querySelectorAll('.call-tile');
+  for (var i = 0; i < tiles.length; i++) {
+    var v = tiles[i].querySelector('video');
+    if (v && v.srcObject && v.srcObject.getVideoTracks().length > 0) {
+      screenVideo = v;
+      break;
+    }
+  }
+  // Fallback: use remoteVideo
+  if (!screenVideo) screenVideo = $('remoteVideo');
+  if (!screenVideo || !screenVideo.srcObject) { toast('اشتراک صفحه فعال نیست'); return; }
+
   var isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement;
   if (!isFs) {
-    if (panel.requestFullscreen) panel.requestFullscreen();
-    else if (panel.webkitRequestFullscreen) panel.webkitRequestFullscreen();
-    else if (panel.mozRequestFullScreen) panel.mozRequestFullScreen();
+    if (screenVideo.requestFullscreen) screenVideo.requestFullscreen();
+    else if (screenVideo.webkitRequestFullscreen) screenVideo.webkitRequestFullscreen();
+    else if (screenVideo.mozRequestFullScreen) screenVideo.mozRequestFullScreen();
     $('fullscreenBtn').innerHTML = '<i class="fas fa-compress"></i>';
-    // Android: lock orientation to landscape for better view
-    if (screen.orientation && screen.orientation.lock) {
-      screen.orientation.lock('landscape').catch(function() {});
-    }
   } else {
     if (document.exitFullscreen) document.exitFullscreen();
     else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
     else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
     $('fullscreenBtn').innerHTML = '<i class="fas fa-expand"></i>';
-    if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
   }
 };
-document.addEventListener('fullscreenchange', function() { handleFsChange(); });
-document.addEventListener('webkitfullscreenchange', function() { handleFsChange(); });
-document.addEventListener('mozfullscreenchange', function() { handleFsChange(); });
+document.addEventListener('fullscreenchange', handleFsChange);
+document.addEventListener('webkitfullscreenchange', handleFsChange);
 function handleFsChange() {
-  var isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement;
-  if (!isFs && $('fullscreenBtn')) {
-    $('fullscreenBtn').innerHTML = '<i class="fas fa-expand"></i>';
-  }
+  var isFs = document.fullscreenElement || document.webkitFullscreenElement;
+  if (!isFs && $('fullscreenBtn')) $('fullscreenBtn').innerHTML = '<i class="fas fa-expand"></i>';
 }
 
 function closeSidebar() { $('sidebar').classList.remove('open'); $('sidebarOverlay').classList.remove('show'); }
