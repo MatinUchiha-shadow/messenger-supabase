@@ -382,33 +382,6 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
   </svg>
 </div>
 
-<!-- AUTH -->
-<div id="auth">
-  <div class="auth-ui">
-    <div style="text-align:center"><div class="auth-brand">GapChat</div><div class="auth-tag">پیام‌رسان نسل بعدی</div></div>
-    <div class="auth-card">
-      <div class="auth-tabs">
-        <button class="auth-tab active" data-tab="login">ورود</button>
-        <button class="auth-tab" data-tab="register">ثبت‌نام</button>
-      </div>
-      <form id="loginForm" class="auth-form active">
-        <div class="fg"><label>ایمیل</label><input type="email" id="loginEmail" placeholder="example@email.com" required></div>
-        <div class="fg"><label>رمز عبور</label><input type="password" id="loginPass" placeholder="حداقل ۶ کاراکتر" required></div>
-        <div class="auth-err" id="authErr"></div>
-        <button type="submit" class="auth-btn">ورود ←</button>
-      </form>
-      <form id="registerForm" class="auth-form">
-        <div class="fg"><label>اسم نمایشی</label><input type="text" id="regName" placeholder="مثلاً: علی" maxlength="20" required></div>
-        <div class="fg"><label>ایمیل</label><input type="email" id="regEmail" placeholder="example@email.com" required></div>
-        <div class="fg"><label>رمز عبور</label><input type="password" id="regPass" placeholder="حداقل ۶ کاراکتر" required minlength="6"></div>
-        <div class="auth-err" id="authErr2"></div>
-        <button type="submit" class="auth-btn">ساخت حساب ←</button>
-      </form>
-    </div>
-  </div>
-  <div class="auth-status"><div class="auth-dot"></div><span>آنلاین</span><span style="opacity:.3">·</span><span>TLS 1.3</span></div>
-</div>
-
 <!-- SIDEBAR -->
 <button class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i></button>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -452,6 +425,33 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
     </div>
   </div>
 </main>
+</div>
+
+<!-- AUTH (must be OUTSIDE #app so it shows when app is hidden) -->
+<div id="auth">
+  <div class="auth-ui">
+    <div style="text-align:center"><div class="auth-brand">GapChat</div><div class="auth-tag">پیام‌رسان نسل بعدی</div></div>
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">ورود</button>
+        <button class="auth-tab" data-tab="register">ثبت‌نام</button>
+      </div>
+      <form id="loginForm" class="auth-form active">
+        <div class="fg"><label>ایمیل</label><input type="email" id="loginEmail" placeholder="example@email.com" required></div>
+        <div class="fg"><label>رمز عبور</label><input type="password" id="loginPass" placeholder="حداقل ۶ کاراکتر" required></div>
+        <div class="auth-err" id="authErr"></div>
+        <button type="submit" class="auth-btn">ورود ←</button>
+      </form>
+      <form id="registerForm" class="auth-form">
+        <div class="fg"><label>اسم نمایشی</label><input type="text" id="regName" placeholder="مثلاً: علی" maxlength="20" required></div>
+        <div class="fg"><label>ایمیل</label><input type="email" id="regEmail" placeholder="example@email.com" required></div>
+        <div class="fg"><label>رمز عبور</label><input type="password" id="regPass" placeholder="حداقل ۶ کاراکتر" required minlength="6"></div>
+        <div class="auth-err" id="authErr2"></div>
+        <button type="submit" class="auth-btn">ساخت حساب ←</button>
+      </form>
+    </div>
+  </div>
+  <div class="auth-status"><div class="auth-dot"></div><span>آنلاین</span><span style="opacity:.3">·</span><span>TLS 1.3</span></div>
 </div>
 
 <!-- DM PANEL -->
