@@ -489,6 +489,7 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
   <div class="call-controls">
     <button class="call-ctrl mic" id="callMuteBtn" onclick="toggleMute()" title="میکروفون"><i class="fas fa-microphone"></i></button>
     <button class="call-ctrl screen" id="callScreenBtn" onclick="shareScreen()" title="اشتراک صفحه"><i class="fas fa-desktop"></i></button>
+    <button class="call-ctrl" id="fullscreenBtn" onclick="toggleFullscreen()" title="تمام‌صفحه" style="background:var(--bg3,#1e2c3a);color:#fff"><i class="fas fa-expand"></i></button>
     <button class="call-ctrl leave" onclick="leaveVoice()" title="پایان"><i class="fas fa-phone-slash"></i></button>
   </div>
 </div>
@@ -1089,7 +1090,6 @@ async function joinVoice() {
       // Don't create peer here - wait for their offer or create as non-initiator
     }).on('broadcast', { event: 'offer' }, async function(payload) {
       if (payload.payload.to !== me.id) return;
-      // Make sure we know about this person
       if (!voiceMembers.has(payload.payload.from)) {
         voiceMembers.set(payload.payload.from, { username: 'کاربر' });
         renderCallGrid();
@@ -1101,6 +1101,33 @@ async function joinVoice() {
     }).on('broadcast', { event: 'ice' }, async function(payload) {
       if (payload.payload.to !== me.id) return;
       await handleIce(payload.payload.from, payload.payload.candidate);
+    }).on('broadcast', { event: 'screen-start' }, function(payload) {
+      // Someone started screen sharing - their tile should show video
+      var tile = document.getElementById('tile-' + payload.payload.userId);
+      if (tile && !tile.querySelector('video')) {
+        tile.classList.add('screen-sharing');
+        var v = document.createElement('video');
+        v.autoplay = true; v.playsInline = true;
+        tile.insertBefore(v, tile.firstChild);
+        var av = tile.querySelector('.tile-av');
+        if (av) av.style.display = 'none';
+        var lbl = document.createElement('div');
+        lbl.className = 'tile-name-overlay';
+        lbl.textContent = (voiceMembers.get(payload.payload.userId) || {}).username + ' - اشتراک صفحه';
+        tile.appendChild(lbl);
+      }
+    }).on('broadcast', { event: 'screen-stop' }, function(payload) {
+      // Screen share stopped - remove video from peer's tile
+      var tile = document.getElementById('tile-' + payload.payload.userId);
+      if (tile) {
+        var vid = tile.querySelector('video');
+        if (vid) vid.remove();
+        var av = tile.querySelector('.tile-av');
+        if (av) av.style.display = '';
+        var lbl = tile.querySelector('.tile-name-overlay');
+        if (lbl) lbl.remove();
+        tile.classList.remove('screen-sharing');
+      }
     }).on('broadcast', { event: 'leave' }, function(payload) {
       var m = voiceMembers.get(payload.payload.userId);
       if (m) toast('🔇 ' + m.username + ' خارج شد');
@@ -1220,12 +1247,14 @@ async function createPeer(pid, init) {
 }
 
 async function handleOffer(from, offer) {
-  if (peers.has(from)) return;
   if (!voiceMembers.has(from)) {
     voiceMembers.set(from, { username: 'کاربر' });
     renderCallGrid();
   }
-  var pc = await createPeer(from, false);
+  var pc = peers.get(from);
+  if (!pc) {
+    pc = await createPeer(from, false);
+  }
   await pc.setRemoteDescription(new RTCSessionDescription(offer));
   var a = await pc.createAnswer(); await pc.setLocalDescription(a);
   voiceChannel.send({ type: 'broadcast', event: 'answer', payload: { from: me.id, to: from, answer: a } });
@@ -1292,6 +1321,10 @@ window.shareScreen = async function() {
       }));
     });
     await Promise.all(promises);
+    // Broadcast screen start to all peers
+    if (voiceChannel) {
+      await voiceChannel.send({ type: 'broadcast', event: 'screen-start', payload: { userId: me.id } });
+    }
     videoTrack.onended = function() { stopScreenShare(); };
     toast('🖥 صفحه اشتراک گذاشته شد');
   } catch(e) {
@@ -1299,7 +1332,11 @@ window.shareScreen = async function() {
   }
 };
 
-window.stopScreenShare = function() {
+window.stopScreenShare = async function() {
+  // Broadcast stop to all peers
+  if (voiceChannel) {
+    await voiceChannel.send({ type: 'broadcast', event: 'screen-stop', payload: { userId: me.id } });
+  }
   if (screenStream) {
     screenStream.getTracks().forEach(function(t) { t.stop(); });
     screenStream = null;
@@ -1313,19 +1350,12 @@ window.stopScreenShare = function() {
     if (av) av.style.display = '';
     var label = selfTile.querySelector('.tile-name-overlay');
     if (label) label.remove();
+    selfTile.classList.remove('screen-sharing');
   }
   var btn = $('callScreenBtn');
   if (btn) btn.className = 'call-ctrl screen';
   $('remoteVideo').srcObject = null;
   $('remoteVideo').style.display = 'none';
-  // Restore audio-only tracks
-  if (myStream) {
-    var audioTrack = myStream.getAudioTracks()[0];
-    peers.forEach(function(pc) {
-      var sender = pc.getSenders().find(function(s) { return s.track && s.track.kind === 'audio'; });
-      if (sender && audioTrack) sender.replaceTrack(audioTrack);
-    });
-  }
 };
 
 // PROFILE
@@ -1389,6 +1419,22 @@ window.uploadAvatar = async function(input) {
 window.openMyProfile = function() { if (myProfile) openProfile(myProfile.display_name || myProfile.username); };
 window.closeProfile = function() { $('profile-overlay').classList.remove('show'); };
 window.closeCallPanel = function() { leaveVoice(); };
+
+window.toggleFullscreen = function() {
+  var panel = $('callPanel');
+  if (!document.fullscreenElement) {
+    panel.requestFullscreen().catch(function() {});
+    $('fullscreenBtn').innerHTML = '<i class="fas fa-compress"></i>';
+  } else {
+    document.exitFullscreen();
+    $('fullscreenBtn').innerHTML = '<i class="fas fa-expand"></i>';
+  }
+};
+document.addEventListener('fullscreenchange', function() {
+  if (!document.fullscreenElement && $('fullscreenBtn')) {
+    $('fullscreenBtn').innerHTML = '<i class="fas fa-expand"></i>';
+  }
+});
 
 function closeSidebar() { $('sidebar').classList.remove('open'); $('sidebarOverlay').classList.remove('show'); }
 $('menuBtn').onclick = function() { $('sidebar').classList.add('open'); $('sidebarOverlay').classList.add('show'); };
