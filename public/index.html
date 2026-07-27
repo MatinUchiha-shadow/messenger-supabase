@@ -726,7 +726,7 @@ function rOnline(state) {
 
 // ROOMS
 async function loadRooms() {
-  const { data } = await db.from('rooms').select('*').order('created_at');
+  const { data } = await db.from('rooms').select('*').eq('is_dm', false).order('created_at');
   $('textRooms').innerHTML = '';
   $('voiceRooms').innerHTML = '';
   if (!data) return;
@@ -795,7 +795,11 @@ async function openDm(userId, userName) {
   if (window.innerWidth <= 768) closeSidebar();
   const dmRoomName = [me.id, userId].sort().join('_');
   let { data: room } = await db.from('rooms').select('*').eq('name', dmRoomName).single();
-  if (!room) { const { data: nr } = await db.from('rooms').insert({ name: dmRoomName, type: 'text', created_by: me.id }).select().single(); room = nr; }
+  if (!room) {
+    const { data: nr, error: insErr } = await db.from('rooms').insert({ name: dmRoomName, type: 'text', created_by: me.id, is_dm: true }).select().single();
+    if (insErr) { const { data: existing } = await db.from('rooms').select('*').eq('name', dmRoomName).single(); room = existing; }
+    else { room = nr; }
+  }
   curRoom = room.id; curType = 'text';
   const { data } = await db.from('messages').select('*, profiles:user_id (id,username,display_name,role,avatar_url)').eq('room_id', room.id).order('created_at').limit(100);
   $('messages').innerHTML = '';
