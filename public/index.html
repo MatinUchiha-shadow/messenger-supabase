@@ -1109,7 +1109,13 @@ async function sendMedia(inp, cap) {
     var md = { room_id: curRoom, user_id: me.id, type: type, content: cap || file.name, file_url: ud.data.publicUrl, file_name: file.name, file_size: file.size };
     if (replyToData) { md.reply_to_id = replyToData.id; md.reply_to_name = replyToData.name; md.reply_to_text = replyToData.text; }
     cancelReply();
-    await db.from('messages').insert(md);
+    var ins = await db.from('messages').insert(md).select('*').single();
+    if (!ins.error && ins.data) {
+      ins.data.profiles = myProfile;
+      ins.data.user = myProfile;
+      addMsg(ins.data);
+      scrollBottom();
+    }
     toast('✅ ارسال شد');
   } catch(e) {
     clearInterval(progressInterval);
