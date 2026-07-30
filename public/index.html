@@ -915,7 +915,10 @@ async function openRoom(id, name, type) {
 }
 
 let lastUid = '';
+var renderedMsgs = new Set();
 function addMsg(m) {
+  if (renderedMsgs.has(m.id)) return;
+  renderedMsgs.add(m.id);
   const c = $('messages'), d = document.createElement('div');
   const own = m.user_id === (me && me.id);
   const u = m.profiles;
@@ -1112,7 +1115,6 @@ async function sendMedia(inp, cap) {
     var ins = await db.from('messages').insert(md).select('*').single();
     if (!ins.error && ins.data) {
       ins.data.profiles = myProfile;
-      ins.data.user = myProfile;
       addMsg(ins.data);
       scrollBottom();
     }
