@@ -374,7 +374,7 @@ button:active,.room-item:active{transform:scale(.97)}
 #float-screen{position:fixed;bottom:100px;right:20px;z-index:299;display:none;border-radius:12px;overflow:hidden;background:#000;border:2px solid var(--accent);box-shadow:0 8px 32px rgba(0,0,0,.6);cursor:grab;max-width:280px;max-height:180px;resize:both}
 #float-screen.show{display:block}
 #float-screen video{width:100%;height:100%;object-fit:contain;display:block}
-#float-screen .fs-close{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:10px;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center}
+#float-screen .fs-full{position:absolute;top:4px;left:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:10px;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center}#float-screen .fs-full:hover{background:var(--accent)}#float-screen.fullscreen{position:fixed;inset:0;z-index:9999;max-width:none!important;max-height:none!important;border-radius:0;border:none;resize:none}#float-screen.fullscreen video{object-fit:contain!important}#float-screen .fs-close{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:10px;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center}
 #float-screen .fs-label{position:absolute;bottom:4px;left:4px;font-size:10px;color:#fff;background:rgba(0,0,0,.5);padding:2px 6px;border-radius:4px}
 @media(max-width:768px){#float-screen{max-width:200px;max-height:130px;bottom:90px}}
 /* FLOATING VOICE BAR */
@@ -483,6 +483,7 @@ button:active,.room-item:active{transform:scale(.97)}
 
 <!-- FLOATING SCREEN SHARE PREVIEW -->
 <div id="float-screen">
+  <button class="fs-full" onclick="toggleFsPreview()" title="تمام‌صفحه">⛶</button>
   <button class="fs-close" onclick="stopScreenShare()">✕</button>
   <div class="fs-label">🖥️ اشتراک صفحه</div>
   <video id="floatScreenVideo" autoplay muted playsinline></video>
@@ -1376,6 +1377,8 @@ function hideFloatingVoice() {
   $('float-voice').classList.remove('show');
   clearInterval(voiceTimerInterval);
 }
+
+function toggleFsPreview() { var fsp = document.getElementById("float-screen"); if (!fsp) return; fsp.classList.toggle("fullscreen"); document.getElementById("floatScreenVideo").style.objectFit = fsp.classList.contains("fullscreen") ? "contain" : "contain"; }
 
 function initDrag(el) {
   var startX, startY, startLeft, startBottom, dragging = false;
