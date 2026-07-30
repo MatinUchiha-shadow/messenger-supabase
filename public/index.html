@@ -1928,6 +1928,7 @@ function toggleMute() {
     a.enabled = !a.enabled;
     var btn = $('callMuteBtn'), fvBtn = $('fvMuteBtn');
     if (btn) { btn.className = 'call-ctrl mic' + (a.enabled ? '' : ' off'); btn.innerHTML = a.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>'; }
+    if (fvBtn) { fvBtn.className = 'fv-btn mute' + (a.enabled ? '' : ' off'); fvBtn.innerHTML = a.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>'; }
     var ind = document.getElementById('mic-indicator-' + me.id);
     if (ind) ind.className = 'tile-mic' + (a.enabled ? '' : ' muted');
   }
