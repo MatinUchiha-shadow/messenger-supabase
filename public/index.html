@@ -1228,7 +1228,7 @@ function leaveVoice() {
   clearInterval(voiceTimerInterval);
 }
 
-function showCallPanel() {
+function showCallPanel() { showFloatingVoice(); return;
   $('callPanel').classList.add('show');
   $('callRoomName').textContent = $('roomTitle').textContent;
   callSeconds = 0;
@@ -1241,7 +1241,7 @@ function showCallPanel() {
   renderCallGrid();
 }
 
-function hideCallPanel() {
+function hideCallPanel() { hideFloatingVoice(); return;
   $('callPanel').classList.remove('show');
   $('remoteVideo').srcObject = null;
   $('remoteVideo').style.display = 'none';
@@ -1415,7 +1415,7 @@ window.shareScreen = async function() {
       if (av) av.style.display = 'none';
       v.srcObject = screenStream;
     }
-    $('callScreenBtn').className = 'call-ctrl screen active';
+    $('callScreenBtn').className = 'call-ctrl screen active'; var fsb = $('fvScreenBtn'); if (fsb) fsb.className = 'fv-btn screen on';
     // Send screen video to all peers with renegotiation
     var videoTrack = screenStream.getVideoTracks()[0];
     var promises = [];
@@ -1463,8 +1463,8 @@ window.stopScreenShare = async function() {
     if (label) label.remove();
     selfTile.classList.remove('screen-sharing');
   }
-  var btn = $('callScreenBtn');
-  if (btn) btn.className = 'call-ctrl screen';
+  var btn = $('callScreenBtn'), fsb = $('fvScreenBtn');
+  if (btn) btn.className = 'call-ctrl screen'; if (fsb) fsb.className = 'fv-btn screen';
   $('remoteVideo').srcObject = null;
   $('remoteVideo').style.display = 'none';
 };
