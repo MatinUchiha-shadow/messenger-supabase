@@ -449,7 +449,7 @@ button:active,.room-item:active{transform:scale(.97)}
 .btn-send:hover{box-shadow:0 6px 28px rgba(139,92,246,.5);transform:scale(1.06) rotate(-6deg)}
 /* DRAGGABLE */
 #float-voice.dragging{transition:none!important;cursor:grabbing}
-#float-voice{cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none}
+#float-voice{cursor:grab;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 /* SCREEN SHARE FLOATING PREVIEW */
 #float-screen{position:fixed;bottom:100px;right:20px;touch-action:none;z-index:299;display:none;border-radius:12px;overflow:hidden;background:#000;border:2px solid var(--accent);box-shadow:0 8px 32px rgba(0,0,0,.6);cursor:grab;max-width:280px;max-height:180px;resize:both}
 #float-screen.show{display:block}
@@ -1931,6 +1931,9 @@ function toggleMute() {
     if (fvBtn) { fvBtn.className = 'fv-btn mute' + (a.enabled ? '' : ' off'); fvBtn.innerHTML = a.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>'; }
     var ind = document.getElementById('mic-indicator-' + me.id);
     if (ind) ind.className = 'tile-mic' + (a.enabled ? '' : ' muted');
+    // Refresh meet view if open
+    var mv = $('meetView');
+    if (mv && mv.classList.contains('show')) renderMeetProfiles();
   }
 }
 
