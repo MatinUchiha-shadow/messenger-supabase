@@ -595,7 +595,7 @@ const db = supabase.createClient(SB_URL, SB_KEY);
 const $ = id => document.getElementById(id);
 
 let me = null, myProfile = null, curRoom = null, curType = null, curDm = null;
-let myStream = null, voiceChannel = null, presenceChannel = null, curVoiceRoom = null, voiceCallSeconds = 0, voiceTimerInterval = null;
+let myStream = null, voiceChannel = null, presenceChannel = null, curVoiceRoom = null, voiceCallSeconds = 0, voiceTimerInterval = null, realtimeRelay = null;
 const peers = new Map(), voiceMembers = new Map();
 let pendingMediaFile = null, pendingMediaIsVideo = false, pollTimer = null, lastMsgTime = null;
 let replyToData = null, reactions = {};
@@ -711,7 +711,7 @@ async function loadSession() {
 
 window.signOut = async function() {
   if (!confirm('خروج؟')) return;
-  if (voiceChannel) { await db.removeChannel(voiceChannel); voiceChannel = null; }
+  if (voiceChannel) { await db.removeChannel(voiceChannel); voiceChannel = null; } if (realtimeRelay) { await db.removeChannel(realtimeRelay); realtimeRelay = null; }
   if (presenceChannel) { await db.removeChannel(presenceChannel); presenceChannel = null; }
   leaveVoice();
   await db.auth.signOut();
@@ -736,6 +736,7 @@ function enterApp() {
   loadRooms();
   loadDmList();
   startPresence();
+  startRelay();
   initEmojis();
 }
 
@@ -754,6 +755,18 @@ function initEmojis() {
     b.onclick = function() { $('msg-input').value += e; $('msg-input').focus(); };
     s.appendChild(b);
   });
+}
+
+// RELAY - broadcast-based realtime messages (fallback for postgres_changes)
+async function startRelay() {
+  if (realtimeRelay) await db.removeChannel(realtimeRelay);
+  realtimeRelay = db.channel('realtime-relay');
+  realtimeRelay.on('broadcast', { event: 'new_msg' }, function(payload) {
+    if (payload.payload.room_id !== curRoom && payload.payload.room_id !== dmSub) return;
+    if (payload.payload.user_id === (me && me.id)) return;
+    addMsg(payload.payload);
+    scrollBottom();
+  }).subscribe();
 }
 
 // PRESENCE
@@ -967,7 +980,7 @@ window.sendMsg = async function() {
   var md = { room_id: curRoom, user_id: me.id, type: 'text', content: text };
   if (replyToData) { md.reply_to_id = replyToData.id; md.reply_to_name = replyToData.name; md.reply_to_text = replyToData.text; }
   cancelReply();
-  await db.from('messages').insert(md);
+  await db.from('messages').insert(md); if (realtimeRelay) { md.id = Date.now().toString(); md.profiles = myProfile; realtimeRelay.send({ type: 'broadcast', event: 'new_msg', payload: md }); }
 };
 
 window.setReply = function(id, name, text) {
@@ -1113,6 +1126,7 @@ async function sendMedia(inp, cap) {
     if (replyToData) { md.reply_to_id = replyToData.id; md.reply_to_name = replyToData.name; md.reply_to_text = replyToData.text; }
     cancelReply();
     // Try insert().select() first for matching DB ID, fallback to manual
+    if (realtimeRelay) { var relayMd = { id: Date.now().toString(), room_id: md.room_id, user_id: md.user_id, type: md.type, content: md.content, file_url: md.file_url, file_name: md.file_name, file_size: md.file_size, created_at: new Date().toISOString(), profiles: myProfile }; realtimeRelay.send({ type: 'broadcast', event: 'new_msg', payload: relayMd }); }
     var ins = await db.from('messages').insert(md).select('*').single();
     var msgObj;
     if (ins.data) {
