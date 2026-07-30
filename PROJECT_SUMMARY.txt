@@ -1,0 +1,401 @@
+# خلاصه کامل پروژه messenger-supabase
+# ================================================
+# این فایل رو به هر AI بدی، کامل پروژه رو می‌فهمه
+# ================================================
+
+## ۱. معرفی کلی پروژه
+# ----------------
+نام پروژه: GapChat (مessenger-supabase)
+توضیح: پیام‌رسان real-time با استفاده از Supabase برای هاستینگ رایگان و همیشه آنلاین
+زبان: فارسی (RTL)
+وضعیت: فعال و در حال توسعه
+
+## ۲. تکنولوژی‌های استفاده شده
+# ----------------------------
+### فرانت‌اند:
+- HTML5
+- CSS3 (با CSS Variables برای تم‌ها)
+- JavaScript (vanilla, بدون framework)
+- فونت: Vazirmatn (فارسی)
+- آیکون‌ها: Font Awesome 6.5
+
+### بک‌اند (Supabase):
+- Supabase JS Client v2
+- PostgreSQL (دیتابیس)
+- Supabase Auth (احراز هویت)
+- Supabase Storage (آپلود فایل)
+- Supabase Realtime (پیام‌های لحظه‌ای)
+- Supabase Broadcast (WebRTC signaling)
+- Supabase Presence (وضعیت آنلاین)
+
+### صوتی/تصویری:
+- WebRTC (ارتباط همتا به همتا)
+- STUN servers: Google (stun.l.google.com:19302)
+
+### هاستینگ:
+- Vercel (فرانت‌اند - رایگان)
+- Supabase (بک‌اند - رایگان)
+
+## ۳. اطلاعات اتصال
+# -----------------
+### Supabase:
+- Project ID: dvhjswspljxbjxngetdc
+- URL: https://dvhjswspljxbjxngetdc.supabase.co
+- Anon Key (Legacy JWT):
+  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2aGpzd3NwbGp4Ymp4bmdldGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4OTA5NDAsImV4cCI6MjEwMDQ2Njk0MH0.HRU4N_JM7mDBQJ2t9t_AfSk8zE-dPz7BecRpop0uxww
+
+### GitHub:
+- Repository: MatinUchiha-shadow/messenger-supabase
+- URL: https://github.com/MatinUchiha-shadow/messenger-supabase
+
+### Vercel:
+- URL: https://messenger-supabase.vercel.app
+
+## ۴. ساختار پروژه
+# ---------------
+messenger-supabase/
+├── public/
+│   └── index.html          # فایل اصلی (1532 خط، 99KB)
+├── supabase/
+│   ├── schema.sql           # ساختار دیتابیس اصلی
+│   ├── fix.sql              # اصلاحات اولیه
+│   ├── avatars-fix.sql      # اصلاح storage buckets
+│   └── fix-all.sql          # اصلاحات کامل
+├── package.json
+└── README.md
+
+## ۵. ساختار دیتابیس (Supabase)
+# -----------------------------
+
+### جدول profiles:
+- id: UUID (primary key, references auth.users)
+- username: TEXT (unique)
+- display_name: TEXT
+- role: TEXT ('owner', 'admin', 'user')
+- avatar_url: TEXT
+- bio: TEXT (بیوگرافی)
+- created_at: TIMESTAMPTZ
+
+### جدول rooms:
+- id: UUID (primary key)
+- name: TEXT
+- type: TEXT ('text', 'voice')
+- created_by: UUID (references profiles)
+- created_at: TIMESTAMPTZ
+
+### جدول messages:
+- id: UUID (primary key)
+- room_id: UUID (references rooms)
+- user_id: UUID (references profiles)
+- type: TEXT ('text', 'image', 'voice', 'file', 'video')
+- content: TEXT
+- file_url: TEXT
+- file_name: TEXT
+- file_size: BIGINT
+- reply_to_id: UUID
+- reply_to_name: TEXT
+- reply_to_text: TEXT
+- created_at: TIMESTAMPTZ
+
+### Storage Buckets:
+- avatars (public) - آواتار کاربران
+- uploads (public) - فایل‌های عمومی
+- chat-images (public) - تصاویر چت
+- chat-videos (public) - ویدیوهای چت
+
+### RLS Policies:
+- profiles: هر کسی می‌تواند بخواند، فقط خودش ویرایش کند
+- rooms: هر کسی می‌تواند بخواند، authenticated می‌تواند ایجاد کند
+- messages: هر کسی می‌تواند بخواند، فقط خودش پیام ارسال کند
+- storage: authenticated می‌تواند آپلود/دانلود کند
+
+## ۶. امکانات پیاده‌سازی شده
+# ==========================
+
+### ۶.۱ احراز هویت (Auth):
+- ثبت‌نام با ایمیل و رمز عبور
+- ورود با ایمیل و رمز عبور
+- خروج از حساب
+- اولین کاربر = owner (مالک)
+- نمایش نقش کاربر (owner/admin/user)
+
+### ۶.۲ سایدبار:
+- نمایش اتاق‌های متنی
+- نمایش اتاق‌های صوتی
+- نمایش لیست پیام‌های خصوصی (DM)
+- نمایش کاربران آنلاین (Presence)
+- دکمه ایجاد اتاق جدید (فقط owner/admin)
+- دکمه تم
+- دکمه خروج
+- منوی موبایل (hamburger)
+
+### ۶.۳ اتاق‌ها:
+- اتاق‌های متنی (گروهی)
+- اتاق‌های صوتی
+- ایجاد اتاق جدید توسط owner/admin
+- انتخاب اتاق از سایدبار
+
+### ۶.۴ پیام‌رسانی متنی:
+- ارسال پیام متنی
+- نمایش پیام‌ها با آواتار کاربر
+- نمایش نام فرستنده
+- نمایش زمان ارسال
+- نمایش تیک تحویل (read receipt)
+- پیام‌های خودم = سمت چپ (RTL)
+- پیام‌های دیگران = سمت راست
+- انیمیشن slideUp برای پیام‌های جدید
+- اسکرول خودکار به آخرین پیام
+
+### ۶.۵ پیام‌های خصوصی (DM):
+- لیست کاربران برای شروع چت خصوصی
+- جستجوی کاربران
+- اتاق DM خودکار با نام [userId1, userId2].sort().join('_')
+- جدا از اتاق‌های گروهی
+
+### ۶.۶ ریپلای (Reply):
+- ریپلای به پیام خاص
+- نمایش نام فرستنده اصلی
+- نمایش متن پیام اصلی (حداکثر 50 کاراکتر)
+- نوار ریپلای بالای اینپوت
+- دکمه لغو ریپلای
+
+### ۶.۷ ری‌اکشن (Reactions):
+- 6 ری‌اکشن: 👍 ❤️ 😂 😮 😢 🔥
+- انتخاب ری‌اکشن از منوی راست‌کلیک
+- نمایش تعداد ری‌اکشن‌ها
+- تغییر وضعیت ری‌اکشن با کلیک
+- نمایش ری‌اکشن‌های خودم با رنگ متفاوت
+
+### ۶.۸ منوی پیام (Context Menu):
+- کلیک راست / long press روی پیام
+- گزینه‌ها: ری‌اکشن، ریپلای، کپی، حذف (فقط پیام خودم)
+- موقعیت خودکار منو
+
+### ۶.۹ آپلود مدیا:
+- آپلود تصویر (از گالری یا دوربین)
+- آپلود ویدیو
+- پیش‌نمایش قبل از ارسال
+- نوار پیشرفت آپلود
+- حداکثر حجم: 50MB
+- storage buckets جداگانه برای تصاویر و ویدیوها
+- پاکسازی خودکار فایل‌های قدیمی (بیش از 3 ساعت)
+
+### ۶.۱۰ نوار ایموجی:
+- 30 ایمیج محبوب
+- نوار افقی قابل اسکرول
+- کلیک روی ایموجی = اضافه شدن به اینپوت
+
+### ۶.۱۱ چت صوتی (Voice Chat):
+- ورود به اتاق صوتی
+- WebRTC برای ارتباط همتا به همتا
+- STUN servers: Google
+- نمایش اعضا در call panel
+- قطع و وصل میکروفون (mute/unmute)
+- نمایش وضعیت میکروفون هر کاربر
+- تایمر مدت تماس
+- خروج از تماس
+
+### ۶.۱۲ اشتراک‌گذاری صفحه (Screen Share):
+- اشتراک‌گذاری صفحه در حین تماس صوتی
+- نمایش صفحه اشتراکی در tile بزرگ
+- ارسال ویدیو به همه peers
+- renegotiation خودکار WebRTC
+- توقف اشتراک‌گذاری
+- حالت تمام‌صفحه برای مشاهده صفحه اشتراکی
+
+### ۶.۱۳ پنل تماس (Meet-like Call Panel):
+- طراحی شبیه Google Meet
+- نمایش grid از شرکت‌کنندگان
+- هر tile شامل: آواتار، نام، وضعیت میکروفون
+- نشان‌گر speaking (سبز)
+- دکمه‌ها: میکروفون، اشتراک صفحه، تمام‌صفحه، پایان
+- ریسپانسیو برای موبایل
+
+### ۶.۱۴ پروفایل کاربر:
+- نمایش آواتار
+- نمایش نام نمایشی
+- نمایش ایمیل
+- نمایش نقش (owner/admin/user)
+- نمایش تعداد پیام‌ها
+- نمایش تاریخ عضویت
+- ویرایش نام (فقط خودم)
+- ویرایش بیو (فقط خودم)
+- آپلود آواتار (فقط خودم)
+- مودال پروفایل با انیمیشن
+
+### ۶.۱۵ سیستم تم (Theme):
+- 5 تم پیش‌فرض:
+  1. پیش‌فرض (تاریک بنفش)
+  2. سیاه‌چاله (Black Hole) - با SVG متحرک
+  3. اقیانوسی (آبی)
+  4. بنفش شب
+  5. روشن (سفید)
+- ذخیره تم در localStorage
+- CSS Variables برای تغییر رنگ‌ها
+- انیمیشن‌های مخصوص هر تم
+- Black Hole: accretion disk متحرک، gravitational lensing، hotspots
+
+### ۶.۱۶ ریسپانسیو (Responsive):
+- موبایل: سایدبار overlay
+- hamburger menu
+- اندازه فونت بزرگ‌تر برای موبایل
+- touch-friendly
+- fix برای کیبورد موبایل (Android)
+
+### ۶.۱۷ اعلان‌ها (Toast):
+- پیام‌های کوتاه در پایین صفحه
+- انیمیشن fade in/out
+- حذف خودکار بعد از 2.2 ثانیه
+
+## ۷. انیمیشن‌ها و افکت‌ها
+# ------------------------
+- slideUp: ظاهر شدن پیام‌ها
+- scaleIn: ظاهر شدن کارت‌ها
+- pulse: نبض (آنلاین، تایمر)
+- shake: خطای احراز هویت
+- sendPop: ارسال پیام
+- typing: تایپ کردن
+- blackholeSpin: چرخش سیاه‌چاله
+- blackholePulse: درخشش سیاه‌چاله
+- bhAmbientPulse: نور محیطی سیاه‌چاله
+- bhOrbit: مدار hotspots
+- uploadPulse: آپلود فایل
+- shimmer: درخشش کارت احراز هویت
+
+## ۸. نکات فنی مهم
+# ================
+
+### Supabase CDN:
+- آدرس: https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2
+- متغیر سراسری: supabase
+- نباید دوباره تعریف شود (از db استفاده شده)
+
+### Supabase Key Format:
+- کلید جدید (sb_publishable_...) سازگار نیست
+- باید از Legacy JWT key استفاده شود
+- فرمت: eyJhbGciOiJIUzI1NiIs...
+
+### Realtime Subscriptions:
+- postgres_changes برای پیام‌های جدید
+- presence برای وضعیت آنلاین
+- broadcast برای WebRTC signaling
+
+### WebRTC:
+- STUN only (بدون TURN)
+- Google STUN servers
+- Renegotiation برای screen share
+
+### Storage Auto-cleanup:
+- فایل‌های chat-images و chat-videos بعد از 3 ساعت پاک می‌شوند
+- آواتارها پاک نمی‌شوند
+- هر 5 دقیقه بررسی می‌شود
+
+## ۹. باگ‌ها و مشکلات رفع شده
+# ============================
+
+### Blank Page در Vercel:
+- علت: خطای syntax در JavaScript
+- راه‌حل: بازنویسی کامل با بررسی balance brace
+- commit: 545d3fe
+
+### Supabase CDN مسدود در ایران:
+- علت: cdn.jsdelivr.net ممکن است کند یا مسدود باشد
+- راه‌حل: self-hosting یا fallback
+
+### handle_new_user() Trigger خطا:
+- علت: تریگر Supabase باعث 500 error می‌شد
+- راه‌حل: حذف تریگر، ایجاد profile از فرانت‌اند
+
+### کیبورد اندروید:
+- علت: کیبورد مجازی input را پنهان می‌کند
+- راه‌حل: visualViewport.resize listener
+
+### Screen Share Renegotiation:
+- علت: اضافه کردن video track نیاز به renegotiation دارد
+- راه‌حل: createOffer() + setLocalDescription() بعد از addTrack()
+
+### DM Room Naming:
+- علت: هر کاربر ممکن است اتاق متفاوتی ایجاد کند
+- راه‌حل: [userId1, userId2].sort().join('_')
+
+## ۱۰. commits مهم
+# ================
+- f3bb996: mono voice fix + android menu + emoji strip + reactions + context menu
+- 545d3fe: blank page fixed by clean rewrite
+- 447fa2b: screen sharing added
+- c4da094: android fixes + screen share fix
+
+## ۱۱. نحوه راه‌اندازی
+# ====================
+
+### محلی:
+```bash
+npx serve public
+# یا
+python -m http.server 3000 --directory public
+```
+
+### Vercel:
+1. کد روی GitHub آپلود شود
+2. Vercel به GitHub متصل شود
+3. خودکار deploy شود
+
+### Supabase:
+1. SQL از schema.sql اجرا شود
+2. Storage buckets ایجاد شوند (avatars, uploads, chat-images, chat-videos)
+3. RLS policies تنظیم شوند
+
+## ۱۲. نکات امنیتی
+# ================
+- service_role key هرگز در فرانت‌اند استفاده نشود
+- RLS همیشه فعال باشد
+- فایل‌های قدیمی خودکار پاک شوند
+- حداکثر حجم آپلود: 50MB (مدیا)، 5MB (آواتار)
+
+## ۱۳. نقش‌ها و دسترسی‌ها
+# =======================
+### Owner (مالک):
+- ایجاد/حذف اتاق
+- مدیریت کاربران
+- تمام دسترسی‌های admin
+
+### Admin (ادمین):
+- ایجاد اتاق
+- مدیریت اتاق‌ها
+
+### User (کاربر):
+- ارسال پیام
+- آپلود مدیا
+- تغییر پروفایل خود
+- شرکت در تماس صوتی
+
+## ۱۴. سایز فایل‌ها
+# =================
+- index.html: 99,206 bytes (1532 خط)
+- schema.sql: 4,264 bytes
+- fix-all.sql: 2,238 bytes
+- avatars-fix.sql: 2,112 bytes
+- fix.sql: 1,252 bytes
+
+## ۱۵. محیط توسعه
+# ================
+- OS: Windows 10 IoT Enterprise LTSC
+- Node.js: نصب شده
+- Git: نصب شده
+- مرورگر: Chrome/Edge
+
+## ================================================
+## خلاصه برای AI:
+## ================================================
+این یک پیام‌رسان کامل (مثل تلگرام/واتساپ) هست که با:
+- Supabase برای بک‌اند (دیتابیس، احراز هویت، storage، realtime)
+- WebRTC برای تماس صوتی و اشتراک‌گذاری صفحه
+- HTML/CSS/JS خالص (بدون framework)
+- طراحی RTL فارسی
+- 5 تم زیبا (شامل Black Hole متحرک)
+- امکانات کامل: چت متنی، DM، صوتی، صفحه، ریپلای، ری‌اکشن، پروفایل، آپلود مدیا
+پیاده‌سازی شده و روی Vercel + Supabase رایگان هاست شده.
+
+فایل اصلی: public/index.html (یک فایل تکی 99KB)
+دیتابیس: Supabase PostgreSQL
+هاست: Vercel (فرانت) + Supabase (بک‌اند)
