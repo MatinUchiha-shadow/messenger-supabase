@@ -1103,22 +1103,37 @@ async function sendMedia(inp, cap) {
   pctEl.textContent = '0%';
   textEl.textContent = isV ? 'در حال آپلود ویدیو...' : 'در حال آپلود عکس...';
   subEl.textContent = file.name;
-  // Animate progress
-  var progress = 0;
-  var progressInterval = setInterval(function() {
-    progress = Math.min(progress + Math.random() * 15, 90);
-    barFill.style.width = progress + '%';
-    pctEl.textContent = Math.round(progress) + '%';
-  }, 200);
+  // Show file size
+  var totalMB = (file.size / (1024*1024)).toFixed(1);
+  pctEl.textContent = '0 / ' + totalMB + ' MB';
   try {
-    var upErr = (await db.storage.from(bucket).upload(path, file, { upsert: true })).error;
-    clearInterval(progressInterval);
-    if (upErr) throw upErr;
+    // Real XHR upload with progress tracking
+    var upResult = await new Promise(function(resolve, reject) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', SB_URL + '/storage/v1/object/' + bucket + '/' + path);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + (db.auth.session() ? db.auth.session().access_token : SB_KEY));
+      xhr.setRequestHeader('apikey', SB_KEY);
+      xhr.setRequestHeader('x-upsert', 'true');
+      xhr.upload.onprogress = function(e) {
+        if (e.lengthComputable) {
+          var loadedMB = (e.loaded / (1024*1024)).toFixed(1);
+          var pct = Math.round((e.loaded / e.total) * 100);
+          barFill.style.width = pct + '%';
+          pctEl.textContent = loadedMB + ' / ' + totalMB + ' MB (' + pct + '%)';
+        }
+      };
+      xhr.onload = function() {
+        if (xhr.status >= 200 && xhr.status < 300) resolve(JSON.parse(xhr.responseText));
+        else reject(new Error(xhr.status + ' ' + xhr.statusText));
+      };
+      xhr.onerror = function() { reject(new Error('Upload failed')); };
+      xhr.send(file);
+    });
     barFill.style.width = '100%';
-    pctEl.textContent = '100%';
+    pctEl.textContent = totalMB + ' / ' + totalMB + ' MB (100%)';
     textEl.textContent = '✅ آپلود کامل شد';
     subEl.textContent = 'در حال ارسال پیام...';
-    await new Promise(function(r) { setTimeout(r, 500); });
+    await new Promise(function(r) { setTimeout(r, 600); });
     overlay.classList.remove('show');
     var ud = db.storage.from(bucket).getPublicUrl(path);
     var type = isV ? 'video' : file.type.startsWith('image/') ? 'image' : 'file';
