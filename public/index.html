@@ -138,7 +138,7 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .msg-bubble.mine{background:var(--bubble-mine);color:var(--bubble-mine-text);border-bottom-left-radius:4px}
 .msg-bubble:not(.mine){background:var(--bubble-other);color:var(--bubble-other-text);border:1px solid var(--border);border-bottom-right-radius:4px}
 .msg-bubble img{max-width:260px;max-height:260px;border-radius:10px;display:block;cursor:pointer;margin-top:4px}
-.msg-bubble video{max-width:260px;max-height:260px;border-radius:10px;display:block;margin-top:4px}
+.msg-bubble video{max-width:260px;max-height:260px;min-width:200px;min-height:120px;border-radius:10px;display:block;margin-top:4px;background:#000;object-fit:contain}
 .msg-bubble audio{max-width:220px;width:100%;margin-top:4px;border-radius:8px}
 .msg-bubble .file-link{display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(255,255,255,.06);border-radius:8px;margin-top:4px;text-decoration:none;color:var(--text);font-size:12px}
 .msg-bubble .file-link:hover{background:rgba(255,255,255,.12)}
@@ -925,9 +925,9 @@ function addMsg(m) {
   let content = '';
   if (m.type === 'text') content = esc(m.content);
   else if (m.type === 'image') content = '<img src="' + m.file_url + '" loading="lazy" onclick="window.open(\'' + m.file_url + '\',\'_blank\')">';
-  else if (m.type === 'video') content = '<video src="' + m.file_url + '" controls style="max-width:260px;border-radius:10px"></video>';
+  else if (m.type === 'video') content = '<video src="' + m.file_url + '" controls playsinline preload="metadata" style="max-width:260px;min-width:200px;min-height:120px;border-radius:10px;background:#000"></video>';
   else if (m.type === 'voice') content = '<audio controls src="' + m.file_url + '" style="max-width:220px"></audio>';
-  else if (m.type === 'file') content = '<a href="' + m.file_url + '" class="file-link" target="_blank"><i class="fas fa-file"></i> ' + esc(m.file_name || 'فایل') + '</a>';
+  else if (m.type === 'video-fallback') content = '<a href="' + m.file_url + '" class="file-link" target="_blank"><i class="fas fa-video"></i> ' + esc(m.file_name || 'ویدیو') + ' - برای دیدن کلیک کن</a>'; else if (m.type === 'file') content = '<a href="' + m.file_url + '" class="file-link" target="_blank"><i class="fas fa-file"></i> ' + esc(m.file_name || 'فایل') + '</a>';
   let replyHtml = '';
   if (m.reply_to_text) replyHtml = '<div class="reply-preview"><div class="rp-name">' + esc(m.reply_to_name || '') + '</div><div class="rp-text">' + esc(m.reply_to_text).slice(0, 50) + '</div></div>';
   d.className = 'msg-g ' + (own ? 'mine' : '') + ' ' + (gapTop ? 'gtop' : '');
