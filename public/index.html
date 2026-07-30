@@ -927,7 +927,7 @@ function addMsg(m) {
   else if (m.type === 'image') content = '<img src="' + m.file_url + '" loading="lazy" onclick="window.open(\'' + m.file_url + '\',\'_blank\')">';
   else if (m.type === 'video') content = '<video src="' + m.file_url + '" controls playsinline preload="metadata" style="max-width:260px;min-width:200px;min-height:120px;border-radius:10px;background:#000"></video>';
   else if (m.type === 'voice') content = '<audio controls src="' + m.file_url + '" style="max-width:220px"></audio>';
-  else if (m.type === 'video-fallback') content = '<a href="' + m.file_url + '" class="file-link" target="_blank"><i class="fas fa-video"></i> ' + esc(m.file_name || 'ویدیو') + ' - برای دیدن کلیک کن</a>'; else if (m.type === 'file') content = '<a href="' + m.file_url + '" class="file-link" target="_blank"><i class="fas fa-file"></i> ' + esc(m.file_name || 'فایل') + '</a>';
+  else if (m.type === 'file') content = '<a href="' + m.file_url + '" class="file-link" target="_blank"><i class="fas fa-file"></i> ' + esc(m.file_name || 'فایل') + '</a>';
   let replyHtml = '';
   if (m.reply_to_text) replyHtml = '<div class="reply-preview"><div class="rp-name">' + esc(m.reply_to_name || '') + '</div><div class="rp-text">' + esc(m.reply_to_text).slice(0, 50) + '</div></div>';
   d.className = 'msg-g ' + (own ? 'mine' : '') + ' ' + (gapTop ? 'gtop' : '');
