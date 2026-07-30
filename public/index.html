@@ -1108,12 +1108,16 @@ async function sendMedia(inp, cap) {
   pctEl.textContent = '0 / ' + totalMB + ' MB';
   try {
     // Real XHR upload with progress tracking
-    var upResult = await new Promise(function(resolve, reject) {
+    var upResult = await new Promise(async function(resolve, reject) {
       var xhr = new XMLHttpRequest();
       xhr.open('POST', SB_URL + '/storage/v1/object/' + bucket + '/' + path);
-      xhr.setRequestHeader('Authorization', 'Bearer ' + (db.auth.session() ? db.auth.session().access_token : SB_KEY));
       xhr.setRequestHeader('apikey', SB_KEY);
       xhr.setRequestHeader('x-upsert', 'true');
+      xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+      // Get auth token properly
+      var session = (await db.auth.getSession()).data.session;
+      var token = session ? session.access_token : SB_KEY;
+      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
       xhr.upload.onprogress = function(e) {
         if (e.lengthComputable) {
           var loadedMB = (e.loaded / (1024*1024)).toFixed(1);
