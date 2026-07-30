@@ -1112,12 +1112,23 @@ async function sendMedia(inp, cap) {
     var md = { room_id: curRoom, user_id: me.id, type: type, content: cap || file.name, file_url: ud.data.publicUrl, file_name: file.name, file_size: file.size };
     if (replyToData) { md.reply_to_id = replyToData.id; md.reply_to_name = replyToData.name; md.reply_to_text = replyToData.text; }
     cancelReply();
-    var ins = await db.from('messages').insert(md).select('*').single();
-    if (!ins.error && ins.data) {
-      ins.data.profiles = myProfile;
-      addMsg(ins.data);
-      scrollBottom();
-    }
+    await db.from('messages').insert(md);
+    // Build message object manually (don't rely on insert return)
+    var msgObj = {
+      id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString() + Math.random(),
+      room_id: curRoom,
+      user_id: me.id,
+      type: type,
+      content: cap || file.name,
+      file_url: ud.data.publicUrl,
+      file_name: file.name,
+      file_size: file.size,
+      created_at: new Date().toISOString(),
+      profiles: myProfile
+    };
+    if (replyToData) { msgObj.reply_to_id = replyToData.id; msgObj.reply_to_name = replyToData.name; msgObj.reply_to_text = replyToData.text; }
+    addMsg(msgObj);
+    scrollBottom();
     toast('✅ ارسال شد');
   } catch(e) {
     clearInterval(progressInterval);
