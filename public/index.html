@@ -923,7 +923,7 @@ function showMsgMenu(msgId, pt, row, isMine) {
     { icon: '↩️', label: 'ریپلای', fn: function() { menu.remove(); setReply(msgId, 'کاربر', pt); } },
     { icon: '📋', label: 'کپی', fn: function() { navigator.clipboard.writeText(pt); toast('✅'); menu.remove(); } }
   ];
-  if (isMine) items.push({ icon: '🗑', label: 'حذف', fn: async function() { menu.remove(); try { await db.from('messages').eq('id', msgId).delete(); row.remove(); toast('✅'); } catch(e) { toast('❌'); } }, danger: true });
+  if (isMine) items.push({ icon: '🗑', label: 'حذف', fn: async function() { menu.remove(); try { const res = await db.from('messages').eq('id', msgId).delete(); if (res.error) { toast('❌ ' + (typeof res.error === 'string' ? res.error : res.error.message || 'خطا')); } else { row.remove(); toast('✅ حذف شد'); } } catch(e) { toast('❌ ' + (e.message || e)); } }, danger: true });
   items.forEach(function(i) {
     var b = document.createElement('button');
     b.className = 'msg-menu-item' + (i.danger ? ' danger' : '');

@@ -65,6 +65,7 @@ CREATE POLICY "rooms_delete" ON rooms FOR DELETE USING (auth.uid() = created_by 
 
 -- Messages: anyone can read, authenticated can create own
 CREATE POLICY "messages_select" ON messages FOR SELECT USING (true);
+CREATE POLICY "messages_delete" ON messages FOR DELETE USING (auth.uid() = user_id);
 CREATE POLICY "messages_insert" ON messages FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- ============================================
