@@ -369,9 +369,9 @@ button:active,.room-item:active{transform:scale(.97)}
 .btn-send:hover{box-shadow:0 6px 28px rgba(139,92,246,.5);transform:scale(1.06) rotate(-6deg)}
 /* DRAGGABLE */
 #float-voice.dragging{transition:none!important;cursor:grabbing}
-#float-voice{cursor:grab;user-select:none;-webkit-user-select:none}
+#float-voice{cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none}
 /* SCREEN SHARE FLOATING PREVIEW */
-#float-screen{position:fixed;bottom:100px;right:20px;z-index:299;display:none;border-radius:12px;overflow:hidden;background:#000;border:2px solid var(--accent);box-shadow:0 8px 32px rgba(0,0,0,.6);cursor:grab;max-width:280px;max-height:180px;resize:both}
+#float-screen{position:fixed;bottom:100px;right:20px;touch-action:none;z-index:299;display:none;border-radius:12px;overflow:hidden;background:#000;border:2px solid var(--accent);box-shadow:0 8px 32px rgba(0,0,0,.6);cursor:grab;max-width:280px;max-height:180px;resize:both}
 #float-screen.show{display:block}
 #float-screen video{width:100%;height:100%;object-fit:contain;display:block}
 #float-screen .fs-full{position:absolute;top:4px;left:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:10px;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center}#float-screen .fs-full:hover{background:var(--accent)}#float-screen.fullscreen{position:fixed;inset:0;z-index:9999;max-width:none!important;max-height:none!important;border-radius:0;border:none;resize:none}#float-screen.fullscreen video{object-fit:contain!important}#float-screen .fs-close{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:10px;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center}
@@ -1396,7 +1396,7 @@ function initDrag(el) {
     var t = e.touches[0];
     startX = t.clientX; startY = t.clientY;
     var rect = el.getBoundingClientRect();
-    startLeft = rect.left; startBottom = window.innerHeight - rect.bottom;
+    startLeft = rect.left; startBottom = window.innerHeight - rect.bottom; e.preventDefault();
   }, {passive: false});
   window.addEventListener('mousemove', function(e) {
     if (!dragging) return;
@@ -1411,7 +1411,7 @@ function initDrag(el) {
     var dx = t.clientX - startX, dy = t.clientY - startY;
     el.style.left = (startLeft + dx) + 'px';
     el.style.bottom = (startBottom - dy) + 'px';
-    el.style.transform = 'none';
+    el.style.transform = 'none'; e.preventDefault();
   }, {passive: false});
   window.addEventListener('mouseup', function() { dragging = false; el.classList.remove('dragging'); });
   window.addEventListener('touchend', function() { dragging = false; el.classList.remove('dragging'); });
@@ -1460,6 +1460,7 @@ function renderVoiceMembers() {
 let screenStream = null;
 
 window.shareScreen = async function() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) { toast('❌ اشتراک صفحه روی موبایل پشتیبانی نمیشه'); return; }
   try {
     screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
     // Show in self tile - make it BIG
@@ -1497,7 +1498,7 @@ window.shareScreen = async function() {
     videoTrack.onended = function() { stopScreenShare(); };
     toast('🖥 صفحه اشتراک گذاشته شد'); var fsv = document.getElementById('floatScreenVideo'); if (fsv && screenStream) { fsv.srcObject = screenStream; document.getElementById('float-screen').classList.add('show'); }
   } catch(e) {
-    if (e.name !== 'AbortError') toast('❌ اشتراک صفحه رد شد');
+    if (e.name !== 'AbortError') { var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent); toast(isMobile ? '❌ اشتراک صفحه روی موبایل پشتیبانی نمیشه' : '❌ اشتراک صفحه رد شد'); }
   }
 };
 
