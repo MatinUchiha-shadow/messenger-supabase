@@ -1222,7 +1222,7 @@ async function joinVoice() {
     }).on('broadcast', { event: 'leave' }, function(payload) {
       var m = voiceMembers.get(payload.payload.userId);
       if (m) toast('🔇 ' + m.username + ' خارج شد');
-      voiceMembers.delete(payload.payload.userId); updateFloatingVoice();
+      voiceMembers.delete(payload.payload.userId); updateFloatingVoice(); var fs4 = document.getElementById('float-screen'); if (fs4 && voiceMembers.size <= 1) { fs4.classList.remove('show'); }
       if (peers.has(payload.payload.userId)) { peers.get(payload.payload.userId).close(); peers.delete(payload.payload.userId); }
       renderCallGrid();
     }).subscribe(async function(status) {
@@ -1241,7 +1241,7 @@ function leaveVoice() {
   if (myStream) { myStream.getTracks().forEach(function(t) { t.stop(); }); myStream = null; }
   stopScreenShare();
   peers.forEach(function(pc) { pc.close(); }); peers.clear(); voiceMembers.clear();
-  hideFloatingVoice(); curVoiceRoom = null;
+  hideFloatingVoice(); curVoiceRoom = null; var fs5 = document.getElementById('float-screen'); if (fs5) { fs5.classList.remove('show'); var fsv5 = document.getElementById('floatScreenVideo'); if (fsv5) fsv5.srcObject = null; }
   clearInterval(voiceTimerInterval);
 }
 
@@ -1325,7 +1325,7 @@ async function createPeer(pid, init) {
           lbl.textContent = (voiceMembers.get(pid) || {}).username;
           tile.appendChild(lbl);
         }
-        vid.srcObject = stream;
+        vid.srcObject = stream; var fs = document.getElementById('float-screen'); var fsv3 = document.getElementById('floatScreenVideo'); if (fs && fsv3 && !fs.classList.contains('show')) { fsv3.srcObject = stream; fs.classList.add('show'); }
       }
     } else {
       // Audio track
@@ -1379,7 +1379,7 @@ function hideFloatingVoice() {
 
 function initDrag(el) {
   var startX, startY, startLeft, startBottom, dragging = false;
-  el.addEventListener('mousedown', function(e) {
+  el.addEventListener('mousedown', function(e) { var rect = el.getBoundingClientRect(); if (e.clientX > rect.right - 20 && e.clientY > rect.bottom - 20) return;
     if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
     dragging = true; el.classList.add('dragging');
     startX = e.clientX; startY = e.clientY;
@@ -1387,7 +1387,7 @@ function initDrag(el) {
     startLeft = rect.left; startBottom = window.innerHeight - rect.bottom;
     e.preventDefault();
   });
-  el.addEventListener('touchstart', function(e) {
+  el.addEventListener('touchstart', function(e) { var t = e.touches[0]; var rect = el.getBoundingClientRect(); if (t.clientX > rect.right - 20 && t.clientY > rect.bottom - 20) return;
     if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
     dragging = true; el.classList.add('dragging');
     var t = e.touches[0];
