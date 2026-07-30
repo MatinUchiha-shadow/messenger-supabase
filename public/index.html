@@ -762,7 +762,7 @@ async function startRelay() {
   if (realtimeRelay) await db.removeChannel(realtimeRelay);
   realtimeRelay = db.channel('realtime-relay');
   realtimeRelay.on('broadcast', { event: 'new_msg' }, function(payload) {
-    if (payload.payload.room_id !== curRoom && payload.payload.room_id !== dmSub) return;
+    if (payload.payload.room_id !== curRoom) return; // curRoom works for both group and DM
     if (payload.payload.user_id === (me && me.id)) return;
     addMsg(payload.payload);
     scrollBottom();
