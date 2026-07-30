@@ -7,10 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-:root{--bg:#0b0d12;--surface:#13161f;--panel:#1a1e2a;--border:#252a3a;--accent:#7c6dfa;--accent2:#fa6d9b;--teal:#2dd4bf;--green:#22c55e;--text:#e2e5f0;--muted:#6b7094;--red:#e5334a;--bubble-mine:#7c6dfa;--bubble-mine-text:#fff;--bubble-other:#13161f;--bubble-other-text:#e2e5f0;--font:'Vazirmatn',system-ui,sans-serif;--ease:.18s cubic-bezier(.4,0,.2,1);--radius:16px}
+:root{--bg:#0a0a0f;--bg2:#13111c;--surface:rgba(18,16,28,.75);--panel:rgba(28,24,44,.65);--border:rgba(255,255,255,.06);--accent:#8b5cf6;--accent2:#ec4899;--accent3:#06b6d4;--teal:#2dd4bf;--green:#22c55e;--text:#f1f1f5;--muted:#6b6b80;--red:#ef4444;--bubble-mine:linear-gradient(135deg,#8b5cf6,#6366f1);--bubble-mine-text:#fff;--bubble-other:rgba(30,26,44,.55);--bubble-other-text:#e4e4ed;--font:'Vazirmatn',system-ui,sans-serif;--ease:.25s cubic-bezier(.16,1,.3,1);--radius:16px;--radius-sm:10px;--glass:rgba(255,255,255,.04);--shadow-lg:0 25px 60px -15px rgba(0,0,0,.5);--shadow-sm:0 4px 15px rgba(0,0,0,.25)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
-body{font-family:var(--font);background:var(--bg);color:var(--text)}
+body{font-family:var(--font);background:linear-gradient(135deg,#0a0a0f 0%,#13111c 30%,#1a1030 60%,#0f1729 100%);background-size:300% 300%;animation:bgShift 20s ease infinite;color:var(--text)}@keyframes bgShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 button{cursor:pointer;border:none;background:none;font-family:inherit;color:inherit}
 input,textarea{font-family:inherit;outline:none;border:none;background:none;color:inherit}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
@@ -355,6 +355,37 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
   #input-bar.show{display:flex!important}
   #messages{padding-bottom:8px}
 }
+/* MODERN GLASS EFFECTS */
+.sidebar{background:rgba(14,12,24,.85)!important;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-left:1px solid rgba(255,255,255,.05)}
+.chat-header{background:rgba(18,16,28,.8)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+#input-bar{background:rgba(14,12,24,.75)!important;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid rgba(255,255,255,.04)}
+.messages-container::-webkit-scrollbar-thumb{background:var(--accent);border-radius:99px}
+button,.room-item,.dm-item,.emoji-btn,.r-chip{transition:all .25s cubic-bezier(.16,1,.3,1)}
+button:active,.room-item:active{transform:scale(.97)}
+.room-item:hover,.dm-item:hover{background:var(--glass);transform:translateX(-4px)}
+.msg-bubble{box-shadow:0 2px 12px rgba(0,0,0,.15)}
+.msg-bubble.mine{box-shadow:0 4px 18px rgba(139,92,246,.2)}
+.btn-send{box-shadow:0 4px 20px rgba(139,92,246,.35)}
+.btn-send:hover{box-shadow:0 6px 28px rgba(139,92,246,.5);transform:scale(1.06) rotate(-6deg)}
+/* FLOATING VOICE BAR */
+#float-voice{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120px);z-index:300;display:none;align-items:center;gap:12px;padding:10px 20px;border-radius:50px;background:rgba(20,16,36,.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.08);box-shadow:0 12px 40px rgba(0,0,0,.5),0 0 0 1px rgba(139,92,246,.15);transition:transform .4s cubic-bezier(.16,1,.3,1);max-width:95vw;flex-wrap:wrap;justify-content:center}
+#float-voice.show{transform:translateX(-50%) translateY(0);display:flex}
+#float-voice .fv-avatars{display:flex;align-items:center;gap:-8px}
+#float-voice .fv-av{width:34px;height:34px;border-radius:50%;border:2px solid var(--surface);background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;margin-left:-8px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+#float-voice .fv-av:first-child{margin-left:0}
+#float-voice .fv-info{display:flex;flex-direction:column;gap:1px;min-width:60px}
+#float-voice .fv-name{font-size:12px;font-weight:700;color:var(--text)}
+#float-voice .fv-count{font-size:10px;color:var(--muted)}
+#float-voice .fv-timer{font-size:11px;font-weight:600;color:var(--accent3);min-width:38px;text-align:center}
+#float-voice .fv-btn{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;transition:all .2s;border:none}
+#float-voice .fv-btn.mute{background:rgba(255,255,255,.08);color:var(--text)}
+#float-voice .fv-btn.mute.off{background:var(--red);color:#fff}
+#float-voice .fv-btn.screen{background:rgba(255,255,255,.08);color:var(--text)}
+#float-voice .fv-btn.screen.on{background:var(--accent);color:#fff}
+#float-voice .fv-btn.hangup{background:var(--red);color:#fff;width:40px;height:40px}
+#float-voice .fv-btn:hover{transform:scale(1.12);filter:brightness(1.2)}
+@media(max-width:768px){#float-voice{bottom:12px;padding:8px 14px;gap:8px;border-radius:40px}}
+
 </style>
 </head>
 <body data-theme="default">
@@ -425,6 +456,19 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
     </div>
   </div>
 </main>
+</div>
+
+<!-- FLOATING VOICE BAR -->
+<div id="float-voice">
+  <div class="fv-avatars" id="fvAvatars"></div>
+  <div class="fv-info">
+    <div class="fv-name" id="fvRoomName">Voice Lounge</div>
+    <div class="fv-count" id="fvMemberCount">0 نفر</div>
+  </div>
+  <div class="fv-timer" id="fvTimer">00:00</div>
+  <button class="fv-btn mute" id="fvMuteBtn" onclick="event.stopPropagation();toggleMute()" title="میکروفون"><i class="fas fa-microphone"></i></button>
+  <button class="fv-btn screen" id="fvScreenBtn" onclick="event.stopPropagation();shareScreen()" title="اشتراک صفحه"><i class="fas fa-desktop"></i></button>
+  <button class="fv-btn hangup" onclick="event.stopPropagation();leaveVoice()" title="قطع تماس"><i class="fas fa-phone-slash"></i></button>
 </div>
 
 <!-- AUTH (must be OUTSIDE #app so it shows when app is hidden) -->
@@ -533,7 +577,7 @@ const db = supabase.createClient(SB_URL, SB_KEY);
 const $ = id => document.getElementById(id);
 
 let me = null, myProfile = null, curRoom = null, curType = null, curDm = null;
-let myStream = null, voiceChannel = null, presenceChannel = null;
+let myStream = null, voiceChannel = null, presenceChannel = null, curVoiceRoom = null, voiceCallSeconds = 0, voiceTimerInterval = null;
 const peers = new Map(), voiceMembers = new Map();
 let pendingMediaFile = null, pendingMediaIsVideo = false, pollTimer = null, lastMsgTime = null;
 let replyToData = null, reactions = {};
@@ -656,7 +700,7 @@ window.signOut = async function() {
   me = null; myProfile = null;
   $('auth').style.display = 'flex';
   $('app').classList.remove('show');
-  if (pollTimer) clearInterval(pollTimer);
+  if (pollTimer) clearInterval(pollTimer); clearInterval(voiceTimerInterval);
 };
 
 function enterApp() {
@@ -826,9 +870,9 @@ async function openRoom(id, name, type) {
   $('chatHeader').style.display = 'flex';
   $('roomTitle').textContent = name;
   const b = $('roomBadge'); b.textContent = type === 'voice' ? 'صوتی' : 'گروه'; b.className = 'chat-badge' + (type === 'voice' ? ' voice' : '');
-  $('input-bar').classList.toggle('show', type === 'text');
+  $('input-bar').classList.add('show'); // always show input
   $('voiceActions').style.display = type === 'voice' ? 'flex' : 'none';
-  $('voice-bar').classList.toggle('show', type === 'voice');
+  $('voice-bar').classList.toggle('show', type === 'voice'); // show voice bar for voice rooms
   document.querySelectorAll('.room-item,.dm-item').forEach(function(el) { el.classList.remove('active'); });
   const activeEl = document.querySelector('.room-item[data-id="' + id + '"]');
   if (activeEl) activeEl.classList.add('active');
@@ -1086,6 +1130,7 @@ setInterval(cleanupOldFiles, 5 * 60 * 1000);
 let callTimerInterval = null, callSeconds = 0;
 
 async function joinVoice() {
+  curVoiceRoom = curRoom;
   try {
     myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     voiceChannel = db.channel('voice:' + curRoom);
@@ -1113,14 +1158,14 @@ async function joinVoice() {
     }).on('broadcast', { event: 'here' }, async function(payload) {
       if (payload.payload.userId === me.id) return;
       if (voiceMembers.has(payload.payload.userId)) return;
-      voiceMembers.set(payload.payload.userId, { username: payload.payload.username, avatar_url: payload.payload.avatar_url || null });
+      voiceMembers.set(payload.payload.userId, { username: payload.payload.username, avatar_url: payload.payload.avatar_url || null }); updateFloatingVoice();
       toast('🎙 ' + payload.payload.username + ' وارد صدا شد');
       renderCallGrid();
       // Don't create peer here - wait for their offer or create as non-initiator
     }).on('broadcast', { event: 'offer' }, async function(payload) {
       if (payload.payload.to !== me.id) return;
       if (!voiceMembers.has(payload.payload.from)) {
-        voiceMembers.set(payload.payload.from, { username: 'کاربر' });
+        voiceMembers.set(payload.payload.from, { username: 'کاربر' }); updateFloatingVoice();
         renderCallGrid();
       }
       await handleOffer(payload.payload.from, payload.payload.offer);
@@ -1160,13 +1205,13 @@ async function joinVoice() {
     }).on('broadcast', { event: 'leave' }, function(payload) {
       var m = voiceMembers.get(payload.payload.userId);
       if (m) toast('🔇 ' + m.username + ' خارج شد');
-      voiceMembers.delete(payload.payload.userId);
+      voiceMembers.delete(payload.payload.userId); updateFloatingVoice();
       if (peers.has(payload.payload.userId)) { peers.get(payload.payload.userId).close(); peers.delete(payload.payload.userId); }
       renderCallGrid();
     }).subscribe(async function(status) {
       if (status === 'SUBSCRIBED') {
-        voiceMembers.set(me.id, { username: myProfile.display_name || myProfile.username });
-        showCallPanel();
+        voiceMembers.set(me.id, { username: myProfile.display_name || myProfile.username }); updateFloatingVoice();
+        showFloatingVoice();
         // Announce join - existing members will respond with 'here'
         await voiceChannel.send({ type: 'broadcast', event: 'join', payload: { userId: me.id, username: myProfile.display_name || myProfile.username, avatar_url: myProfile.avatar_url || null } });
       }
@@ -1179,8 +1224,8 @@ function leaveVoice() {
   if (myStream) { myStream.getTracks().forEach(function(t) { t.stop(); }); myStream = null; }
   stopScreenShare();
   peers.forEach(function(pc) { pc.close(); }); peers.clear(); voiceMembers.clear();
-  hideCallPanel();
-  clearInterval(callTimerInterval);
+  hideFloatingVoice(); curVoiceRoom = null;
+  clearInterval(voiceTimerInterval);
 }
 
 function showCallPanel() {
@@ -1247,7 +1292,7 @@ async function createPeer(pid, init) {
     if (track.kind === 'video') {
       // Screen share video received
       remoteVideoStream = stream;
-      if (!voiceMembers.has(pid)) voiceMembers.set(pid, { username: 'کاربر' });
+      if (!voiceMembers.has(pid)) voiceMembers.set(pid, { username: 'کاربر' }); updateFloatingVoice();
       renderCallGrid();
       var tile = document.getElementById('tile-' + pid);
       if (tile) {
@@ -1283,7 +1328,7 @@ async function createPeer(pid, init) {
 
 async function handleOffer(from, offer) {
   if (!voiceMembers.has(from)) {
-    voiceMembers.set(from, { username: 'کاربر' });
+    voiceMembers.set(from, { username: 'کاربر' }); updateFloatingVoice();
     renderCallGrid();
   }
   var pc = peers.get(from);
@@ -1298,12 +1343,43 @@ async function handleOffer(from, offer) {
 async function handleAnswer(from, answer) { var pc = peers.get(from); if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer)); }
 async function handleIce(from, candidate) { var pc = peers.get(from); if (pc) try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch(e) {} }
 
+function showFloatingVoice() {
+  $('float-voice').classList.add('show');
+  $('fvRoomName').textContent = $('roomTitle').textContent;
+  voiceCallSeconds = 0;
+  clearInterval(voiceTimerInterval);
+  voiceTimerInterval = setInterval(function() {
+    voiceCallSeconds++;
+    var m = Math.floor(voiceCallSeconds / 60), s = voiceCallSeconds % 60;
+    $('fvTimer').textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }, 1000);
+  updateFloatingVoice();
+}
+function hideFloatingVoice() {
+  $('float-voice').classList.remove('show');
+  clearInterval(voiceTimerInterval);
+}
+function updateFloatingVoice() {
+  var avatars = $('fvAvatars'), count = $('fvMemberCount');
+  avatars.innerHTML = '';
+  var i = 0;
+  voiceMembers.forEach(function(m, uid) {
+    if (i++ >= 4) return;
+    var av = document.createElement('div');
+    av.className = 'fv-av';
+    av.textContent = (m.username || '?').charAt(0).toUpperCase();
+    avatars.appendChild(av);
+  });
+  count.textContent = voiceMembers.size + ' نفر';
+  renderVoiceMembers();
+}
+
 function toggleMute() {
   if (!myStream) return;
   var a = myStream.getAudioTracks()[0];
   if (a) {
     a.enabled = !a.enabled;
-    var btn = $('callMuteBtn');
+    var btn = $('callMuteBtn'), fvBtn = $('fvMuteBtn');
     if (btn) { btn.className = 'call-ctrl mic' + (a.enabled ? '' : ' off'); btn.innerHTML = a.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>'; }
     var ind = document.getElementById('mic-indicator-' + me.id);
     if (ind) ind.className = 'tile-mic' + (a.enabled ? '' : ' muted');
@@ -1453,7 +1529,7 @@ window.uploadAvatar = async function(input) {
 };
 window.openMyProfile = function() { if (myProfile) openProfile(myProfile.display_name || myProfile.username); };
 window.closeProfile = function() { $('profile-overlay').classList.remove('show'); };
-window.closeCallPanel = function() { leaveVoice(); };
+window.closeCallPanel = function() { $('callPanel').classList.remove('show'); };
 
 var fsOverlay = null;
 window.toggleFullscreen = function(e) {
