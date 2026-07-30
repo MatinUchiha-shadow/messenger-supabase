@@ -367,6 +367,16 @@ button:active,.room-item:active{transform:scale(.97)}
 .msg-bubble.mine{box-shadow:0 4px 18px rgba(139,92,246,.2)}
 .btn-send{box-shadow:0 4px 20px rgba(139,92,246,.35)}
 .btn-send:hover{box-shadow:0 6px 28px rgba(139,92,246,.5);transform:scale(1.06) rotate(-6deg)}
+/* DRAGGABLE */
+#float-voice.dragging{transition:none!important;cursor:grabbing}
+#float-voice{cursor:grab;user-select:none;-webkit-user-select:none}
+/* SCREEN SHARE FLOATING PREVIEW */
+#float-screen{position:fixed;bottom:100px;right:20px;z-index:299;display:none;border-radius:12px;overflow:hidden;background:#000;border:2px solid var(--accent);box-shadow:0 8px 32px rgba(0,0,0,.6);cursor:grab;max-width:280px;max-height:180px;resize:both}
+#float-screen.show{display:block}
+#float-screen video{width:100%;height:100%;object-fit:contain;display:block}
+#float-screen .fs-close{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:10px;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center}
+#float-screen .fs-label{position:absolute;bottom:4px;left:4px;font-size:10px;color:#fff;background:rgba(0,0,0,.5);padding:2px 6px;border-radius:4px}
+@media(max-width:768px){#float-screen{max-width:200px;max-height:130px;bottom:90px}}
 /* FLOATING VOICE BAR */
 #float-voice{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120px);z-index:300;display:none;align-items:center;gap:12px;padding:10px 20px;border-radius:50px;background:rgba(20,16,36,.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.08);box-shadow:0 12px 40px rgba(0,0,0,.5),0 0 0 1px rgba(139,92,246,.15);transition:transform .4s cubic-bezier(.16,1,.3,1);max-width:95vw;flex-wrap:wrap;justify-content:center}
 #float-voice.show{transform:translateX(-50%) translateY(0);display:flex}
@@ -469,6 +479,13 @@ button:active,.room-item:active{transform:scale(.97)}
   <button class="fv-btn mute" id="fvMuteBtn" onclick="event.stopPropagation();toggleMute()" title="میکروفون"><i class="fas fa-microphone"></i></button>
   <button class="fv-btn screen" id="fvScreenBtn" onclick="event.stopPropagation();shareScreen()" title="اشتراک صفحه"><i class="fas fa-desktop"></i></button>
   <button class="fv-btn hangup" onclick="event.stopPropagation();leaveVoice()" title="قطع تماس"><i class="fas fa-phone-slash"></i></button>
+</div>
+
+<!-- FLOATING SCREEN SHARE PREVIEW -->
+<div id="float-screen">
+  <button class="fs-close" onclick="stopScreenShare()">✕</button>
+  <div class="fs-label">🖥️ اشتراک صفحه</div>
+  <video id="floatScreenVideo" autoplay muted playsinline></video>
 </div>
 
 <!-- AUTH (must be OUTSIDE #app so it shows when app is hidden) -->
@@ -1359,6 +1376,44 @@ function hideFloatingVoice() {
   $('float-voice').classList.remove('show');
   clearInterval(voiceTimerInterval);
 }
+
+function initDrag(el) {
+  var startX, startY, startLeft, startBottom, dragging = false;
+  el.addEventListener('mousedown', function(e) {
+    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+    dragging = true; el.classList.add('dragging');
+    startX = e.clientX; startY = e.clientY;
+    var rect = el.getBoundingClientRect();
+    startLeft = rect.left; startBottom = window.innerHeight - rect.bottom;
+    e.preventDefault();
+  });
+  el.addEventListener('touchstart', function(e) {
+    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+    dragging = true; el.classList.add('dragging');
+    var t = e.touches[0];
+    startX = t.clientX; startY = t.clientY;
+    var rect = el.getBoundingClientRect();
+    startLeft = rect.left; startBottom = window.innerHeight - rect.bottom;
+  }, {passive: false});
+  window.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    var dx = e.clientX - startX, dy = e.clientY - startY;
+    el.style.left = (startLeft + dx) + 'px';
+    el.style.bottom = (startBottom - dy) + 'px';
+    el.style.transform = 'none';
+  });
+  window.addEventListener('touchmove', function(e) {
+    if (!dragging) return;
+    var t = e.touches[0];
+    var dx = t.clientX - startX, dy = t.clientY - startY;
+    el.style.left = (startLeft + dx) + 'px';
+    el.style.bottom = (startBottom - dy) + 'px';
+    el.style.transform = 'none';
+  }, {passive: false});
+  window.addEventListener('mouseup', function() { dragging = false; el.classList.remove('dragging'); });
+  window.addEventListener('touchend', function() { dragging = false; el.classList.remove('dragging'); });
+}
+
 function updateFloatingVoice() {
   var avatars = $('fvAvatars'), count = $('fvMemberCount');
   avatars.innerHTML = '';
@@ -1437,7 +1492,7 @@ window.shareScreen = async function() {
       await voiceChannel.send({ type: 'broadcast', event: 'screen-start', payload: { userId: me.id } });
     }
     videoTrack.onended = function() { stopScreenShare(); };
-    toast('🖥 صفحه اشتراک گذاشته شد');
+    toast('🖥 صفحه اشتراک گذاشته شد'); var fsv = document.getElementById('floatScreenVideo'); if (fsv && screenStream) { fsv.srcObject = screenStream; document.getElementById('float-screen').classList.add('show'); }
   } catch(e) {
     if (e.name !== 'AbortError') toast('❌ اشتراک صفحه رد شد');
   }
@@ -1452,6 +1507,7 @@ window.stopScreenShare = async function() {
     screenStream.getTracks().forEach(function(t) { t.stop(); });
     screenStream = null;
   }
+  document.getElementById('float-screen').classList.remove('show'); var fsv2 = document.getElementById('floatScreenVideo'); if (fsv2) fsv2.srcObject = null;
   // Remove video from self tile
   var selfTile = document.getElementById('tile-' + me.id);
   if (selfTile) {
@@ -1591,6 +1647,8 @@ function esc(t) { var d = document.createElement('div'); d.textContent = t; retu
 function toast(t) { var el = $('toast'); el.textContent = t; el.classList.add('show'); setTimeout(function() { el.classList.remove('show'); }, 2200); }
 
 applyTheme(curTheme);
+initDrag(document.getElementById("float-voice"));
+initDrag(document.getElementById("float-screen"));
 loadSession();
 
 // Fix Android keyboard - keep input visible
