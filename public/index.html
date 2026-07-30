@@ -725,12 +725,17 @@ function rOnline(state) {
 }
 
 // ROOMS
+function isDmRoomName(name) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(name);
+}
+
 async function loadRooms() {
   const { data } = await db.from('rooms').select('*').eq('is_dm', false).order('created_at');
   $('textRooms').innerHTML = '';
   $('voiceRooms').innerHTML = '';
   if (!data) return;
   data.forEach(function(r) {
+    if (isDmRoomName(r.name)) return;
     const d = document.createElement('div');
     d.className = 'room-item';
     d.dataset.id = r.id;
