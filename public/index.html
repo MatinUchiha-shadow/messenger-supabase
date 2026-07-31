@@ -555,6 +555,18 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
 .drop-zone-sub{font-size:12px;color:var(--muted)}
 .file-drop-label{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--panel);border-radius:8px;font-size:12px;color:var(--text);margin-top:4px;border:1px solid var(--border)}
 .file-drop-label .ui-icon{width:16px;height:16px;color:var(--accent)}
+
+
+.file-queue{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0}
+.file-chip{display:flex;align-items:center;gap:6px;padding:6px 28px 6px 10px;background:var(--panel);border:1px solid var(--border);border-radius:10px;font-size:12px;color:var(--text);position:relative;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-chip .chip-icon{width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--accent)}
+.file-chip .chip-icon .ui-icon{width:14px;height:14px}
+.file-chip .chip-info{min-width:0;overflow:hidden}
+.file-chip .chip-name{font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.file-chip .chip-size{font-size:9px;color:var(--muted);margin-top:1px}
+.file-chip .chip-remove{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:rgba(239,68,68,.15);color:var(--red);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:8px;padding:0}
+.file-chip .chip-remove:hover{background:var(--red);color:#fff}
+.chip-img-thumb{width:20px;height:20px;border-radius:4px;object-fit:cover;flex-shrink:0}
 </style>
 </head>
 <body data-theme="default">
@@ -618,9 +630,33 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
   <div id="replyBar" class="reply-bar" style="display:none"><div class="reply-bar-content"><div class="reply-bar-name" id="replyBarName"></div><div class="reply-bar-text" id="replyBarText"></div></div><button class="icon-btn" onclick="cancelReply()" style="width:26px;height:26px;font-size:10px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button></div>
   <div id="input-bar">
     <div id="quickRepliesStrip" class="quick-strip"></div>
-    <div class="media-preview" id="mediaPreview"><div style="position:relative;display:inline-block"><img id="prevImg" style="max-width:160px;max-height:100px;border-radius:8px;display:none"><video id="prevVid" style="max-width:160px;max-height:100px;border-radius:8px;display:none" muted playsinline></video><button class="cancel-media" onclick="cancelMedia()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button></div></div>
+    <div class="media-preview" id="mediaPreview"><div class="file-queue" id="mediaQueueList"></div><button class="cancel-media" onclick="cancelMedia()" style="position:absolute;top:-8px;right:-8px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button></div>
+function renderFileQueue() {
+  var q = $('mediaQueueList');
+  q.innerHTML = '';
+  pendingMediaFiles.forEach(function(item, idx) {
+    var f = item.file;
+    var chip = document.createElement('div');
+    chip.className = 'file-chip';
+    if (f.type.startsWith('image/') && !item.thumbUrl) item.thumbUrl = URL.createObjectURL(f);
+    if (item.thumbUrl) {
+      chip.innerHTML = '<img class="chip-img-thumb" src="'+item.thumbUrl+'" alt=""><div class="chip-info"><div class="chip-name">'+esc(f.name)+'</div><div class="chip-size">'+(f.size<1024*1024?(f.size/1024).toFixed(0)+' KB':(f.size/(1024*1024)).toFixed(1)+' MB')+'</div></div><button class="chip-remove" onclick="removeFromQueue('+idx+')" title="حذف">&times;</button>';
+    } else {
+      var iconName = item.isVideo ? 'pg-file' : f.type.startsWith('audio/') ? 'pg-volume' : 'pg-file';
+      chip.innerHTML = '<div class="chip-icon"><svg class="ui-icon" aria-hidden="true"><use href="#'+iconName+'"></use></svg></div><div class="chip-info"><div class="chip-name">'+esc(f.name)+'</div><div class="chip-size">'+(f.size<1024*1024?(f.size/1024).toFixed(0)+' KB':(f.size/(1024*1024)).toFixed(1)+' MB')+'</div></div><button class="chip-remove" onclick="removeFromQueue('+idx+')" title="حذف">&times;</button>';
+    }
+    q.appendChild(chip);
+  });
+}
+window.removeFromQueue = function(idx) {
+  var item = pendingMediaFiles[idx];
+  if (item && item.thumbUrl) URL.revokeObjectURL(item.thumbUrl);
+  pendingMediaFiles.splice(idx, 1);
+  if (pendingMediaFiles.length === 0) cancelMedia();
+  else renderFileQueue();
+};
     <div class="irow">
-      <label class="attach-btn" style="cursor:pointer"><svg class="ui-icon" aria-hidden="true"><use href="#pg-paperclip"></use></svg><input type="file" id="mediaInput" accept="*/*,.mcworld,.mcpack,.mcaddon,.mcmeta,.mctemplate,.mcstructure,.mcfunction,.jar,.json,.dat,.nbt,.lang,.properties,.mcgame,.mclevel" style="display:none"></label>
+      <label class="attach-btn" style="cursor:pointer"><svg class="ui-icon" aria-hidden="true"><use href="#pg-paperclip"></use></svg><input type="file" id="mediaInput" accept="*/*,.mcworld,.mcpack,.mcaddon,.mcmeta,.mctemplate,.mcstructure,.mcfunction,.jar,.json,.dat,.nbt,.lang,.properties,.mcgame,.mclevel" multiple style="display:none"></label>
       <label class="camera-btn" style="cursor:pointer"><svg class="ui-icon" aria-hidden="true"><use href="#pg-camera"></use></svg><input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none"></label>
       <textarea id="msg-input" rows="1" placeholder="پیام…"></textarea>
       <button class="btn-send" id="sendBtn" onclick="sendMsg()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-send"></use></svg></button>
@@ -954,7 +990,7 @@ function fmtVoiceTime(v) {
   return h > 0 ? h + ':' + pad(m) + ':' + pad(sec) : m + ':' + pad(sec);
 }
 const peers = new Map(), voiceMembers = new Map();
-let pendingMediaFile = null, pendingMediaIsVideo = false, pollTimer = null, lastMsgTime = null;
+let pendingMediaFiles = [], pollTimer = null, lastMsgTime = null;
 let replyToData = null, reactions = {}, audioSettings = { deviceId: null, echoCancellation: true, noiseSuppression: true, autoGainControl: true, notifications: true };
 const REACTIONS = [
   { key: 'like', icon: 'check', label: 'پسندیدن' },
@@ -1446,8 +1482,8 @@ function scrollBottom() {
 
 window.sendMsg = async function() {
   var inp = $('msg-input'), text = inp.value.trim();
-  if ((!text && !pendingMediaFile) || !me || !curRoom) return;
-  if (pendingMediaFile) { await sendMedia(inp, text); return; }
+  if ((!text && !pendingMediaFiles.length) || !me || !curRoom) return;
+  if (pendingMediaFiles.length) { await sendMediaQueue(inp, text); return; }
   inp.value = ''; inp.style.height = '';
   var sb = $('sendBtn'); sb.classList.remove('sent'); void sb.offsetWidth; sb.classList.add('sent');
   var md = { room_id: curRoom, user_id: me.id, type: 'text', content: text };
@@ -1569,20 +1605,17 @@ function renderReactions(msgId) {
 
 // MEDIA
 $('mediaInput').addEventListener('change', function() {
-  var f = this.files[0]; if (!f) return;
-  pendingMediaFile = f; pendingMediaIsVideo = f.type.startsWith('video/');
-  var url = URL.createObjectURL(f);
-  if (pendingMediaIsVideo) { $('prevVid').src = url; $('prevVid').style.display = 'block'; $('prevImg').style.display = 'none'; }
-  else { $('prevImg').src = url; $('prevImg').style.display = 'block'; $('prevVid').style.display = 'none'; }
-  $('mediaPreview').style.display = 'block'; this.value = '';
+  var added=0;
+  for(var i=0;i<this.files.length;i++){var file=this.files[i];pendingMediaFiles.push({file:file,isVideo:file.type.startsWith('video/')});added++;}
+  if(added>0){renderFileQueue();$('mediaPreview').style.display='block';toast(added+' فایل به صف اضافه شد');}
+  this.value='';
 });
 $('cameraInput').addEventListener('change', function() {
   var f = this.files[0]; if (!f) return;
-  pendingMediaFile = f; pendingMediaIsVideo = false;
-  $('prevImg').src = URL.createObjectURL(f); $('prevImg').style.display = 'block'; $('prevVid').style.display = 'none';
-  $('mediaPreview').style.display = 'block'; this.value = '';
+  pendingMediaFiles.push({file:f,isVideo:false});
+  renderFileQueue();$('mediaPreview').style.display='block';this.value='';
 });
-window.cancelMedia = function() { pendingMediaFile = null; $('mediaPreview').style.display = 'none'; $('prevImg').src = ''; $('prevVid').src = ''; var fl = $('mediaPreview').querySelector('.file-drop-label'); if (fl) fl.remove(); };
+window.cancelMedia = function() { pendingMediaFiles.forEach(function(item){if(item.thumbUrl)URL.revokeObjectURL(item.thumbUrl);}); pendingMediaFiles = []; $('mediaPreview').style.display = 'none'; $('mediaQueueList').innerHTML = ''; };
 
 // DRAG & DROP
 var dragCounter = 0;
@@ -1598,114 +1631,65 @@ document.addEventListener('drop', function(e) {
   var f = files[0];
   if (!curRoom) { toast('اول یه روم انتخاب کن'); return; }
   // Accept ALL file types - no MIME restriction
-  pendingMediaFile = f;
-  pendingMediaIsVideo = f.type.startsWith('video/');
-  var url = URL.createObjectURL(f);
-  if (pendingMediaIsVideo) { $('prevVid').src = url; $('prevVid').style.display = 'block'; $('prevImg').style.display = 'none'; }
-  else if (f.type.startsWith('image/')) { $('prevImg').src = url; $('prevImg').style.display = 'block'; $('prevVid').style.display = 'none'; }
-  else { $('prevImg').style.display = 'none'; $('prevVid').style.display = 'none'; }
-  $('mediaPreview').style.display = 'block';
-  // Show filename in preview for non-media files
-  var prevContainer = $('mediaPreview').querySelector('div');
-  var existingLabel = prevContainer.querySelector('.file-drop-label');
-  if (existingLabel) existingLabel.remove();
-  if (!f.type.startsWith('image/') && !f.type.startsWith('video/')) {
-    var lbl = document.createElement('div');
-    lbl.className = 'file-drop-label';
-    lbl.innerHTML = '<svg class="ui-icon" aria-hidden="true"><use href="#pg-file"></use></svg> ' + esc(f.name) + ' (' + (f.size < 1024*1024 ? (f.size/1024).toFixed(0)+' KB' : (f.size/(1024*1024)).toFixed(1)+' MB') + ')';
-    prevContainer.appendChild(lbl);
-  }
-  toast('فایل آماده ارسال - پیام رو بنویس و send کن');
+  pendingMediaFiles.push({file:f,isVideo:f.type.startsWith('video/')});
+  renderFileQueue();$('mediaPreview').style.display='block';
+  toast(pendingMediaFiles.length+' فایل در صف - پیام رو بنویس و send کن')
 });
 
-async function sendMedia(inp, cap) {
-  var file = pendingMediaFile, isV = pendingMediaIsVideo;
-  cancelMedia(); inp.value = ''; inp.style.height = '';
+
+async function sendMediaQueue(inp, cap) {
+  if (!pendingMediaFiles.length) return;
+  var queue = pendingMediaFiles.slice();
+  var total = queue.length;
+  cancelMedia();
+  inp.value = ''; inp.style.height = '';
+  for (var i = 0; i < queue.length; i++) {
+    var item = queue[i];
+    await sendOneFile(item.file, item.isVideo, cap, total, i+1);
+  }
+  toast(total + ' فایل ارسال شد');
+}
+async function sendOneFile(file, isV, cap, total, idx) {
   var ext = (file.name.split('.').pop() || (isV ? 'mp4' : 'jpg')).toLowerCase().replace(/[^a-z0-9]/g, '');
-  var path = Date.now() + '.' + (ext || 'jpg');
+  var path = Date.now() + '_' + Math.random().toString(36).slice(2,6) + '.' + (ext || 'jpg');
   var bucket = isV ? 'chat-videos' : 'chat-images';
-  // Show upload overlay
-  var overlay = $('uploadOverlay');
-  var barFill = $('uploadBarFill');
-  var pctEl = $('uploadPct');
-  var textEl = $('uploadText');
-  var subEl = $('uploadSub');
-  overlay.classList.add('show');
-  barFill.style.width = '0%';
-  pctEl.textContent = '0%';
-  textEl.textContent = isV ? 'در حال آپلود ویدیو...' : 'در حال آپلود عکس...';
+  var overlay = $('uploadOverlay'), barFill = $('uploadBarFill'), pctEl = $('uploadPct'), textEl = $('uploadText'), subEl = $('uploadSub');
+  overlay.classList.add('show');barFill.style.width='0%';
+  textEl.textContent = 'آپلود ' + idx + ' از ' + total;
   subEl.textContent = file.name;
-  // Show file size
-  var totalMB = (file.size / (1024*1024)).toFixed(1);
+  var totalMB = (file.size/(1024*1024)).toFixed(1);
   pctEl.textContent = '0 / ' + totalMB + ' MB';
   try {
-    // Real XHR upload with progress tracking
     var upResult = await new Promise(async function(resolve, reject) {
       var xhr = new XMLHttpRequest();
       xhr.open('POST', SB_URL + '/storage/v1/object/' + bucket + '/' + path);
-      xhr.setRequestHeader('apikey', SB_KEY);
-      xhr.setRequestHeader('x-upsert', 'true');
+      xhr.setRequestHeader('apikey', SB_KEY);xhr.setRequestHeader('x-upsert','true');
       xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-      // Get auth token properly
       var session = (await db.auth.getSession()).data.session;
-      var token = session ? session.access_token : SB_KEY;
-      xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + (session ? session.access_token : SB_KEY));
       xhr.upload.onprogress = function(e) {
-        if (e.lengthComputable) {
-          var loadedMB = (e.loaded / (1024*1024)).toFixed(1);
-          var pct = Math.round((e.loaded / e.total) * 100);
-          barFill.style.width = pct + '%';
-          pctEl.textContent = loadedMB + ' / ' + totalMB + ' MB (' + pct + '%)';
-        }
+        if(e.lengthComputable){var lm=(e.loaded/(1024*1024)).toFixed(1);var p=Math.round((e.loaded/e.total)*100);barFill.style.width=p+'%';pctEl.textContent=lm+' / '+totalMB+' MB ('+p+'%)';}
       };
-      xhr.onload = function() {
-        if (xhr.status >= 200 && xhr.status < 300) resolve(JSON.parse(xhr.responseText));
-        else reject(new Error(xhr.status + ' ' + xhr.statusText));
-      };
-      xhr.onerror = function() { reject(new Error('Upload failed')); };
+      xhr.onload = function(){if(xhr.status>=200&&xhr.status<300)resolve(JSON.parse(xhr.responseText));else reject(new Error(xhr.status));};
+      xhr.onerror = function(){reject(new Error('Upload failed'));};
       xhr.send(file);
     });
-    barFill.style.width = '100%';
-    pctEl.textContent = totalMB + ' / ' + totalMB + ' MB (100%)';
-    textEl.textContent = 'آپلود کامل شد';
-    subEl.textContent = 'در حال ارسال پیام...';
-    await new Promise(function(r) { setTimeout(r, 600); });
+    barFill.style.width='100%';pctEl.textContent=totalMB+' / '+totalMB+' MB (100%)';
+    textEl.textContent='آپلود شد';await new Promise(function(r){setTimeout(r,300);});
     overlay.classList.remove('show');
     var ud = db.storage.from(bucket).getPublicUrl(path);
     var type = isV ? 'video' : file.type.startsWith('image/') ? 'image' : 'file';
-    var md = { room_id: curRoom, user_id: me.id, type: type, content: cap || file.name, file_url: ud.data.publicUrl, file_name: file.name, file_size: file.size };
-    if (replyToData) { md.reply_to_id = replyToData.id; md.reply_to_name = replyToData.name; md.reply_to_text = replyToData.text; }
-    var _reply = replyToData;
-    cancelReply();
-    // Try insert().select() first for matching DB ID, fallback to manual
-    if (realtimeRelay) { var relayMd = { id: Date.now().toString(), room_id: md.room_id, user_id: md.user_id, type: md.type, content: md.content, file_url: md.file_url, file_name: md.file_name, file_size: md.file_size, created_at: new Date().toISOString(), profiles: myProfile }; realtimeRelay.send({ type: 'broadcast', event: 'new_msg', payload: relayMd }); }
+    var md = {room_id:curRoom,user_id:me.id,type:type,content:cap||file.name,file_url:ud.data.publicUrl,file_name:file.name,file_size:file.size};
+    if(replyToData&&idx===total){md.reply_to_id=replyToData.id;md.reply_to_name=replyToData.name;md.reply_to_text=replyToData.text;}
+    if(idx===total)cancelReply();
+    if(realtimeRelay){realtimeRelay.send({type:'broadcast',event:'new_msg',payload:{id:Date.now().toString(),room_id:md.room_id,user_id:md.user_id,type:md.type,content:md.content,file_url:md.file_url,file_name:md.file_name,file_size:md.file_size,created_at:new Date().toISOString(),profiles:myProfile}});}
     var ins = await db.from('messages').insert(md).select('*').single();
-    var msgObj;
-    if (ins.data) {
-      msgObj = ins.data;
-      msgObj.profiles = myProfile;
-    } else {
-      msgObj = {
-        id: (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString() + Math.random()),
-        room_id: curRoom,
-        user_id: me.id,
-        type: type,
-        content: cap || file.name,
-        file_url: ud.data.publicUrl,
-        file_name: file.name,
-        file_size: file.size,
-        created_at: new Date().toISOString(),
-        profiles: myProfile
-      };
-      if (_reply) { msgObj.reply_to_id = _reply.id; msgObj.reply_to_name = _reply.name; msgObj.reply_to_text = _reply.text; }
-    }
-    addMsg(msgObj);
-    scrollBottom();
-    toast('ارسال شد');
+    var msgObj = ins.data || {id:(crypto.randomUUID?crypto.randomUUID():Date.now().toString()),room_id:curRoom,user_id:me.id,type:type,content:cap||file.name,file_url:ud.data.publicUrl,file_name:file.name,file_size:file.size,created_at:new Date().toISOString(),profiles:myProfile};
+    if(ins.data)msgObj.profiles=myProfile;
+    addMsg(msgObj);scrollBottom();
   } catch(e) {
-    clearInterval(progressInterval);
+    toast('خطا در آپلود ' + idx + ': ' + (e.message||'نامشخص'));
     overlay.classList.remove('show');
-    toast('خطا: ' + e.message);
   }
 }
 
