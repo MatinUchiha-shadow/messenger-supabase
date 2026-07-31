@@ -2206,15 +2206,15 @@ window.openAvatarCrop = function(input) {
   var url = URL.createObjectURL(f);
   var img = new Image();
   img.onload = function() {
+    $('crop-overlay').classList.add('show');
     var vp = $('cropViewport');
-    var vpSize = vp.getBoundingClientRect().width;
+    var vpSize = vp.getBoundingClientRect().width || 230;
     cropState = { img: img, nw: img.naturalWidth, nh: img.naturalHeight, zoom: 1, dx: 0, dy: 0, baseScale: vpSize / Math.min(img.naturalWidth, img.naturalHeight), url: url };
     var ci = $('cropImg');
     ci.src = url;
     $('cropZoom').value = 1;
     $('cropZoomVal').textContent = '100%';
     cropRender();
-    $('crop-overlay').classList.add('show');
     cropBindDrag();
     input.value = '';
   };
