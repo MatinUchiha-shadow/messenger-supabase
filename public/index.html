@@ -73,8 +73,8 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .fg{display:flex;flex-direction:column;gap:6px}
 .fg label{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:1px}
 .field{position:relative}
-.field i.lead{position:absolute;top:50%;right:13px;transform:translateY(-50%);font-size:13px;color:var(--muted);pointer-events:none;transition:color .25s}
-.field:focus-within i.lead{color:var(--accent)}
+.field .lead{position:absolute;top:50%;right:13px;transform:translateY(-50%);width:13px;height:13px;font-size:13px;color:var(--muted);pointer-events:none;transition:color .25s}
+.field:focus-within .lead{color:var(--accent)}
 .fg input{width:100%;padding:13px 38px 13px 14px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.08);border-radius:13px;font-size:14px;color:var(--text);transition:border-color .25s,box-shadow .25s,background .25s}
 .fg input:focus{border-color:rgba(124,109,250,.6);box-shadow:0 0 0 4px rgba(124,109,250,.13),0 4px 20px -8px rgba(124,109,250,.4);background:rgba(124,109,250,.05)}
 .fg input::placeholder{color:var(--muted)}
@@ -90,7 +90,7 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .auth-btn .spin{display:none;width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .7s linear infinite}
 .auth-btn.loading .spin{display:inline-block}
 .auth-btn.loading .btn-txt{opacity:.85}
-.auth-btn.loading i{display:none}
+.auth-btn.loading i,.auth-btn.loading .ui-icon{display:none}
 @keyframes spin{to{transform:rotate(360deg)}}
 .auth-err{font-size:12px;color:var(--red);text-align:center;min-height:16px}
 .auth-err:not(:empty){animation:shake .3s}
@@ -124,8 +124,8 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .room-item,.dm-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;cursor:pointer;transition:all .25s var(--ease);color:var(--muted);font:500 13px inherit;margin:2px 4px}
 .room-item:hover,.dm-item:hover{background:var(--panel);color:var(--text)}
 .room-item.active{background:linear-gradient(135deg,rgba(139,92,246,.15),rgba(236,72,153,.08));color:var(--accent);box-shadow:0 2px 10px rgba(139,92,246,.1)}
-.room-item i{width:16px;text-align:center;font-size:12px;opacity:.7}
-.room-item.active i{opacity:1}
+.room-item .ui-icon{width:16px;height:16px;opacity:.7}
+.room-item.active .ui-icon{opacity:1}
 .room-item span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dm-item .dm-av{width:32px;height:32px;border-radius:8px;background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;overflow:hidden}
 .dm-item .dm-av img{width:100%;height:100%;object-fit:cover;border-radius:inherit}
@@ -276,7 +276,7 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .meet-card-status.mic-off{background:rgba(239,68,68,.15);color:var(--red)}
 .meet-card-status .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
 .meet-empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--muted)}
-.meet-empty i{font-size:48px;margin-bottom:16px;opacity:.4}
+.meet-empty .ui-icon{width:48px;height:48px;margin-bottom:16px;opacity:.4}
 .meet-empty p{font-size:14px}
 @media(max-width:768px){
   .meet-header{padding:12px 16px}
@@ -294,10 +294,10 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .reply-bar-content{flex:1;min-width:0}
 .reply-bar-name{font-size:10px;color:var(--accent);font-weight:600}
 .reply-bar-text{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.emoji-strip{display:flex;gap:2px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
-.emoji-strip::-webkit-scrollbar{height:0}
-.emoji-btn{width:30px;height:30px;border-radius:8px;font-size:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:transform .1s;cursor:pointer}
-.emoji-btn:hover{background:var(--panel);transform:scale(1.15)}
+.quick-strip{display:flex;gap:2px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.quick-strip::-webkit-scrollbar{height:0}
+.quick-btn{width:auto;min-width:30px;height:30px;padding:0 8px;border-radius:8px;font-size:11px;gap:5px;white-space:nowrap;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:transform .1s;cursor:pointer}
+.quick-btn:hover{background:var(--panel);transform:scale(1.15)}
 .irow{display:flex;gap:6px;align-items:flex-end}
 #msg-input{flex:1;padding:11px 16px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.08);border-radius:16px;font-size:14px;resize:none;max-height:110px;line-height:1.6;transition:all var(--ease)}
 #msg-input:focus{border-color:rgba(167,139,250,.6);background:rgba(255,255,255,.06);box-shadow:0 0 0 3px rgba(167,139,250,.1)}
@@ -483,7 +483,7 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .chat-header{backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 #input-bar{backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 .messages-container::-webkit-scrollbar-thumb{background:var(--accent);border-radius:99px}
-button,.room-item,.dm-item,.emoji-btn,.r-chip{transition:all .25s cubic-bezier(.16,1,.3,1)}
+button,.room-item,.dm-item,.quick-btn,.reaction-btn,.r-chip{transition:all .25s cubic-bezier(.16,1,.3,1)}
 button:active,.room-item:active{transform:scale(.97)}
 .room-item:hover,.dm-item:hover{background:var(--glass);transform:translateX(-4px)}
 .msg-bubble{box-shadow:0 2px 12px rgba(0,0,0,.15)}
@@ -519,6 +519,23 @@ button:active,.room-item:active{transform:scale(.97)}
 #float-voice .fv-btn:hover{transform:scale(1.12);filter:brightness(1.2)}
 @media(max-width:768px){#float-voice{bottom:12px;padding:8px 14px;gap:8px;border-radius:40px}}
 
+
+.icon-sprite{position:absolute;width:0;height:0;overflow:hidden;pointer-events:none}
+.ui-icon{width:1.2em;height:1.2em;display:inline-block;vertical-align:-.18em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.auth-logo{display:grid;place-items:center;position:relative;overflow:hidden}
+.auth-logo .ui-icon{width:34px;height:34px;position:relative;z-index:1}
+.welcome-icon{width:92px;height:92px;display:grid;place-items:center;border:1px solid rgba(167,139,250,.35);border-radius:30px;color:var(--accent);background:linear-gradient(145deg,rgba(167,139,250,.16),rgba(34,211,238,.08));box-shadow:0 16px 40px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.1);animation:pgWelcomePulse 3s ease-in-out infinite}
+.welcome-icon .ui-icon{width:48px;height:48px}
+@keyframes pgWelcomePulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px);box-shadow:0 22px 48px rgba(0,0,0,.32),0 0 0 8px rgba(167,139,250,.05)}}
+.room-item>.ui-icon{width:17px;height:17px;color:var(--accent);margin-left:3px}
+.settings-section-title .ui-icon,.tp-title .ui-icon,.fs-label .ui-icon,.pf-stat-lbl .ui-icon{width:14px;height:14px;vertical-align:-.2em;margin-left:4px}
+.owner-mark{display:inline-flex;align-items:center;gap:4px;color:var(--accent)}
+.owner-mark .ui-icon{width:14px;height:14px}
+.pf-role-badge,.sb-role{display:inline-flex;align-items:center;gap:4px}
+.pf-role-badge .ui-icon,.sb-role .ui-icon{width:12px;height:12px}
+.vb-join,.btn-primary,.btn-ghost,.call-ctrl,.fv-btn,.icon-btn,.fs-full,.fs-close{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16px;height:16px}
+
 </style>
 </head>
 <body data-theme="default">
@@ -547,47 +564,47 @@ button:active,.room-item:active{transform:scale(.97)}
 </div>
 
 <!-- SIDEBAR -->
-<button class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i></button>
+<button class="menu-btn" id="menuBtn"><svg class="ui-icon" aria-hidden="true"><use href="#pg-menu"></use></svg></button>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 <aside class="sidebar" id="sidebar">
   <div class="sb-head">
     <div class="avatar" id="hav" onclick="openMyProfile()"></div>
     <div class="sb-info"><div class="sb-name" id="hname" onclick="openMyProfile()"></div><span class="sb-role" id="hrole"></span></div>
-    <button class="icon-btn" onclick="openSettings()" title="تنظیمات" style="width:30px;height:30px;font-size:13px"><i class="fas fa-cog"></i></button>
-    <button class="icon-btn" onclick="openThemePanel()" title="تم" style="width:30px;height:30px;font-size:13px"><i class="fas fa-palette"></i></button>
+    <button class="icon-btn" onclick="openSettings()" title="تنظیمات" style="width:30px;height:30px;font-size:13px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-settings"></use></svg></button>
+    <button class="icon-btn" onclick="openThemePanel()" title="تم" style="width:30px;height:30px;font-size:13px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-palette"></use></svg></button>
   </div>
   <div class="sb-body">
     <div class="sb-section"><div class="sb-sec-head"><span class="sb-sec-title">خصوصی</span></div><div id="dmList"></div></div>
-    <div class="sb-section"><div class="sb-sec-head"><span class="sb-sec-title">گروه‌ها</span><button class="btn-add" id="addTextBtn" onclick="openCreateRoom('text')"><i class="fas fa-plus"></i></button></div><div id="textRooms"></div></div>
-    <div class="sb-section"><div class="sb-sec-head"><span class="sb-sec-title">صوتی</span><button class="btn-add" id="addVoiceBtn" onclick="openCreateRoom('voice')"><i class="fas fa-plus"></i></button></div><div id="voiceRooms"></div></div>
+    <div class="sb-section"><div class="sb-sec-head"><span class="sb-sec-title">گروه‌ها</span><button class="btn-add" id="addTextBtn" onclick="openCreateRoom('text')"><svg class="ui-icon" aria-hidden="true"><use href="#pg-plus"></use></svg></button></div><div id="textRooms"></div></div>
+    <div class="sb-section"><div class="sb-sec-head"><span class="sb-sec-title">صوتی</span><button class="btn-add" id="addVoiceBtn" onclick="openCreateRoom('voice')"><svg class="ui-icon" aria-hidden="true"><use href="#pg-plus"></use></svg></button></div><div id="voiceRooms"></div></div>
     <div class="sb-section"><div class="sb-sec-head"><span class="sb-sec-title">آنلاین</span></div><div id="onlineList"></div></div>
   </div>
-  <div class="sb-foot"><button class="btn-logout" onclick="signOut()"><i class="fas fa-sign-out-alt"></i> خروج</button></div>
+  <div class="sb-foot"><button class="btn-logout" onclick="signOut()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-logout"></use></svg> خروج</button></div>
 </aside>
 
 <!-- MAIN -->
 <main class="main">
   <div class="chat-header" id="chatHeader" style="display:none">
     <div class="chat-title"><h2 id="roomTitle"></h2><span class="chat-badge" id="roomBadge"></span></div>
-    <button class="icon-btn" id="meetBtn" onclick="openMeet()" title="مشاهده اعضا" style="display:none;width:34px;height:34px;font-size:14px"><i class="fas fa-users"></i></button>
+    <button class="icon-btn" id="meetBtn" onclick="openMeet()" title="مشاهده اعضا" style="display:none;width:34px;height:34px;font-size:14px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-users"></use></svg></button>
     <div class="chat-actions" id="voiceActions" style="display:none">
-      <button class="vb-join" id="joinVoiceBtn" onclick="joinVoice()"><i class="fas fa-microphone"></i> ورود</button>
-      <button class="vb-join leave" id="leaveVoiceBtn" style="display:none" onclick="leaveVoice()"><i class="fas fa-microphone-slash"></i> خروج</button>
-      <button class="icon-btn" id="shareScreenBtn" style="display:none" onclick="shareScreen()" title="اشتراک صفحه"><i class="fas fa-desktop"></i></button>
+      <button class="vb-join" id="joinVoiceBtn" onclick="joinVoice()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg> ورود</button>
+      <button class="vb-join leave" id="leaveVoiceBtn" style="display:none" onclick="leaveVoice()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic-off"></use></svg> خروج</button>
+      <button class="icon-btn" id="shareScreenBtn" style="display:none" onclick="shareScreen()" title="اشتراک صفحه"><svg class="ui-icon" aria-hidden="true"><use href="#pg-screen"></use></svg></button>
     </div>
   </div>
-  <div id="voice-bar"><div style="flex:1"><div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:3px">🔊 صوتی</div><div class="vb-members" id="vbMembers"><span style="font-size:11px;color:var(--muted)">خالی</span></div></div></div>
-  <div id="welcome" class="welcome"><div class="welcome-icon">💬</div><h2 style="font-size:18px;font-weight:600">GapChat</h2><p style="font-size:12px">یه اتاق یا پیام خصوصی انتخاب کن</p></div>
+  <div id="voice-bar"><div style="flex:1"><div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:3px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg> صوتی</div><div class="vb-members" id="vbMembers"><span style="font-size:11px;color:var(--muted)">خالی</span></div></div></div>
+  <div id="welcome" class="welcome"><div class="welcome-icon"><svg class="ui-icon" aria-hidden="true"><use href="#pg-chat"></use></svg></div><h2 style="font-size:18px;font-weight:600">GapChat</h2><p style="font-size:12px">یه اتاق یا پیام خصوصی انتخاب کن</p></div>
   <div id="messages" style="display:none"></div>
-  <div id="replyBar" class="reply-bar" style="display:none"><div class="reply-bar-content"><div class="reply-bar-name" id="replyBarName"></div><div class="reply-bar-text" id="replyBarText"></div></div><button class="icon-btn" onclick="cancelReply()" style="width:26px;height:26px;font-size:10px">✕</button></div>
+  <div id="replyBar" class="reply-bar" style="display:none"><div class="reply-bar-content"><div class="reply-bar-name" id="replyBarName"></div><div class="reply-bar-text" id="replyBarText"></div></div><button class="icon-btn" onclick="cancelReply()" style="width:26px;height:26px;font-size:10px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button></div>
   <div id="input-bar">
-    <div id="emojiStrip" class="emoji-strip"></div>
-    <div class="media-preview" id="mediaPreview"><div style="position:relative;display:inline-block"><img id="prevImg" style="max-width:160px;max-height:100px;border-radius:8px;display:none"><video id="prevVid" style="max-width:160px;max-height:100px;border-radius:8px;display:none" muted playsinline></video><button class="cancel-media" onclick="cancelMedia()">✕</button></div></div>
+    <div id="quickRepliesStrip" class="quick-strip"></div>
+    <div class="media-preview" id="mediaPreview"><div style="position:relative;display:inline-block"><img id="prevImg" style="max-width:160px;max-height:100px;border-radius:8px;display:none"><video id="prevVid" style="max-width:160px;max-height:100px;border-radius:8px;display:none" muted playsinline></video><button class="cancel-media" onclick="cancelMedia()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button></div></div>
     <div class="irow">
-      <label class="attach-btn" style="cursor:pointer"><i class="fas fa-paperclip"></i><input type="file" id="mediaInput" accept="image/*,video/*" style="display:none"></label>
-      <label class="camera-btn" style="cursor:pointer"><i class="fas fa-camera"></i><input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none"></label>
+      <label class="attach-btn" style="cursor:pointer"><svg class="ui-icon" aria-hidden="true"><use href="#pg-paperclip"></use></svg><input type="file" id="mediaInput" accept="image/*,video/*" style="display:none"></label>
+      <label class="camera-btn" style="cursor:pointer"><svg class="ui-icon" aria-hidden="true"><use href="#pg-camera"></use></svg><input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none"></label>
       <textarea id="msg-input" rows="1" placeholder="پیام…"></textarea>
-      <button class="btn-send" id="sendBtn" onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
+      <button class="btn-send" id="sendBtn" onclick="sendMsg()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-send"></use></svg></button>
     </div>
   </div>
 </main>
@@ -601,16 +618,16 @@ button:active,.room-item:active{transform:scale(.97)}
     <div class="fv-count" id="fvMemberCount">0 نفر</div>
   </div>
   <div class="fv-timer" id="fvTimer">00:00</div>
-  <button class="fv-btn mute" id="fvMuteBtn" onclick="event.stopPropagation();toggleMute()" title="میکروفون"><i class="fas fa-microphone"></i></button>
-  <button class="fv-btn screen" id="fvScreenBtn" onclick="event.stopPropagation();shareScreen()" title="اشتراک صفحه"><i class="fas fa-desktop"></i></button>
-  <button class="fv-btn hangup" onclick="event.stopPropagation();leaveVoice()" title="قطع تماس"><i class="fas fa-phone-slash"></i></button>
+  <button class="fv-btn mute" id="fvMuteBtn" onclick="event.stopPropagation();toggleMute()" title="میکروفون"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg></button>
+  <button class="fv-btn screen" id="fvScreenBtn" onclick="event.stopPropagation();shareScreen()" title="اشتراک صفحه"><svg class="ui-icon" aria-hidden="true"><use href="#pg-screen"></use></svg></button>
+  <button class="fv-btn hangup" onclick="event.stopPropagation();leaveVoice()" title="قطع تماس"><svg class="ui-icon" aria-hidden="true"><use href="#pg-phone"></use></svg></button>
 </div>
 
 <!-- FLOATING SCREEN SHARE PREVIEW -->
 <div id="float-screen">
-  <button class="fs-full" onclick="toggleFsPreview()" title="تمام‌صفحه">⛶</button>
-  <button class="fs-close" onclick="stopScreenShare()">✕</button>
-  <div class="fs-label">🖥️ اشتراک صفحه</div>
+  <button class="fs-full" onclick="toggleFsPreview()" title="تمام‌صفحه"><svg class="ui-icon" aria-hidden="true"><use href="#pg-expand"></use></svg></button>
+  <button class="fs-close" onclick="stopScreenShare()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button>
+  <div class="fs-label"><svg class="ui-icon" aria-hidden="true"><use href="#pg-screen"></use></svg> اشتراک صفحه</div>
   <video id="floatScreenVideo" autoplay muted playsinline></video>
 </div>
 
@@ -622,7 +639,7 @@ button:active,.room-item:active{transform:scale(.97)}
   <div class="auth-grid-bg"></div>
   <div class="auth-ui">
     <div class="auth-head">
-      <div class="auth-logo"><i class="fas fa-bolt"></i></div>
+      <div class="auth-logo"><svg class="ui-icon" aria-hidden="true"><use href="#pg-bolt"></use></svg></div>
       <div class="auth-brand">GapChat</div>
       <div class="auth-tag">پیام‌رسان نسل بعدی</div>
     </div>
@@ -632,19 +649,19 @@ button:active,.room-item:active{transform:scale(.97)}
         <button class="auth-tab" data-tab="register">ثبت‌نام</button>
       </div>
       <form id="loginForm" class="auth-form active">
-        <div class="fg"><label>ایمیل</label><div class="field"><i class="fas fa-envelope lead"></i><input type="email" id="loginEmail" placeholder="example@email.com" required autocomplete="email"></div></div>
-        <div class="fg"><label>رمز عبور</label><div class="field"><i class="fas fa-lock lead"></i><input type="password" id="loginPass" placeholder="حداقل ۶ کاراکتر" required autocomplete="current-password"><button type="button" class="pass-toggle" onclick="togglePass('loginPass',this)" tabindex="-1" aria-label="نمایش رمز"><i class="fas fa-eye"></i></button></div></div>
+        <div class="fg"><label>ایمیل</label><div class="field"><svg class="ui-icon lead" aria-hidden="true"><use href="#pg-envelope"></use></svg><input type="email" id="loginEmail" placeholder="example@email.com" required autocomplete="email"></div></div>
+        <div class="fg"><label>رمز عبور</label><div class="field"><svg class="ui-icon lead" aria-hidden="true"><use href="#pg-shield"></use></svg><input type="password" id="loginPass" placeholder="حداقل ۶ کاراکتر" required autocomplete="current-password"><button type="button" class="pass-toggle" onclick="togglePass('loginPass',this)" tabindex="-1" aria-label="نمایش رمز"><svg class="ui-icon" aria-hidden="true"><use href="#pg-eye"></use></svg></button></div></div>
         <div class="auth-err" id="authErr"></div>
-        <button type="submit" class="auth-btn"><span class="spin"></span><span class="btn-txt">ورود</span><i class="fas fa-arrow-left"></i></button>
+        <button type="submit" class="auth-btn"><span class="spin"></span><span class="btn-txt">ورود</span><svg class="ui-icon" aria-hidden="true"><use href="#pg-reply"></use></svg></button>
       </form>
       <form id="registerForm" class="auth-form">
-        <div class="fg"><label>اسم نمایشی</label><div class="field"><i class="fas fa-user lead"></i><input type="text" id="regName" placeholder="مثلاً: علی" maxlength="20" required autocomplete="nickname"></div></div>
-        <div class="fg"><label>ایمیل</label><div class="field"><i class="fas fa-envelope lead"></i><input type="email" id="regEmail" placeholder="example@email.com" required autocomplete="email"></div></div>
-        <div class="fg"><label>رمز عبور</label><div class="field"><i class="fas fa-lock lead"></i><input type="password" id="regPass" placeholder="حداقل ۶ کاراکتر" required minlength="6" autocomplete="new-password"><button type="button" class="pass-toggle" onclick="togglePass('regPass',this)" tabindex="-1" aria-label="نمایش رمز"><i class="fas fa-eye"></i></button></div></div>
+        <div class="fg"><label>اسم نمایشی</label><div class="field"><svg class="ui-icon lead" aria-hidden="true"><use href="#pg-users"></use></svg><input type="text" id="regName" placeholder="مثلاً: علی" maxlength="20" required autocomplete="nickname"></div></div>
+        <div class="fg"><label>ایمیل</label><div class="field"><svg class="ui-icon lead" aria-hidden="true"><use href="#pg-envelope"></use></svg><input type="email" id="regEmail" placeholder="example@email.com" required autocomplete="email"></div></div>
+        <div class="fg"><label>رمز عبور</label><div class="field"><svg class="ui-icon lead" aria-hidden="true"><use href="#pg-shield"></use></svg><input type="password" id="regPass" placeholder="حداقل ۶ کاراکتر" required minlength="6" autocomplete="new-password"><button type="button" class="pass-toggle" onclick="togglePass('regPass',this)" tabindex="-1" aria-label="نمایش رمز"><svg class="ui-icon" aria-hidden="true"><use href="#pg-eye"></use></svg></button></div></div>
         <div class="auth-err" id="authErr2"></div>
-        <button type="submit" class="auth-btn"><span class="spin"></span><span class="btn-txt">ساخت حساب</span><i class="fas fa-arrow-left"></i></button>
+        <button type="submit" class="auth-btn"><span class="spin"></span><span class="btn-txt">ساخت حساب</span><svg class="ui-icon" aria-hidden="true"><use href="#pg-reply"></use></svg></button>
       </form>
-      <div class="auth-foot"><i class="fas fa-shield-halved" style="opacity:.5"></i> اطلاعات شما رمزنگاری‌شده است</div>
+      <div class="auth-foot"><svg class="ui-icon" aria-hidden="true" style="opacity:.5"><use href="#pg-shield"></use></svg> اطلاعات شما رمزنگاری‌شده است</div>
     </div>
   </div>
   <div class="auth-status"><div class="auth-dot"></div><span>آنلاین</span><span style="opacity:.3">·</span><span>TLS 1.3</span></div>
@@ -653,7 +670,7 @@ button:active,.room-item:active{transform:scale(.97)}
 <!-- DM PANEL -->
 <div class="dm-panel" id="dmPanel" onclick="if(event.target===this)closeDmPanel()">
   <div class="dm-box">
-    <div class="dm-header"><h3>✉️ پیام خصوصی</h3><button class="icon-btn" onclick="closeDmPanel()">✕</button></div>
+    <div class="dm-header"><h3><svg class="ui-icon" aria-hidden="true"><use href="#pg-envelope"></use></svg> پیام خصوصی</h3><button class="icon-btn" onclick="closeDmPanel()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button></div>
     <div class="dm-header" style="border-top:1px solid var(--border)"><input class="dm-search" id="dmSearch" placeholder="جستجو…" oninput="searchDmUsers()"></div>
     <div class="dm-body" id="dmBody"></div>
   </div>
@@ -672,7 +689,7 @@ button:active,.room-item:active{transform:scale(.97)}
 <!-- PROFILE -->
 <div id="profile-overlay" onclick="if(event.target===this)closeProfile()">
   <div id="profile-card">
-    <div class="pf-header"><button class="pf-close" onclick="closeProfile()">✕</button></div>
+    <div class="pf-header"><button class="pf-close" onclick="closeProfile()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button></div>
     <div class="pf-body" id="profile-body"></div>
   </div>
 </div>
@@ -680,18 +697,18 @@ button:active,.room-item:active{transform:scale(.97)}
 <!-- CROP OVERLAY -->
 <div id="crop-overlay" onclick="if(event.target===this)closeCrop()">
   <div class="crop-panel" onclick="event.stopPropagation()">
-    <div class="crop-head"><h3>✂️ برش عکس پروفایل</h3><button class="icon-btn" onclick="closeCrop()" style="width:30px;height:30px;font-size:12px">✕</button></div>
+    <div class="crop-head"><h3><svg class="ui-icon" aria-hidden="true"><use href="#pg-crop"></use></svg> برش عکس پروفایل</h3><button class="icon-btn" onclick="closeCrop()" style="width:30px;height:30px;font-size:12px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button></div>
     <div class="crop-viewport" id="cropViewport"><img id="cropImg" alt=""></div>
     <div class="crop-zoom-row">
-      <i class="fas fa-search-minus"></i>
+      <svg class="ui-icon" aria-hidden="true"><use href="#pg-search"></use></svg>
       <input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1" oninput="cropZoomSet(this.value)">
-      <i class="fas fa-search-plus"></i>
+      <svg class="ui-icon" aria-hidden="true"><use href="#pg-search"></use></svg>
       <span id="cropZoomVal">100%</span>
     </div>
-    <div class="crop-hint"><i class="fas fa-hand-pointer"></i> بکشید تا جابه‌جا شود · اسکرول یا اسلایدر برای زوم</div>
+    <div class="crop-hint"><svg class="ui-icon" aria-hidden="true"><use href="#pg-hand"></use></svg> بکشید تا جابه‌جا شود · اسکرول یا اسلایدر برای زوم</div>
     <div class="crop-btns">
       <button class="btn btn-ghost" onclick="closeCrop()">لغو</button>
-      <button class="btn btn-primary" onclick="confirmCrop()">تایید ✓</button>
+      <button class="btn btn-primary" onclick="confirmCrop()">تایید <svg class="ui-icon" aria-hidden="true"><use href="#pg-check"></use></svg></button>
     </div>
   </div>
 </div>
@@ -699,12 +716,12 @@ button:active,.room-item:active{transform:scale(.97)}
 <div id="settings-overlay" onclick="if(event.target===this)closeSettings()">
   <div class="settings-panel" onclick="event.stopPropagation()">
     <div class="settings-head">
-      <h3>⚙️ تنظیمات</h3>
-      <button class="icon-btn" onclick="closeSettings()" style="width:32px;height:32px;font-size:12px">✕</button>
+      <h3><svg class="ui-icon" aria-hidden="true"><use href="#pg-settings"></use></svg> تنظیمات</h3>
+      <button class="icon-btn" onclick="closeSettings()" style="width:32px;height:32px;font-size:12px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button>
     </div>
     <div class="settings-body">
       <div class="settings-section">
-        <div class="settings-section-title">🎤 صدا و میکروفون</div>
+        <div class="settings-section-title"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg> صدا و میکروفون</div>
         <div class="settings-row">
           <div class="settings-row-label">
             <div class="srl-title">میکروفون</div>
@@ -747,7 +764,7 @@ button:active,.room-item:active{transform:scale(.97)}
         </div>
       </div>
       <div class="settings-section">
-        <div class="settings-section-title">🎨 ظاهر</div>
+        <div class="settings-section-title"><svg class="ui-icon" aria-hidden="true"><use href="#pg-palette"></use></svg> ظاهر</div>
         <div class="settings-row" style="cursor:pointer" onclick="closeSettings();openThemePanel()">
           <div class="settings-row-label">
             <div class="srl-title">تم</div>
@@ -757,7 +774,7 @@ button:active,.room-item:active{transform:scale(.97)}
         </div>
       </div>
       <div class="settings-section">
-        <div class="settings-section-title">🔔 اعلان‌ها</div>
+        <div class="settings-section-title"><svg class="ui-icon" aria-hidden="true"><use href="#pg-bell"></use></svg> اعلان‌ها</div>
         <div class="settings-row">
           <div class="settings-row-label">
             <div class="srl-title">نوتیفیکیشن</div>
@@ -774,7 +791,7 @@ button:active,.room-item:active{transform:scale(.97)}
         <div class="settings-about">
           <strong>GapChat</strong> v2.0<br>
           پیام‌رسان نسل بعدی با تماس صوتی و اشتراک صفحه<br>
-          <span style="opacity:.5">Made with ❤️</span>
+          <span style="opacity:.5">ساخته‌شده با دقت</span>
         </div>
       </div>
     </div>
@@ -789,7 +806,7 @@ button:active,.room-item:active{transform:scale(.97)}
 <!-- THEME -->
 <div id="theme-overlay" onclick="if(event.target===this)closeThemePanel()">
   <div id="theme-panel">
-    <div class="tp-head"><div class="tp-title">🎨 تم</div><button class="icon-btn" onclick="closeThemePanel()">✕</button></div>
+    <div class="tp-head"><div class="tp-title"><svg class="ui-icon" aria-hidden="true"><use href="#pg-palette"></use></svg> تم</div><button class="icon-btn" onclick="closeThemePanel()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button></div>
     <div class="tp-body">
       <div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px">پیش‌فرض‌ها</div><div class="tp-presets" id="tp-presets"></div></div>
       <div class="tp-actions"><button class="tp-btn" onclick="resetTheme()">بازنشانی</button><button class="tp-btn primary" onclick="closeThemePanel()">ذخیره</button></div>
@@ -800,18 +817,18 @@ button:active,.room-item:active{transform:scale(.97)}
 <!-- CALL PANEL (Meet-like) -->
 <div id="callPanel">
   <div class="call-top">
-    <h3><i class="fas fa-phone" style="color:var(--green)"></i> <span id="callRoomName">روم صوتی</span></h3>
+    <h3><svg class="ui-icon" aria-hidden="true" style="color:var(--green)"><use href="#pg-phone"></use></svg> <span id="callRoomName">روم صوتی</span></h3>
     <div style="display:flex;align-items:center;gap:8px">
       <span class="call-badge" id="callTimer">00:00</span>
-      <button class="icon-btn" onclick="closeCallPanel()" style="width:32px;height:32px;font-size:12px;background:rgba(255,255,255,.1);color:#fff"><i class="fas fa-times"></i></button>
+      <button class="icon-btn" onclick="closeCallPanel()" style="width:32px;height:32px;font-size:12px;background:rgba(255,255,255,.1);color:#fff"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button>
     </div>
   </div>
   <div class="call-grid" id="callGrid"></div>
   <div class="call-controls">
-    <button class="call-ctrl mic" id="callMuteBtn" onclick="event.stopPropagation();toggleMute()" title="میکروفون"><i class="fas fa-microphone"></i></button>
-    <button class="call-ctrl screen" id="callScreenBtn" onclick="event.stopPropagation();shareScreen()" title="اشتراک صفحه"><i class="fas fa-desktop"></i></button>
-    <button class="call-ctrl" id="fullscreenBtn" onclick="event.stopPropagation();toggleFullscreen()" title="تمام‌صفحه" style="background:var(--bg3,#1e2c3a);color:#fff"><i class="fas fa-expand"></i></button>
-    <button class="call-ctrl leave" onclick="leaveVoice()" title="پایان"><i class="fas fa-phone-slash"></i></button>
+    <button class="call-ctrl mic" id="callMuteBtn" onclick="event.stopPropagation();toggleMute()" title="میکروفون"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg></button>
+    <button class="call-ctrl screen" id="callScreenBtn" onclick="event.stopPropagation();shareScreen()" title="اشتراک صفحه"><svg class="ui-icon" aria-hidden="true"><use href="#pg-screen"></use></svg></button>
+    <button class="call-ctrl" id="fullscreenBtn" onclick="event.stopPropagation();toggleFullscreen()" title="تمام‌صفحه" style="background:var(--bg3,#1e2c3a);color:#fff"><svg class="ui-icon" aria-hidden="true"><use href="#pg-expand"></use></svg></button>
+    <button class="call-ctrl leave" onclick="leaveVoice()" title="پایان"><svg class="ui-icon" aria-hidden="true"><use href="#pg-phone"></use></svg></button>
   </div>
 </div>
 
@@ -820,13 +837,13 @@ button:active,.room-item:active{transform:scale(.97)}
 <div id="meetView">
   <div class="meet-header">
     <div class="meet-header-left">
-      <div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:20px">👥</div>
+      <div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:20px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-users"></use></svg></div>
       <div>
         <div class="meet-title" id="meetRoomName">روم</div>
         <div class="meet-sub" id="meetMemberCount">0 نفر</div>
       </div>
     </div>
-    <button class="meet-close" onclick="closeMeet()">✕</button>
+    <button class="meet-close" onclick="closeMeet()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button>
   </div>
   <div class="meet-grid" id="meetGrid"></div>
 </div>
@@ -835,7 +852,7 @@ button:active,.room-item:active{transform:scale(.97)}
 <!-- UPLOAD OVERLAY -->
 <div class="upload-overlay" id="uploadOverlay">
   <div class="upload-card">
-    <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+    <div class="upload-icon"><svg class="ui-icon" aria-hidden="true"><use href="#pg-upload"></use></svg></div>
     <div class="upload-text" id="uploadText">در حال آپلود...</div>
     <div class="upload-sub" id="uploadSub">لطفاً صبر کنید</div>
     <div class="upload-bar"><div class="upload-bar-fill" id="uploadBarFill"></div></div>
@@ -853,6 +870,7 @@ const SB_URL = 'https://dvhjswspljxbjxngetdc.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2aGpzd3NwbGp4Ymp4bmdldGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4OTA5NDAsImV4cCI6MjEwMDQ2Njk0MH0.HRU4N_JM7mDBQJ2t9t_AfSk8zE-dPz7BecRpop0uxww';
 const db = supabase.createClient(SB_URL, SB_KEY);
 const $ = id => document.getElementById(id);
+function svgIcon(name, cls) { return '<svg class="' + (cls || 'ui-icon') + '" aria-hidden="true"><use href="#pg-' + name + '"></use></svg>'; }
 
 let me = null, myProfile = null, curRoom = null, curType = null, curDm = null;
 let myStream = null, voiceChannel = null, presenceChannel = null, curVoiceRoom = null, voiceCallSeconds = 0, voiceTimerInterval = null, realtimeRelay = null;
@@ -866,7 +884,7 @@ async function loadVoiceTotal() {
     if (r.error) {
       if (r.error.message && r.error.message.toLowerCase().includes('column')) {
         voiceDbOk = false;
-        if (!window._voiceDbWarned) { window._voiceDbWarned = true; toast('❌ ستون voice_seconds وجود نداره! SQL اجرا کن'); }
+        if (!window._voiceDbWarned) { window._voiceDbWarned = true; toast('خطا: ستون voice_seconds وجود نداره! SQL اجرا کن'); }
       }
       return;
     }
@@ -886,7 +904,7 @@ function saveVoiceTotal(force) {
   db.from('profiles').select('voice_seconds').eq('id', me.id).single().then(function(r) {
     if (r.error && r.error.message && r.error.message.toLowerCase().includes('column')) {
       voiceDbOk = false;
-      if (!window._voiceDbWarned) { window._voiceDbWarned = true; toast('❌ ستون voice_seconds وجود نداره! SQL اجرا کن'); }
+      if (!window._voiceDbWarned) { window._voiceDbWarned = true; toast('خطا: ستون voice_seconds وجود نداره! SQL اجرا کن'); }
       return;
     }
     var dbVal = (r.data && typeof r.data.voice_seconds === 'number') ? r.data.voice_seconds : 0;
@@ -894,7 +912,7 @@ function saveVoiceTotal(force) {
     return db.from('profiles').update({ voice_seconds: toSave }).eq('id', me.id).then(function(u) {
       if (u.error && u.error.message && u.error.message.toLowerCase().includes('column')) {
         voiceDbOk = false;
-        if (!window._voiceDbWarned) { window._voiceDbWarned = true; toast('❌ ستون voice_seconds وجود نداره! SQL اجرا کن'); }
+        if (!window._voiceDbWarned) { window._voiceDbWarned = true; toast('خطا: ستون voice_seconds وجود نداره! SQL اجرا کن'); }
       }
     });
   }).catch(function() {});
@@ -910,8 +928,21 @@ function fmtVoiceTime(v) {
 const peers = new Map(), voiceMembers = new Map();
 let pendingMediaFile = null, pendingMediaIsVideo = false, pollTimer = null, lastMsgTime = null;
 let replyToData = null, reactions = {}, audioSettings = { deviceId: null, echoCancellation: true, noiseSuppression: true, autoGainControl: true, notifications: true };
-const REACTIONS = ['👍','❤️','😂','😮','😢','🔥'];
-const EMOJIS = ['😄','😂','❤️','🔥','👍','😍','🥺','😤','🎉','💯','😊','🙏','👏','💪','😎','🤩','🥳','😇','🤓','💀','👻','🤖','👽','🧠','💎','🎮','⚽','🎵','🌈','⚡'];
+const REACTIONS = [
+  { key: 'like', icon: 'check', label: 'پسندیدن' },
+  { key: 'heart', icon: 'chat', label: 'دوست داشتن' },
+  { key: 'laugh', icon: 'smile', label: 'خنده' },
+  { key: 'surprise', icon: 'bolt', label: 'تعجب' },
+  { key: 'sad', icon: 'hand', label: 'ناراحتی' },
+  { key: 'fire', icon: 'volume', label: 'عالی' }
+];
+const QUICK_REPLIES = [
+  { text: 'سلام', icon: 'hand' },
+  { text: 'ممنون', icon: 'chat' },
+  { text: 'عالیه', icon: 'check' },
+  { text: 'باشه', icon: 'check' },
+  { text: 'بعداً خبر می‌دم', icon: 'volume' }
+];
 
 const THEMES = {
   'نیون پیش‌فرض': {bg:'#06060b',surface:'rgba(14,11,26,.82)',panel:'rgba(22,18,40,.7)',border:'rgba(255,255,255,.07)',accent:'#a78bfa',accent2:'#f472b6',text:'#f5f3ff',muted:'#7c7b9e',bMine:'linear-gradient(135deg,#8b5cf6,#6366f1)',bMineT:'#fff',bOther:'rgba(22,18,40,.7)',bOtherT:'#e8e6f5'},
@@ -988,7 +1019,7 @@ window.resetSettings = function() {
   audioSettings = { deviceId: null, echoCancellation: true, noiseSuppression: true, autoGainControl: true, notifications: true };
   localStorage.removeItem('gapchat_settings');
   loadSettings();
-  toast('✅ تنظیمات بازنشانی شد');
+  toast('تنظیمات بازنشانی شد');
 };
 
 // Patch getUserMedia to use settings
@@ -1065,7 +1096,7 @@ window.togglePass = function(id, btn) {
   if (!inp) return;
   var show = inp.type === 'password';
   inp.type = show ? 'text' : 'password';
-  btn.innerHTML = show ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+  btn.innerHTML = show ? '<svg class="ui-icon" aria-hidden="true"><use href="#pg-eye-off"></use></svg>' : '<svg class="ui-icon" aria-hidden="true"><use href="#pg-eye"></use></svg>';
 };
 window.authLoading = function(form, on) {
   var btn = form.querySelector('.auth-btn');
@@ -1138,9 +1169,9 @@ function enterApp() {
   loadVoiceTotal();
   rAv($('hav'), myProfile);
   const n = myProfile.display_name || myProfile.username;
-  $('hname').textContent = n + (myProfile.role === 'owner' ? ' 👑' : '');
+  $('hname').textContent = n + (myProfile.role === 'owner' ? '  · مالک' : '');
   const r = $('hrole');
-  r.textContent = myProfile.role === 'owner' ? 'مالک' : myProfile.role === 'admin' ? 'ادمین' : 'کاربر';
+  r.innerHTML = (myProfile.role === 'owner' ? svgIcon('crown') : '') + (myProfile.role === 'owner' ? 'مالک' : myProfile.role === 'admin' ? 'ادمین' : 'کاربر');
   r.className = 'sb-role ' + myProfile.role;
   const a = ['owner', 'admin'].includes(myProfile.role);
   $('addTextBtn').classList.toggle('show', a);
@@ -1149,7 +1180,7 @@ function enterApp() {
   loadDmList();
   startPresence();
   startRelay();
-  initEmojis();
+  initQuickReplies();
 }
 
 function rAv(el, p) {
@@ -1157,14 +1188,16 @@ function rAv(el, p) {
   else { el.textContent = (p && (p.display_name || p.username) || '?').charAt(0).toUpperCase(); }
 }
 
-function initEmojis() {
-  const s = $('emojiStrip');
+function initQuickReplies() {
+  const s = $('quickRepliesStrip');
   if (s.children.length) return;
-  EMOJIS.forEach(function(e) {
+  QUICK_REPLIES.forEach(function(item) {
     const b = document.createElement('button');
-    b.className = 'emoji-btn';
-    b.textContent = e;
-    b.onclick = function() { $('msg-input').value += e; $('msg-input').focus(); };
+    b.className = 'quick-btn quick-reply-btn';
+    b.type = 'button';
+    b.title = item.text;
+    b.innerHTML = svgIcon(item.icon) + '<span>' + item.text + '</span>';
+    b.onclick = function() { $('msg-input').value += ($('msg-input').value ? ' ' : '') + item.text; $('msg-input').focus(); };
     s.appendChild(b);
   });
 }
@@ -1226,7 +1259,7 @@ async function loadRooms() {
     const d = document.createElement('div');
     d.className = 'room-item';
     d.dataset.id = r.id;
-    d.innerHTML = '<i class="fas fa-' + (r.type === 'voice' ? 'volume-up' : 'comment') + '"></i><span>' + esc(r.name) + '</span>';
+    d.innerHTML = '<svg class="ui-icon" aria-hidden="true"><use href="#pg-' + (r.type === 'voice' ? 'volume' : 'chat') + '"></use></svg><span>' + esc(r.name) + '</span>';
     d.onclick = function() { openRoom(r.id, r.name, r.type); };
     (r.type === 'voice' ? $('voiceRooms') : $('textRooms')).appendChild(d);
   });
@@ -1241,7 +1274,7 @@ window.createRoom = async function() {
   $('createRoomModal').classList.remove('show');
   $('newRoomName').value = '';
   loadRooms();
-  toast('✅ ساخته شد');
+  toast('ساخته شد');
 };
 
 // DM LIST
@@ -1335,7 +1368,7 @@ async function openRoom(id, name, type) {
   } else {
     // Voice room - show welcome message
     $('messages').style.display = 'flex';
-    $('messages').innerHTML = '<div class="empty"><div class="empty-icon">🔊</div><div class="empty-txt">اتاق صوتی فعاله</div></div>';
+    $('messages').innerHTML = '<div class="empty"><div class="empty-icon"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg></div><div class="empty-txt">اتاق صوتی فعاله</div></div>';
   }
 }
 
@@ -1355,7 +1388,7 @@ function addMsg(m) {
   else if (m.type === 'image') content = '<img src="' + m.file_url + '" loading="lazy" onclick="window.open(\'' + m.file_url + '\',\'_blank\')">';
   else if (m.type === 'video') content = '<video src="' + m.file_url + '" controls playsinline preload="metadata" style="max-width:260px;min-width:200px;min-height:120px;border-radius:10px;background:#000"></video>';
   else if (m.type === 'voice') content = '<audio controls src="' + m.file_url + '" style="max-width:220px"></audio>';
-  else if (m.type === 'file') content = '<a href="' + m.file_url + '" class="file-link" target="_blank"><i class="fas fa-file"></i> ' + esc(m.file_name || 'فایل') + '</a>';
+  else if (m.type === 'file') content = '<a href="' + m.file_url + '" class="file-link" target="_blank"><svg class="ui-icon" aria-hidden="true"><use href="#pg-file"></use></svg> ' + esc(m.file_name || 'فایل') + '</a>';
   let replyHtml = '';
   if (m.reply_to_text) replyHtml = '<div class="reply-preview"><div class="rp-name">' + esc(m.reply_to_name || '') + '</div><div class="rp-text">' + esc(m.reply_to_text).slice(0, 50) + '</div></div>';
   d.className = 'msg-g ' + (own ? 'mine' : '') + ' ' + (gapTop ? 'gtop' : '');
@@ -1366,7 +1399,7 @@ function addMsg(m) {
     '<div class="msg-c">' + (!own && gapTop ? '<div class="msg-name" onclick="openProfile(\'' + esc(u && u.display_name || '') + '\')">' + esc(u && u.display_name || '') + '</div>' : '') +
     '<div class="msg-bubble' + (own ? ' mine' : '') + '">' + replyHtml + content + '</div>' +
     '<div class="reactions-row" id="reactions-' + msgId + '"></div>' +
-    '<div class="msg-meta"><span>' + time + '</span>' + (own ? '<span class="msg-check"><i class="fas fa-check-double"></i></span>' : '') + '</div></div>';
+    '<div class="msg-meta"><span>' + time + '</span>' + (own ? '<span class="msg-check"><svg class="ui-icon" aria-hidden="true"><use href="#pg-check"></use></svg></span>' : '') + '</div></div>';
   c.appendChild(d);
   var bubble = d.querySelector('.msg-bubble');
   var pt = null;
@@ -1430,11 +1463,11 @@ function showMsgMenu(msgId, pt, row, isMine) {
   var menu = document.createElement('div');
   menu.className = 'msg-menu';
   var items = [
-    { icon: '😀', label: 'ری‌اکشن', fn: function() { menu.remove(); showReactionPicker(msgId, row); } },
-    { icon: '↩️', label: 'ریپلای', fn: function() { menu.remove(); setReply(msgId, 'کاربر', pt); } },
-    { icon: '📋', label: 'کپی', fn: function() { navigator.clipboard.writeText(pt); toast('✅'); menu.remove(); } }
+    { icon: '<svg class="ui-icon" aria-hidden="true"><use href="#pg-smile"></use></svg>', label: 'ری‌اکشن', fn: function() { menu.remove(); showReactionPicker(msgId, row); } },
+    { icon: '<svg class="ui-icon" aria-hidden="true"><use href="#pg-reply"></use></svg>', label: 'ریپلای', fn: function() { menu.remove(); setReply(msgId, 'کاربر', pt); } },
+    { icon: '<svg class="ui-icon" aria-hidden="true"><use href="#pg-copy"></use></svg>', label: 'کپی', fn: function() { navigator.clipboard.writeText(pt); toast('کپی شد'); menu.remove(); } }
   ];
-  if (isMine) items.push({ icon: '🗑', label: 'حذف', fn: async function() { menu.remove(); try { await db.from('messages').eq('id', msgId).delete(); row.remove(); toast('✅'); } catch(e) { toast('❌'); } }, danger: true });
+  if (isMine) items.push({ icon: '<svg class="ui-icon" aria-hidden="true"><use href="#pg-trash"></use></svg>', label: 'حذف', fn: async function() { menu.remove(); try { await db.from('messages').delete().eq('id', msgId); row.remove(); toast('حذف شد'); } catch(e) { toast('خطا: حذف پیام انجام نشد'); } }, danger: true });
   items.forEach(function(i) {
     var b = document.createElement('button');
     b.className = 'msg-menu-item' + (i.danger ? ' danger' : '');
@@ -1456,18 +1489,21 @@ function showReactionPicker(msgId, row) {
   var p = document.createElement('div');
   p.className = 'msg-menu';
   p.style.cssText = 'display:flex;gap:4px;padding:6px';
-  REACTIONS.forEach(function(em) {
+  REACTIONS.forEach(function(reaction) {
     var b = document.createElement('button');
-    b.className = 'emoji-btn';
-    b.textContent = em;
+    b.className = 'reaction-btn quick-btn';
+    b.title = reaction.label;
+    b.setAttribute('aria-label', reaction.label);
+    b.innerHTML = svgIcon(reaction.icon);
     b.style.cssText = 'width:32px;height:32px';
     b.onclick = function() {
       p.remove();
+      var key = reaction.key;
       if (!reactions[msgId]) reactions[msgId] = {};
-      if (!reactions[msgId][em]) reactions[msgId][em] = [];
-      var i = reactions[msgId][em].indexOf(myProfile.display_name);
-      if (i > -1) reactions[msgId][em].splice(i, 1); else reactions[msgId][em].push(myProfile.display_name);
-      if (!reactions[msgId][em].length) delete reactions[msgId][em];
+      if (!reactions[msgId][key]) reactions[msgId][key] = [];
+      var i = reactions[msgId][key].indexOf(myProfile.display_name);
+      if (i > -1) reactions[msgId][key].splice(i, 1); else reactions[msgId][key].push(myProfile.display_name);
+      if (!reactions[msgId][key].length) delete reactions[msgId][key];
       renderReactions(msgId);
     };
     p.appendChild(b);
@@ -1487,10 +1523,12 @@ function renderReactions(msgId) {
   if (!r) return;
   Object.entries(r).forEach(function(pair) {
     var em = pair[0], names = pair[1];
+    var reaction = REACTIONS.find(function(item) { return item.key === em; }) || { icon: 'fa-face-smile', label: 'واکنش' };
     if (!names.length) return;
     var c = document.createElement('button');
     c.className = 'r-chip' + (names.indexOf(myProfile.display_name) > -1 ? ' mine' : '');
-    c.innerHTML = '<span>' + em + '</span><span style="font-weight:700;font-size:10px;color:var(--muted)">' + names.length + '</span>';
+    c.setAttribute('aria-label', reaction.label + ': ' + names.length);
+    c.innerHTML = '<span aria-hidden="true">' + svgIcon(reaction.icon) + '</span><span style="font-weight:700;font-size:10px;color:var(--muted)">' + names.length + '</span>';
     c.onclick = function() {
       var i = names.indexOf(myProfile.display_name);
       if (i > -1) names.splice(i, 1); else names.push(myProfile.display_name);
@@ -1568,7 +1606,7 @@ async function sendMedia(inp, cap) {
     });
     barFill.style.width = '100%';
     pctEl.textContent = totalMB + ' / ' + totalMB + ' MB (100%)';
-    textEl.textContent = '✅ آپلود کامل شد';
+    textEl.textContent = 'آپلود کامل شد';
     subEl.textContent = 'در حال ارسال پیام...';
     await new Promise(function(r) { setTimeout(r, 600); });
     overlay.classList.remove('show');
@@ -1602,11 +1640,11 @@ async function sendMedia(inp, cap) {
     }
     addMsg(msgObj);
     scrollBottom();
-    toast('✅ ارسال شد');
+    toast('ارسال شد');
   } catch(e) {
     clearInterval(progressInterval);
     overlay.classList.remove('show');
-    toast('❌ ' + e.message);
+    toast('خطا: ' + e.message);
   }
 }
 
@@ -1653,7 +1691,7 @@ async function joinVoice() {
         if (profResult.data) avatarUrl = profResult.data.avatar_url;
       } catch(e) {}
       voiceMembers.set(payload.payload.userId, { username: payload.payload.username, avatar_url: avatarUrl });
-      toast('🎙 ' + payload.payload.username + ' وارد صدا شد');
+      toast(payload.payload.username + ' وارد تماس صوتی شد');
       renderCallGrid();
       // Create peer as initiator
       setTimeout(async function() {
@@ -1669,7 +1707,7 @@ async function joinVoice() {
       if (payload.payload.userId === me.id) return;
       if (voiceMembers.has(payload.payload.userId)) return;
       voiceMembers.set(payload.payload.userId, { username: payload.payload.username, avatar_url: payload.payload.avatar_url || null }); updateFloatingVoice();
-      toast('🎙 ' + payload.payload.username + ' وارد صدا شد');
+      toast(payload.payload.username + ' وارد تماس صوتی شد');
       renderCallGrid();
       // Don't create peer here - wait for their offer or create as non-initiator
     }).on('broadcast', { event: 'offer' }, async function(payload) {
@@ -1714,7 +1752,7 @@ async function joinVoice() {
       }
     }).on('broadcast', { event: 'leave' }, function(payload) {
       var m = voiceMembers.get(payload.payload.userId);
-      if (m) toast('🔇 ' + m.username + ' خارج شد');
+      if (m) toast(m.username + ' از تماس صوتی خارج شد');
       voiceMembers.delete(payload.payload.userId); updateFloatingVoice(); var fs4 = document.getElementById('float-screen'); if (fs4 && voiceMembers.size <= 1) { fs4.classList.remove('show'); }
       if (peers.has(payload.payload.userId)) { peers.get(payload.payload.userId).close(); peers.delete(payload.payload.userId); }
       renderCallGrid();
@@ -1726,7 +1764,7 @@ async function joinVoice() {
         await voiceChannel.send({ type: 'broadcast', event: 'join', payload: { userId: me.id, username: myProfile.display_name || myProfile.username, avatar_url: myProfile.avatar_url || null } });
       }
     });
-  } catch(e) { toast('❌ میکروفون'); }
+  } catch(e) { toast('خطا: میکروفون'); }
 }
 
 function leaveVoice() {
@@ -1767,7 +1805,7 @@ function renderCallGrid() {
   selfTile.style.cursor = 'pointer';
   selfTile.onclick = function() { openProfile(myProfile.display_name || myProfile.username); };
   var selfAvatar = myProfile.avatar_url ? '<img src="' + esc(myProfile.avatar_url) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : (myProfile.display_name || '?').charAt(0).toUpperCase();
-  selfTile.innerHTML = '<div class="tile-mic" id="mic-indicator-' + me.id + '"><i class="fas fa-microphone"></i></div><div class="tile-av">' + selfAvatar + '</div><div class="tile-name">' + esc(myProfile.display_name || '') + '</div><div class="tile-status">شما</div>';
+  selfTile.innerHTML = '<div class="tile-mic" id="mic-indicator-' + me.id + '"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg></div><div class="tile-av">' + selfAvatar + '</div><div class="tile-name">' + esc(myProfile.display_name || '') + '</div><div class="tile-status">شما</div>';
   grid.appendChild(selfTile);
   // Add peer tiles
   voiceMembers.forEach(function(m, uid) {
@@ -1778,7 +1816,7 @@ function renderCallGrid() {
     tile.style.cursor = 'pointer';
     tile.onclick = (function(username) { return function() { openProfile(username); }; })(m.username);
     var peerAvatar = m.avatar_url ? '<img src="' + esc(m.avatar_url) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : (m.username || '?').charAt(0).toUpperCase();
-    tile.innerHTML = '<div class="tile-mic" id="mic-indicator-' + uid + '"><i class="fas fa-microphone"></i></div><div class="tile-av" style="background:linear-gradient(135deg,var(--accent2),var(--accent))">' + peerAvatar + '</div><div class="tile-name">' + esc(m.username || '') + '</div><div class="tile-status">در تماس</div>';
+    tile.innerHTML = '<div class="tile-mic" id="mic-indicator-' + uid + '"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg></div><div class="tile-av" style="background:linear-gradient(135deg,var(--accent2),var(--accent))">' + peerAvatar + '</div><div class="tile-name">' + esc(m.username || '') + '</div><div class="tile-status">در تماس</div>';
     grid.appendChild(tile);
   });
 }
@@ -1978,7 +2016,7 @@ function renderMeetProfiles() {
 
   // If no members besides self
   if (cards.length <= 1 && (!curVoiceRoom || voiceMembers.size === 0)) {
-    grid.innerHTML = '<div class="meet-empty"><i class="fas fa-user-group"></i><p>کسی تو روم نیست</p><p style="font-size:11px;margin-top:4px;opacity:.6">وقتی کسی به voice join کنه اینجا میاد</p></div>';
+    grid.innerHTML = '<div class="meet-empty"><svg class="ui-icon" aria-hidden="true"><use href="#pg-users"></use></svg><p>کسی تو روم نیست</p><p style="font-size:11px;margin-top:4px;opacity:.6">وقتی کسی به voice join کنه اینجا میاد</p></div>';
     $('meetMemberCount').textContent = '0 نفر';
     return;
   }
@@ -2065,8 +2103,8 @@ function toggleMute() {
   if (a) {
     a.enabled = !a.enabled;
     var btn = $('callMuteBtn'), fvBtn = $('fvMuteBtn');
-    if (btn) { btn.className = 'call-ctrl mic' + (a.enabled ? '' : ' off'); btn.innerHTML = a.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>'; }
-    if (fvBtn) { fvBtn.className = 'fv-btn mute' + (a.enabled ? '' : ' off'); fvBtn.innerHTML = a.enabled ? '<i class="fas fa-microphone"></i>' : '<i class="fas fa-microphone-slash"></i>'; }
+    if (btn) { btn.className = 'call-ctrl mic' + (a.enabled ? '' : ' off'); btn.innerHTML = a.enabled ? '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg>' : '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic-off"></use></svg>'; }
+    if (fvBtn) { fvBtn.className = 'fv-btn mute' + (a.enabled ? '' : ' off'); fvBtn.innerHTML = a.enabled ? '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg>' : '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic-off"></use></svg>'; }
     var ind = document.getElementById('mic-indicator-' + me.id);
     if (ind) ind.className = 'tile-mic' + (a.enabled ? '' : ' muted');
     // Refresh meet view if open
@@ -2091,7 +2129,7 @@ function renderVoiceMembers() {
 let screenStream = null;
 
 window.shareScreen = async function() {
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) { toast('❌ اشتراک صفحه روی موبایل پشتیبانی نمیشه'); return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) { toast('خطا: اشتراک صفحه روی موبایل پشتیبانی نمیشه'); return; }
   try {
     screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
     // Show in self tile - make it BIG
@@ -2127,9 +2165,9 @@ window.shareScreen = async function() {
       await voiceChannel.send({ type: 'broadcast', event: 'screen-start', payload: { userId: me.id } });
     }
     videoTrack.onended = function() { stopScreenShare(); };
-    toast('🖥 صفحه اشتراک گذاشته شد'); var fsv = document.getElementById('floatScreenVideo'); if (fsv && screenStream) { fsv.srcObject = screenStream; document.getElementById('float-screen').classList.add('show'); }
+    toast('اشتراک صفحه فعال شد'); var fsv = document.getElementById('floatScreenVideo'); if (fsv && screenStream) { fsv.srcObject = screenStream; document.getElementById('float-screen').classList.add('show'); }
   } catch(e) {
-    if (e.name !== 'AbortError') { var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent); toast(isMobile ? '❌ اشتراک صفحه روی موبایل پشتیبانی نمیشه' : '❌ اشتراک صفحه رد شد'); }
+    if (e.name !== 'AbortError') { var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent); toast(isMobile ? 'خطا: اشتراک صفحه روی موبایل پشتیبانی نمیشه' : 'خطا: اشتراک صفحه رد شد'); }
   }
 };
 
@@ -2171,16 +2209,16 @@ window.openProfile = async function(name) {
   if (!data) { $('profile-body').innerHTML = '<div style="padding:30px;text-align:center;color:var(--muted)">ناموجود</div>'; return; }
   var mc = (await db.from('messages').select('*', { count: 'exact', head: true }).eq('user_id', data.id)).count;
   var isMe = data.id === (me && me.id);
-  var rn = data.role === 'owner' ? 'مالک' : data.role === 'admin' ? 'ادمین' : 'کاربر';
+  var rn = (data.role === 'owner' ? svgIcon('crown') : '') + (data.role === 'owner' ? 'مالک' : data.role === 'admin' ? 'ادمین' : 'کاربر');
   var avH = data.avatar_url ? '<img src="' + esc(data.avatar_url) + '" alt=""/>' : (data.display_name || '?').charAt(0).toUpperCase();
-  var upBtn = isMe ? '<label class="pf-upload"><i class="fas fa-camera"></i><input type="file" accept="image/*" onchange="openAvatarCrop(this)"></label>' : '';
+  var upBtn = isMe ? '<label class="pf-upload"><svg class="ui-icon" aria-hidden="true"><use href="#pg-camera"></use></svg><input type="file" accept="image/*" onchange="openAvatarCrop(this)"></label>' : '';
   var nmE = isMe ? '<div id="pf-ne" style="display:none;width:100%;gap:4px;margin-top:6px"><input id="pf-ni" value="' + esc(data.display_name || '') + '" maxlength="20" style="flex:1;padding:7px 10px;font-size:12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text)"><button onclick="saveName()" style="padding:7px 12px;border-radius:8px;background:var(--accent);color:#fff;font-size:11px;font-weight:600;border:none;cursor:pointer">ذخیره</button></div>' : '';
   var bio = isMe ? '<div style="width:100%;margin-top:10px"><div id="pf-bd" style="font-size:12px;color:var(--muted);text-align:center;cursor:pointer;padding:6px;border-radius:8px" onclick="toggleBio()">' + (data.bio ? esc(data.bio) : '<span style="opacity:.4">بیو… (کلیک)</span>') + '</div><div id="pf-be" style="display:none;flex-direction:column;gap:4px;width:100%"><textarea id="pf-bi" maxlength="120" rows="2" style="resize:none;font-size:12px;padding:7px 10px;border-radius:8px;background:var(--panel);border:1px solid var(--border);color:var(--text)">' + esc(data.bio || '') + '</textarea><div style="display:flex;gap:4px"><button onclick="toggleBio()" style="flex:1;padding:6px;border-radius:8px;background:var(--panel);color:var(--muted);border:1px solid var(--border);font-size:11px;cursor:pointer">لغو</button><button onclick="saveBio()" style="flex:1;padding:6px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:11px;font-weight:600;cursor:pointer">ذخیره</button></div></div></div>' : (data.bio ? '<div style="font-size:12px;color:var(--muted);text-align:center;padding:6px;margin-top:6px">' + esc(data.bio) + '</div>' : '');
-  $('profile-body').innerHTML = '<div class="pf-avatar-wrap">' + avH + upBtn + '</div><div class="pf-name">' + esc(data.display_name || data.username) + (data.role === 'owner' ? ' 👑' : '') + (isMe ? ' <button onclick="toggleNE()" style="width:22px;height:22px;font-size:10px;background:var(--panel);border:none;border-radius:6px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center">✏️</button>' : '') + '</div>' + nmE + '<div class="pf-email">' + esc(data.username) + '</div><span class="pf-role-badge ' + data.role + '">' + rn + '</span>' + bio + '<div class="pf-stats"><div class="pf-stat"><div class="pf-stat-val">' + (mc || 0) + '</div><div class="pf-stat-lbl">پیام</div></div><div class="pf-stat"><div class="pf-stat-val">' + new Date(data.created_at).toLocaleDateString('fa-IR') + '</div><div class="pf-stat-lbl">عضویت</div></div>' + '<div class="pf-stat" style="grid-column:1/-1;background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(34,211,238,.06));border:1px solid rgba(139,92,246,.25)"><div class="pf-stat-val" style="color:var(--accent)">' + fmtVoiceTime(isMe ? Math.max(totalVoiceSeconds || 0, (typeof data.voice_seconds === 'number') ? data.voice_seconds : 0) : (data.voice_seconds || 0)) + '</div><div class="pf-stat-lbl">🎙 زمان در تماس صوتی</div></div>' + '</div>';
+  $('profile-body').innerHTML = '<div class="pf-avatar-wrap">' + avH + upBtn + '</div><div class="pf-name">' + esc(data.display_name || data.username) + (data.role === 'owner' ? '  · مالک' : '') + (isMe ? ' <button onclick="toggleNE()" style="width:22px;height:22px;font-size:10px;background:var(--panel);border:none;border-radius:6px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg class="ui-icon" aria-hidden="true"><use href="#pg-pen"></use></svg></button>' : '') + '</div>' + nmE + '<div class="pf-email">' + esc(data.username) + '</div><span class="pf-role-badge ' + data.role + '">' + rn + '</span>' + bio + '<div class="pf-stats"><div class="pf-stat"><div class="pf-stat-val">' + (mc || 0) + '</div><div class="pf-stat-lbl">پیام</div></div><div class="pf-stat"><div class="pf-stat-val">' + new Date(data.created_at).toLocaleDateString('fa-IR') + '</div><div class="pf-stat-lbl">عضویت</div></div>' + '<div class="pf-stat" style="grid-column:1/-1;background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(34,211,238,.06));border:1px solid rgba(139,92,246,.25)"><div class="pf-stat-val" style="color:var(--accent)">' + fmtVoiceTime(isMe ? Math.max(totalVoiceSeconds || 0, (typeof data.voice_seconds === 'number') ? data.voice_seconds : 0) : (data.voice_seconds || 0)) + '</div><div class="pf-stat-lbl"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg> زمان در تماس صوتی</div></div>' + '</div>';
 };
 
 window.toggleNE = function() { var e = $('pf-ne'); if (!e) return; e.style.display = e.style.display === 'none' ? 'flex' : 'none'; if (e.style.display === 'flex') { $('pf-ni').focus(); $('pf-ni').select(); } };
-window.saveName = async function() { var n = $('pf-ni').value.trim(); if (!n || n.length > 20) return; try { await db.from('profiles').update({ display_name: n }).eq('id', me.id); myProfile.display_name = n; $('hname').textContent = n + (myProfile.role === 'owner' ? ' 👑' : ''); openProfile(n); toast('✅'); } catch(e) { toast('❌'); } };
+window.saveName = async function() { var n = $('pf-ni').value.trim(); if (!n || n.length > 20) return; try { await db.from('profiles').update({ display_name: n }).eq('id', me.id); myProfile.display_name = n; $('hname').textContent = n + (myProfile.role === 'owner' ? '  · مالک' : ''); openProfile(n); toast('نام ذخیره شد'); } catch(e) { toast('خطا: عملیات انجام نشد'); } };
 window.toggleBio = function() { var d = $('pf-bd'), e = $('pf-be'); if (!e) return; var s = e.style.display === 'none'; e.style.display = s ? 'flex' : 'none'; if (d) d.style.display = s ? 'none' : 'block'; };
 window.saveBio = async function() {
   var bioEl = $('pf-bi');
@@ -2189,14 +2227,14 @@ window.saveBio = async function() {
     var result = await db.from('profiles').update({ bio: bio }).eq('id', me.id);
     if (result.error) {
       if (result.error.message && result.error.message.includes('column')) {
-        toast('❌ ستون bio وجود نداره! SQL اجرا کن');
-      } else { toast('❌ ' + (result.error.message || 'خطا')); }
+        toast('خطا: ستون bio وجود نداره! SQL اجرا کن');
+      } else { toast('خطا: ' + (result.error.message || 'خطا')); }
       return;
     }
     myProfile.bio = bio;
     openProfile(myProfile.display_name || myProfile.username);
-    toast('✅');
-  } catch(e) { toast('❌ ' + (e.message || 'خطا')); }
+    toast('توضیحات ذخیره شد');
+  } catch(e) { toast('خطا: ' + (e.message || 'خطا')); }
 };
 var cropState = null, cropDragBound = false;
 window.openAvatarCrop = function(input) {
@@ -2218,7 +2256,7 @@ window.openAvatarCrop = function(input) {
     cropBindDrag();
     input.value = '';
   };
-  img.onerror = function() { URL.revokeObjectURL(url); toast('❌ فایل نامعتبر'); input.value = ''; };
+  img.onerror = function() { URL.revokeObjectURL(url); toast('خطا: فایل نامعتبر'); input.value = ''; };
   img.src = url;
 };
 function cropRender() {
@@ -2290,7 +2328,7 @@ window.confirmCrop = function() {
   ctx.drawImage(c.img, sx, sy, natSize, natSize, 0, 0, out, out);
   closeCrop();
   cv.toBlob(function(blob) {
-    if (!blob) { toast('❌'); return; }
+    if (!blob) { toast('خطا: ساخت تصویر انجام نشد'); return; }
     uploadAvatarBlob(blob);
   }, 'image/png');
 };
@@ -2303,13 +2341,13 @@ window.closeCrop = function() {
 };
 window.uploadAvatarBlob = async function(blob) {
   try {
-    toast('⏳');
+    toast('در حال انجام...');
     var path = 'avatar_' + me.id + '.png';
     var result = await db.storage.from('avatars').upload(path, blob, { upsert: true });
     if (result.error) {
       if (result.error.message && result.error.message.includes('Bucket not found')) {
-        toast('❌ bucket وجود نداره! SQL اجرا کن');
-      } else { toast('❌ ' + (result.error.message || 'خطا')); }
+        toast('خطا: bucket وجود نداره! SQL اجرا کن');
+      } else { toast('خطا: ' + (result.error.message || 'خطا')); }
       return;
     }
     var ud = db.storage.from('avatars').getPublicUrl(path);
@@ -2318,8 +2356,8 @@ window.uploadAvatarBlob = async function(blob) {
     myProfile.avatar_url = verUrl;
     rAv($('hav'), myProfile);
     openProfile(myProfile.display_name || myProfile.username);
-    toast('✅');
-  } catch(e) { toast('❌ ' + (e.message || 'خطا')); }
+    toast('تصویر پروفایل ذخیره شد');
+  } catch(e) { toast('خطا: ' + (e.message || 'خطا')); }
 };
 window.openMyProfile = function() { if (myProfile) openProfile(myProfile.display_name || myProfile.username); };
 window.closeProfile = function() { $('profile-overlay').classList.remove('show'); };
@@ -2352,7 +2390,7 @@ window.toggleFullscreen = function(e) {
   fsOverlay.appendChild(vid);
   // Close button
   var closeBtn = document.createElement('button');
-  closeBtn.innerHTML = '<i class="fas fa-compress"></i>';
+  closeBtn.innerHTML = '<svg class="ui-icon" aria-hidden="true"><use href="#pg-compress"></use></svg>';
   closeBtn.style.cssText = 'position:absolute;top:16px;left:16px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:18px;cursor:pointer;z-index:1;display:flex;align-items:center;justify-content:center';
   closeBtn.onclick = closeFullscreen;
   fsOverlay.appendChild(closeBtn);
@@ -2362,7 +2400,7 @@ window.toggleFullscreen = function(e) {
   // Try native fullscreen on the overlay
   if (fsOverlay.requestFullscreen) fsOverlay.requestFullscreen().catch(function(){});
   else if (fsOverlay.webkitRequestFullscreen) fsOverlay.webkitRequestFullscreen();
-  $('fullscreenBtn').innerHTML = '<i class="fas fa-compress"></i>';
+  $('fullscreenBtn').innerHTML = '<svg class="ui-icon" aria-hidden="true"><use href="#pg-compress"></use></svg>';
 };
 function closeFullscreen() {
   if (document.fullscreenElement || document.webkitFullscreenElement) {
@@ -2370,7 +2408,7 @@ function closeFullscreen() {
     else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
   }
   if (fsOverlay) { fsOverlay.remove(); fsOverlay = null; }
-  if ($('fullscreenBtn')) $('fullscreenBtn').innerHTML = '<i class="fas fa-expand"></i>';
+  if ($('fullscreenBtn')) $('fullscreenBtn').innerHTML = '<svg class="ui-icon" aria-hidden="true"><use href="#pg-expand"></use></svg>';
 }
 document.addEventListener('fullscreenchange', function() {
   if (!document.fullscreenElement && !document.webkitFullscreenElement && fsOverlay) closeFullscreen();
@@ -2409,5 +2447,45 @@ document.addEventListener('focusin', function(e) {
   }
 });
 </script>
+
+  <svg class="icon-sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="pg-brand" viewBox="0 0 64 64"><path d="M12 14h40v28H31L18 53v-11h-6z"/><path d="M22 27h20M27 34h10"/></symbol>
+    <symbol id="pg-chat" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 4v-4H6.5A2.5 2.5 0 0 1 4 12.5z"/><path d="M8 8.5h8M8 11.5h5"/></symbol>
+    <symbol id="pg-hand" viewBox="0 0 24 24"><path d="M7 12V6.5a1.5 1.5 0 0 1 3 0V10V5a1.5 1.5 0 0 1 3 0v5V6a1.5 1.5 0 0 1 3 0v5.5l.6-1.4a1.5 1.5 0 0 1 2.7 1.2l-2.1 5.1A5 5 0 0 1 12.6 19H11a5 5 0 0 1-4.6-3.1L5 12.5A1.5 1.5 0 0 1 7 12z"/></symbol>
+    <symbol id="pg-settings" viewBox="0 0 24 24"><path d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6z"/><path d="m19.4 15 .1.1a1.8 1.8 0 0 1-2.5 2.5l-.1-.1a1.8 1.8 0 0 0-3.1 1.3v.2a1.8 1.8 0 0 1-3.6 0v-.2a1.8 1.8 0 0 0-3.1-1.3l-.1.1a1.8 1.8 0 0 1-2.5-2.5l.1-.1a1.8 1.8 0 0 0-1.3-3.1h-.2a1.8 1.8 0 0 1 0-3.6h.2a1.8 1.8 0 0 0 1.3-3.1l-.1-.1a1.8 1.8 0 0 1 2.5-2.5l.1.1a1.8 1.8 0 0 0 3.1-1.3V1.2a1.8 1.8 0 0 1 3.6 0v.2a1.8 1.8 0 0 0 3.1 1.3l.1-.1a1.8 1.8 0 0 1 2.5 2.5l-.1.1a1.8 1.8 0 0 0 1.3 3.1h.2a1.8 1.8 0 0 1 0 3.6h-.2a1.8 1.8 0 0 0-1.3 3.1z"/></symbol>
+    <symbol id="pg-mic" viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="12" rx="4"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></symbol>
+    <symbol id="pg-mic-off" viewBox="0 0 24 24"><path d="M8 4.5v6.8a4 4 0 0 0 6.2 3.4M16 10.5V7a4 4 0 0 0-6.8-2.8M5 5l14 14M5 11a7 7 0 0 0 12.7 4.1M12 18v3M8 21h8"/></symbol>
+    <symbol id="pg-screen" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+    <symbol id="pg-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 5.8M17 14.5a4.7 4.7 0 0 1 4 5.5"/></symbol>
+    <symbol id="pg-paperclip" viewBox="0 0 24 24"><path d="m9 12.5 6.4-6.4a3.5 3.5 0 0 1 5 5L11 20.5a5 5 0 0 1-7-7L13 4.5"/></symbol>
+    <symbol id="pg-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="pg-phone" viewBox="0 0 24 24"><path d="M7 4h3l1.5 4-2 1.5a14 14 0 0 0 5 5l1.5-2 4 1.5v3a2 2 0 0 1-2.2 2A15.5 15.5 0 0 1 5 6.2 2 2 0 0 1 7 4z"/></symbol>
+    <symbol id="pg-logout" viewBox="0 0 24 24"><path d="M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5"/><path d="M14 8l4 4-4 4M8 12h10"/></symbol>
+    <symbol id="pg-crown" viewBox="0 0 24 24"><path d="m4 7 4 4 4-6 4 6 4-4-2 11H6z"/><path d="M6 21h12"/></symbol>
+    <symbol id="pg-volume" viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6l-5 4zM17 9a5 5 0 0 1 0 6M19.5 6.5a9 9 0 0 1 0 11"/></symbol>
+    <symbol id="pg-camera" viewBox="0 0 24 24"><path d="M4 8h4l1.5-2h5L16 8h4v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+    <symbol id="pg-send" viewBox="0 0 24 24"><path d="m3 4 18 8-18 8 3-8z"/><path d="M6 12h15"/></symbol>
+    <symbol id="pg-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="pg-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h4M9 13h6M9 17h6"/></symbol>
+    <symbol id="pg-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="pg-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2"/></symbol>
+    <symbol id="pg-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 4h4M8 7v13h8V7M10 10v7M14 10v7"/></symbol>
+    <symbol id="pg-reply" viewBox="0 0 24 24"><path d="M10 7 4 12l6 5v-3c5 0 8 1 10 4-1-6-4-9-10-9z"/></symbol>
+    <symbol id="pg-expand" viewBox="0 0 24 24"><path d="M8 4H4v4M16 4h4v4M8 20H4v-4M20 16v4h-4"/></symbol>
+    <symbol id="pg-compress" viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M20 15h-5v5"/></symbol>
+    <symbol id="pg-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="pg-crop" viewBox="0 0 24 24"><path d="M6 3v15a3 3 0 0 0 3 3h12M3 6h15a3 3 0 0 1 3 3v12"/></symbol>
+    <symbol id="pg-palette" viewBox="0 0 24 24"><path d="M12 4a8 8 0 1 0 0 16h2a2 2 0 0 0 0-4h-1a2 2 0 0 1 0-4h3a5 5 0 0 0 5-5 8 8 0 0 0-9-3z"/><circle cx="7" cy="10" r="1"/><circle cx="11" cy="7" r="1"/></symbol>
+    <symbol id="pg-bell" viewBox="0 0 24 24"><path d="M6 17h12l-1.5-2v-4a4.5 4.5 0 0 0-9 0v4zM10 20h4"/></symbol>
+    <symbol id="pg-envelope" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></symbol>
+    <symbol id="pg-eye" viewBox="0 0 24 24"><path d="M3 12s3-6 9-6 9 6 9 6-3 6-9 6-9-6-9-6z"/><circle cx="12" cy="12" r="2.5"/></symbol>
+    <symbol id="pg-eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18M5 8.5A10 10 0 0 0 3 12s3 6 9 6c1.2 0 2.3-.2 3.3-.7M10 6.3A8.3 8.3 0 0 1 12 6c6 0 9 6 9 6a10 10 0 0 1-2 3.5"/></symbol>
+    <symbol id="pg-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="pg-bolt" viewBox="0 0 24 24"><path d="m13 2-9 12h7l-1 8 9-12h-7z"/></symbol>
+    <symbol id="pg-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0M9 10h.01M15 10h.01"/></symbol>
+    <symbol id="pg-shield" viewBox="0 0 24 24"><path d="M12 3 19 6v5c0 5-3 8-7 10-4-2-7-5-7-10V6zM9 12l2 2 4-4"/></symbol>
+    <symbol id="pg-pen" viewBox="0 0 24 24"><path d="m4 16-.8 4.8L8 20l11-11a2.8 2.8 0 0 0-4-4z"/><path d="m13.5 6.5 4 4"/></symbol>
+    <symbol id="pg-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></symbol>
+  </svg>
 </body>
 </html>
