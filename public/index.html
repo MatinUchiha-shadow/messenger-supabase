@@ -567,6 +567,62 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
 .file-chip .chip-remove{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:rgba(239,68,68,.15);color:var(--red);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:8px;padding:0}
 .file-chip .chip-remove:hover{background:var(--red);color:#fff}
 .chip-img-thumb{width:20px;height:20px;border-radius:4px;object-fit:cover;flex-shrink:0}
+
+/* VOICE RECORD */
+.voice-record-btn{width:40px;height:40px;border-radius:12px;flex-shrink:0;background:var(--panel);border:1.5px solid var(--border);color:var(--muted);font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s;cursor:pointer}
+.voice-record-btn:hover{background:var(--border);color:var(--text)}
+.voice-record-btn.recording{background:var(--red);color:#fff;border-color:var(--red);animation:recordPulse 1.2s ease-in-out infinite;box-shadow:0 0 0 0 rgba(248,113,113,.6)}
+.voice-record-btn.recording:hover{background:#dc2626}
+@keyframes recordPulse{0%,100%{box-shadow:0 0 0 0 rgba(248,113,113,.6)}50%{box-shadow:0 0 0 12px rgba(248,113,113,0)}}
+.voice-record-timer{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;color:var(--red);white-space:nowrap;display:none}
+.voice-record-btn.recording + .voice-record-timer{display:block}
+#input-bar .irow{position:relative}
+
+/* STATUS PICKER */
+.status-picker{position:relative;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;transition:all .2s}
+.status-dot.online{background:var(--green);box-shadow:0 0 8px var(--green)}
+.status-dot.away{background:#f59e0b;box-shadow:0 0 8px #f59e0b}
+.status-dot.dnd{background:var(--red);box-shadow:0 0 8px var(--red)}
+.status-dot.invisible{background:var(--muted)}
+.status-dropdown{position:absolute;top:100%;right:0;margin-top:8px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:6px;z-index:300;min-width:180px;box-shadow:0 12px 40px rgba(0,0,0,.5);animation:scaleIn .2s var(--ease);display:none}
+.status-dropdown.show{display:block}
+.status-option{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;font-size:12px;font-weight:500;color:var(--text);cursor:pointer;transition:all .15s;white-space:nowrap}
+.status-option:hover{background:var(--panel)}
+.status-option .status-dot{margin:0}
+.status-current{font-size:11px;color:var(--muted)}
+
+/* STATUS ON AVATARS */
+.status-av-dot{position:absolute;bottom:0;right:0;width:12px;height:12px;border-radius:50%;border:2px solid var(--surface);flex-shrink:0}
+.status-av-dot.online{background:var(--green)}
+.status-av-dot.away{background:#f59e0b}
+.status-av-dot.dnd{background:var(--red)}
+.status-av-dot.invisible{background:var(--muted)}
+.online-item .status-av-dot{width:8px;height:8px;border-width:1px;position:static;margin-left:4px}
+
+/* MESSAGE SEARCH */
+.search-toggle-btn{width:34px;height:34px;border-radius:10px;background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;color:var(--muted)}
+.search-toggle-btn:hover{background:var(--border);color:var(--text)}
+.search-bar-container{display:none;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);gap:8px;align-items:center}
+.search-bar-container.show{display:flex}
+.search-bar-input{flex:1;padding:8px 14px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;font-size:13px;color:var(--text);transition:all .2s}
+.search-bar-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(139,92,246,.1)}
+.search-bar-input::placeholder{color:var(--muted)}
+.search-nav-btn{width:28px;height:28px;border-radius:8px;background:var(--panel);border:none;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;transition:all .15s}
+.search-nav-btn:hover{background:var(--border);color:var(--text)}
+.search-nav-btn:disabled{opacity:.3;pointer-events:none}
+.search-count{font-size:11px;color:var(--muted);min-width:50px;text-align:center;white-space:nowrap}
+.search-highlight{background:rgba(250,204,21,.35);border-radius:2px;padding:1px 0}
+.search-highlight.current{background:rgba(250,204,21,.65);outline:2px solid #facc15;outline-offset:1px;border-radius:3px}
+
+/* AUTO THEME */
+.theme-auto-indicator{font-size:10px;color:var(--accent);font-weight:600;margin-top:2px;display:flex;align-items:center;gap:3px}
+
+/* NOTIFICATION TOGGLE IN HEADER */
+.push-subscribe-btn{font-size:11px;padding:4px 10px;border-radius:8px;background:var(--panel);border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .15s}
+.push-subscribe-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.push-subscribe-btn.subscribed{background:rgba(34,197,94,.12);color:var(--green);border-color:rgba(34,197,94,.2)}
+
 </style>
 </head>
 <body data-theme="default">
@@ -601,6 +657,16 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
   <div class="sb-head">
     <div class="avatar" id="hav" onclick="openMyProfile()"></div>
     <div class="sb-info"><div class="sb-name" id="hname" onclick="openMyProfile()"></div><span class="sb-role" id="hrole"></span></div>
+  <div class="status-picker" id="statusPicker" onclick="toggleStatusDropdown(event)" title="وضعیت">
+    <span class="status-dot online" id="statusDot"></span>
+    <span class="status-current" id="statusLabel">آنلاین</span>
+    <div class="status-dropdown" id="statusDropdown">
+      <div class="status-option" onclick="setStatus('online');event.stopPropagation()"><span class="status-dot online"></span> آنلاین</div>
+      <div class="status-option" onclick="setStatus('away');event.stopPropagation()"><span class="status-dot away"></span> دور از دسترس</div>
+      <div class="status-option" onclick="setStatus('dnd');event.stopPropagation()"><span class="status-dot dnd"></span> مزاحم نشید</div>
+      <div class="status-option" onclick="setStatus('invisible');event.stopPropagation()"><span class="status-dot invisible"></span> مخفی</div>
+    </div>
+  </div>
     <button class="icon-btn" onclick="openSettings()" title="تنظیمات" style="width:30px;height:30px;font-size:13px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-settings"></use></svg></button>
     <button class="icon-btn" onclick="openThemePanel()" title="تم" style="width:30px;height:30px;font-size:13px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-palette"></use></svg></button>
   </div>
@@ -617,6 +683,7 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
 <main class="main">
   <div class="chat-header" id="chatHeader" style="display:none">
     <div class="chat-title"><h2 id="roomTitle"></h2><span class="chat-badge" id="roomBadge"></span></div>
+    <button class="search-toggle-btn" onclick="toggleSearch()" title="جستجو" id="searchToggleBtn"><svg class="ui-icon" aria-hidden="true"><use href="#pg-search"></use></svg></button>
     <button class="icon-btn" id="meetBtn" onclick="openMeet()" title="مشاهده اعضا" style="display:none;width:34px;height:34px;font-size:14px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-users"></use></svg></button>
     <div class="chat-actions" id="voiceActions" style="display:none">
       <button class="vb-join" id="joinVoiceBtn" onclick="joinVoice()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg> ورود</button>
@@ -624,6 +691,13 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
       <button class="icon-btn" id="shareScreenBtn" style="display:none" onclick="shareScreen()" title="اشتراک صفحه"><svg class="ui-icon" aria-hidden="true"><use href="#pg-screen"></use></svg></button>
     </div>
   </div>
+  <div class="search-bar-container" id="searchBarContainer">
+  <input class="search-bar-input" id="searchBarInput" placeholder="جستجو در پیام‌ها..." oninput="doSearch()" onkeydown="if(event.key==='Enter')searchNext()">
+  <span class="search-count" id="searchCount"></span>
+  <button class="search-nav-btn" id="searchPrevBtn" onclick="searchPrev()" disabled title="قبلی"><svg class="ui-icon" aria-hidden="true"><use href="#pg-search-nav-up"></use></svg></button>
+  <button class="search-nav-btn" id="searchNextBtn" onclick="searchNext()" disabled title="بعدی"><svg class="ui-icon" aria-hidden="true"><use href="#pg-search-nav-down"></use></svg></button>
+  <button class="search-nav-btn" onclick="closeSearch()" title="بستن"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button>
+</div>
   <div id="voice-bar"><div style="flex:1"><div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:3px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg> صوتی</div><div class="vb-members" id="vbMembers"><span style="font-size:11px;color:var(--muted)">خالی</span></div></div></div>
   <div id="welcome" class="welcome"><div class="welcome-icon"><svg class="ui-icon" aria-hidden="true"><use href="#pg-chat"></use></svg></div><h2 style="font-size:18px;font-weight:600">GapChat</h2><p style="font-size:12px">یه اتاق یا پیام خصوصی انتخاب کن</p></div>
   <div id="messages" style="display:none"></div>
@@ -658,6 +732,7 @@ window.removeFromQueue = function(idx) {
     <div class="irow">
       <label class="attach-btn" style="cursor:pointer"><svg class="ui-icon" aria-hidden="true"><use href="#pg-paperclip"></use></svg><input type="file" id="mediaInput" accept="*/*,.mcworld,.mcpack,.mcaddon,.mcmeta,.mctemplate,.mcstructure,.mcfunction,.jar,.json,.dat,.nbt,.lang,.properties,.mcgame,.mclevel" multiple style="display:none"></label>
       <label class="camera-btn" style="cursor:pointer"><svg class="ui-icon" aria-hidden="true"><use href="#pg-camera"></use></svg><input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none"></label>
+<button class="voice-record-btn" id="voiceRecordBtn" title="پیام صوتی (نگه دارید)" aria-label="ضبط پیام صوتی"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg></button><span class="voice-record-timer" id="voiceRecordTimer">00:00</span>
       <textarea id="msg-input" rows="1" placeholder="پیام…"></textarea>
       <button class="btn-send" id="sendBtn" onclick="sendMsg()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-send"></use></svg></button>
     </div>
@@ -2491,6 +2566,470 @@ document.addEventListener('focusin', function(e) {
     }, 400);
   }
 });
+
+
+// === VOICE MESSAGES ===
+let voiceRecorder = null, voiceRecChunks = [], voiceRecStart = 0, voiceRecTimer = null;
+$('voiceRecordBtn').addEventListener('pointerdown', async function(e) {
+  e.preventDefault();
+  if (!curRoom || !me) { toast('اول یه روم انتخاب کن'); return; }
+  if (myStream) { toast('اول از تماس صوتی خارج شو'); return; }
+  try {
+    var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    voiceRecorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm' });
+    voiceRecChunks = [];
+    voiceRecorder.ondataavailable = function(e) { if (e.data.size > 0) voiceRecChunks.push(e.data); };
+    voiceRecorder.onstop = async function() {
+      stream.getTracks().forEach(function(t) { t.stop(); });
+      var blob = new Blob(voiceRecChunks, { type: 'audio/webm' });
+      voiceRecChunks = [];
+      if (blob.size < 100) { toast('ضبط خیلی کوتاه بود'); return; }
+      await uploadVoiceMessage(blob);
+    };
+    voiceRecorder.start();
+    voiceRecStart = Date.now();
+    $('voiceRecordBtn').classList.add('recording');
+    $('voiceRecordBtn').innerHTML = '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic-off"></use></svg>';
+    voiceRecTimer = setInterval(function() {
+      var elapsed = Math.floor((Date.now() - voiceRecStart) / 1000);
+      var m = Math.floor(elapsed / 60), s = elapsed % 60;
+      $('voiceRecordTimer').textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    }, 200);
+    toast('در حال ضبط...');
+  } catch(e) { toast('خطا: دسترسی به میکروفون'); }
+});
+$('voiceRecordBtn').addEventListener('pointerup', function(e) {
+  e.preventDefault();
+  stopVoiceRecord();
+});
+$('voiceRecordBtn').addEventListener('pointerleave', function(e) {
+  if (voiceRecorder && voiceRecorder.state === 'recording') stopVoiceRecord();
+});
+function stopVoiceRecord() {
+  if (!voiceRecorder || voiceRecorder.state !== 'recording') return;
+  voiceRecorder.stop();
+  voiceRecorder = null;
+  $('voiceRecordBtn').classList.remove('recording');
+  $('voiceRecordBtn').innerHTML = '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg>';
+  $('voiceRecordTimer').textContent = '00:00';
+  if (voiceRecTimer) { clearInterval(voiceRecTimer); voiceRecTimer = null; }
+}
+async function uploadVoiceMessage(blob) {
+  var path = 'voice_' + Date.now() + '_' + Math.random().toString(36).slice(2,6) + '.webm';
+  var overlay = $('uploadOverlay'), barFill = $('uploadBarFill'), pctEl = $('uploadPct'), textEl = $('uploadText'), subEl = $('uploadSub');
+  overlay.classList.add('show'); barFill.style.width = '0%';
+  textEl.textContent = 'آپلود پیام صوتی';
+  subEl.textContent = 'لطفا صبر کنید';
+  var totalMB = (blob.size/(1024*1024)).toFixed(1);
+  pctEl.textContent = '0 / ' + totalMB + ' MB';
+  try {
+    var upResult = await new Promise(async function(resolve, reject) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', SB_URL + '/storage/v1/object/chat-images/' + path);
+      xhr.setRequestHeader('apikey', SB_KEY); xhr.setRequestHeader('x-upsert', 'true');
+      xhr.setRequestHeader('Content-Type', 'audio/webm');
+      var session = (await db.auth.getSession()).data.session;
+      xhr.setRequestHeader('Authorization', 'Bearer ' + (session ? session.access_token : SB_KEY));
+      xhr.upload.onprogress = function(e) {
+        if(e.lengthComputable){var lm=(e.loaded/(1024*1024)).toFixed(1);var p=Math.round((e.loaded/e.total)*100);barFill.style.width=p+'%';pctEl.textContent=lm+' / '+totalMB+' MB ('+p+'%)';}
+      };
+      xhr.onload = function(){if(xhr.status>=200&&xhr.status<300)resolve(JSON.parse(xhr.responseText));else reject(new Error(xhr.status));};
+      xhr.onerror = function(){reject(new Error('Upload failed'));};
+      xhr.send(blob);
+    });
+    barFill.style.width='100%'; pctEl.textContent=totalMB+' / '+totalMB+' MB (100%)';
+    textEl.textContent='آپلود شد'; await new Promise(function(r){setTimeout(r,300);});
+    overlay.classList.remove('show');
+    var ud = db.storage.from('chat-images').getPublicUrl(path);
+    var md = {room_id:curRoom,user_id:me.id,type:'voice',content:'',file_url:ud.data.publicUrl,file_name:'پیام صوتی',file_size:blob.size};
+    if(replyToData){md.reply_to_id=replyToData.id;md.reply_to_name=replyToData.name;md.reply_to_text=replyToData.text;cancelReply();}
+    if(realtimeRelay){realtimeRelay.send({type:'broadcast',event:'new_msg',payload:{id:Date.now().toString(),room_id:md.room_id,user_id:md.user_id,type:md.type,content:md.content,file_url:md.file_url,file_name:md.file_name,file_size:md.file_size,created_at:new Date().toISOString(),profiles:myProfile}});}
+    var ins = await db.from('messages').insert(md).select('*').single();
+    var msgObj = ins.data || {id:(crypto.randomUUID?crypto.randomUUID():Date.now().toString()),room_id:curRoom,user_id:me.id,type:'voice',content:'',file_url:ud.data.publicUrl,file_name:'پیام صوتی',file_size:blob.size,created_at:new Date().toISOString(),profiles:myProfile};
+    if(ins.data)msgObj.profiles=myProfile;
+    addMsg(msgObj);scrollBottom();
+  } catch(e) {
+    toast('خطا در آپلود صدا: ' + (e.message||'نامشخص'));
+    overlay.classList.remove('show');
+  }
+}
+
+// === USER STATUS ===
+var userStatus = localStorage.getItem('gapchat_status') || 'online';
+var statusLabels = { online: 'آنلاین', away: 'دور از دسترس', dnd: 'مزاحم نشید', invisible: 'مخفی' };
+function applyStatusUI() {
+  var dot = $('statusDot'), label = $('statusLabel');
+  if (dot) { dot.className = 'status-dot ' + userStatus; }
+  if (label) { label.textContent = statusLabels[userStatus] || 'آنلاین'; }
+}
+window.setStatus = function(st) {
+  userStatus = st;
+  localStorage.setItem('gapchat_status', st);
+  applyStatusUI();
+  $('statusDropdown').classList.remove('show');
+  // Broadcast status via presence
+  if (presenceChannel) {
+    presenceChannel.track({ user_id: me.id, username: myProfile.username, display_name: myProfile.display_name, status: st });
+  }
+  toast('وضعیت: ' + (statusLabels[st] || st));
+};
+window.toggleStatusDropdown = function(e) {
+  e.stopPropagation();
+  var dd = $('statusDropdown');
+  dd.classList.toggle('show');
+  if (dd.classList.contains('show')) {
+    setTimeout(function() {
+      document.addEventListener('click', function h() { dd.classList.remove('show'); document.removeEventListener('click', h); }, { once: true });
+    }, 40);
+  }
+};
+applyStatusUI();
+
+// Extend presence tracking to include status
+var origStartPresence = startPresence;
+startPresence = async function() {
+  await origStartPresence();
+  // Re-track with status after original subscribe
+  setTimeout(async function() {
+    if (presenceChannel) {
+      await presenceChannel.track({ user_id: me.id, username: myProfile.username, display_name: myProfile.display_name, status: userStatus });
+    }
+  }, 500);
+};
+
+// Extend rOnline to show status dots
+var origROnline = rOnline;
+rOnline = function(state) {
+  var l = $('onlineList');
+  l.innerHTML = '';
+  var seen = new Set();
+  for (var [, p] of Object.entries(state)) {
+    for (var u of p) {
+      if (seen.has(u.user_id)) continue;
+      seen.add(u.user_id);
+      var st = u.status || 'online';
+      if (st === 'invisible') continue; // Don't show invisible users in online list
+      var d = document.createElement('div');
+      d.className = 'online-item';
+      d.innerHTML = '<span class="status-av-dot ' + st + '"></span><span>' + esc(u.display_name || u.username) + (u.user_id === me.id ? ' (شما)' : '') + '</span>';
+      l.appendChild(d);
+    }
+  }
+};
+
+// === MESSAGE SEARCH ===
+var searchResults = [], searchIdx = -1;
+window.toggleSearch = function() {
+  var cont = $('searchBarContainer');
+  var show = !cont.classList.contains('show');
+  if (show) { cont.classList.add('show'); $('searchBarInput').focus(); $('searchBarInput').value = ''; clearSearch(); }
+  else closeSearch();
+};
+window.closeSearch = function() { clearSearch(); $('searchBarContainer').classList.remove('show'); $('searchBarInput').value = ''; };
+function clearSearch() {
+  searchResults = []; searchIdx = -1;
+  document.querySelectorAll('.search-highlight').forEach(function(el) {
+    var parent = el.parentNode;
+    parent.replaceChild(document.createTextNode(el.textContent), el);
+    parent.normalize();
+  });
+  $('searchCount').textContent = '';
+  $('searchPrevBtn').disabled = true;
+  $('searchNextBtn').disabled = true;
+}
+window.doSearch = function() {
+  clearSearch();
+  var q = $('searchBarInput').value.trim();
+  if (!q || q.length < 1) return;
+  var bubbles = document.querySelectorAll('#messages .msg-bubble');
+  bubbles.forEach(function(b) {
+    var text = b.textContent || '';
+    var idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if (idx === -1) return;
+    // Highlight all occurrences
+    highlightInElement(b, q);
+    searchResults.push(b);
+  });
+  searchIdx = searchResults.length > 0 ? 0 : -1;
+  $('searchCount').textContent = searchResults.length > 0 ? (searchIdx + 1) + ' / ' + searchResults.length : 'پیدا نشد';
+  $('searchPrevBtn').disabled = searchResults.length <= 1;
+  $('searchNextBtn').disabled = searchResults.length <= 1;
+  if (searchResults.length > 0) {
+    navigateToResult(0);
+  }
+};
+function highlightInElement(el, q) {
+  var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+  var nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(function(node) {
+    var text = node.textContent;
+    var lower = text.toLowerCase();
+    var qi = lower.indexOf(q.toLowerCase());
+    if (qi === -1) return;
+    var parent = node.parentNode;
+    if (!parent) return;
+    var frag = document.createDocumentFragment();
+    var lastIdx = 0;
+    while (qi !== -1) {
+      if (qi > lastIdx) frag.appendChild(document.createTextNode(text.slice(lastIdx, qi)));
+      var span = document.createElement('span');
+      span.className = 'search-highlight';
+      span.textContent = text.slice(qi, qi + q.length);
+      frag.appendChild(span);
+      lastIdx = qi + q.length;
+      qi = lower.indexOf(q.toLowerCase(), lastIdx);
+    }
+    if (lastIdx < text.length) frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+    parent.replaceChild(frag, node);
+  });
+}
+function navigateToResult(idx) {
+  searchResults.forEach(function(b, i) {
+    b.querySelectorAll('.search-highlight').forEach(function(h) {
+      h.classList.toggle('current', i === idx);
+    });
+  });
+  if (searchResults[idx]) {
+    searchResults[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  $('searchCount').textContent = (idx + 1) + ' / ' + searchResults.length;
+}
+window.searchNext = function() {
+  if (!searchResults.length) return;
+  searchIdx = (searchIdx + 1) % searchResults.length;
+  navigateToResult(searchIdx);
+};
+window.searchPrev = function() {
+  if (!searchResults.length) return;
+  searchIdx = (searchIdx - 1 + searchResults.length) % searchResults.length;
+  navigateToResult(searchIdx);
+};
+
+// === AUTO THEME ===
+var themeMode = localStorage.getItem('gapchat_theme_mode') || 'auto'; // auto | dark | light
+var systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+function isDarkByTime() {
+  var h = new Date().getHours();
+  return h >= 19 || h < 6; // 7PM to 6AM = dark
+}
+function shouldUseDark() {
+  if (themeMode === 'dark') return true;
+  if (themeMode === 'light') return false;
+  // Auto mode: prefer system, fallback to time
+  if (systemDark && systemDark.matches !== undefined) return systemDark.matches;
+  return isDarkByTime();
+}
+function applyAutoTheme() {
+  var useDark = shouldUseDark();
+  if (useDark) {
+    if (curTheme === 'روشن ملایم') {
+      applyTheme('نیون پیش‌فرض');
+    }
+  } else {
+    applyTheme('روشن ملایم');
+  }
+  renderPresets();
+}
+window.setThemeMode = function(mode) {
+  themeMode = mode;
+  localStorage.setItem('gapchat_theme_mode', mode);
+  applyAutoTheme();
+  toast('حالت تم: ' + (mode === 'auto' ? 'خودکار' : mode === 'dark' ? 'تیره' : 'روشن'));
+};
+// Listen for system theme changes
+if (systemDark && systemDark.addEventListener) {
+  systemDark.addEventListener('change', function() {
+    if (themeMode === 'auto') applyAutoTheme();
+  });
+}
+// Check time every 5 minutes for time-based auto theme
+setInterval(function() {
+  if (themeMode === 'auto' && !(systemDark && systemDark.addEventListener)) {
+    var curDark = document.body.getAttribute('data-theme') !== 'light';
+    if (curDark !== isDarkByTime()) applyAutoTheme();
+  }
+}, 5 * 60 * 1000);
+
+// Extend theme panel to include auto toggle
+var origRenderPresets = renderPresets;
+renderPresets = function() {
+  origRenderPresets();
+  // Remove old row and re-add theme mode selector after presets
+  var oldRow = document.getElementById('themeModeRow');
+  if (oldRow) oldRow.remove();
+  var tpBody = document.querySelector('.tp-body');
+  if (tpBody) {
+    var row = document.createElement('div');
+    row.id = 'themeModeRow';
+    row.style.cssText = 'margin-top:12px;padding-top:12px;border-top:1px solid var(--border)';
+    row.innerHTML = '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px">حالت تم</div>' +
+      '<div style="display:flex;gap:6px">' +
+      '<button class="tp-btn' + (themeMode === 'auto' ? ' primary' : '') + '" onclick="setThemeMode(\'auto\')" style="flex:1">خودکار</button>' +
+      '<button class="tp-btn' + (themeMode === 'dark' ? ' primary' : '') + '" onclick="setThemeMode(\'dark\')" style="flex:1">تیره</button>' +
+      '<button class="tp-btn' + (themeMode === 'light' ? ' primary' : '') + '" onclick="setThemeMode(\'light\')" style="flex:1">روشن</button>' +
+      '</div>';
+    var presetsDiv = tpBody.querySelector('div');
+    if (presetsDiv && presetsDiv.nextSibling) {
+      tpBody.insertBefore(row, presetsDiv.nextSibling);
+    } else {
+      tpBody.appendChild(row);
+    }
+  }
+};
+// Apply auto theme on load
+setTimeout(function() {
+  if (themeMode !== 'always') {
+    // Only override if user hasn't manually set a theme
+    var savedTheme = localStorage.getItem('gapchat_theme');
+    if (!savedTheme || themeMode === 'auto') {
+      applyAutoTheme();
+    }
+  }
+}, 100);
+
+// === WEB PUSH NOTIFICATIONS ===
+var pushSubscribed = false;
+var pushSubscription = null;
+var isPageFocused = true;
+document.addEventListener('visibilitychange', function() { isPageFocused = !document.hidden; });
+window.addEventListener('focus', function() { isPageFocused = true; });
+window.addEventListener('blur', function() { isPageFocused = false; });
+
+async function initPushNotifications() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  try {
+    var reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    var sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      pushSubscribed = true;
+      pushSubscription = sub;
+      document.querySelectorAll('.push-subscribe-btn').forEach(function(b) {
+        b.classList.add('subscribed');
+        b.textContent = 'فعال';
+      });
+    }
+  } catch(e) { console.log('SW registration:', e); }
+}
+window.togglePushNotifications = async function() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    toast('مرورگر شما پشتیبانی نمیکنه');
+    return;
+  }
+  if (pushSubscribed) {
+    await unsubscribePush();
+  } else {
+    await subscribePush();
+  }
+};
+async function subscribePush() {
+  try {
+    var perm = await Notification.requestPermission();
+    if (perm !== 'granted') { toast('دسترسی نوتیفیکیشن رد شد'); return; }
+    var reg = await navigator.serviceWorker.ready;
+    // Use a simple VAPID key or just store the subscription
+    var sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array('BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U')
+    });
+    pushSubscribed = true;
+    pushSubscription = sub;
+    // Store subscription in Supabase
+    if (me && me.id) {
+      try {
+        await db.from('push_subscriptions').upsert({
+          user_id: me.id,
+          subscription: JSON.stringify(sub),
+          created_at: new Date().toISOString()
+        });
+      } catch(e) { console.log('Push subscription storage:', e); }
+    }
+    document.querySelectorAll('.push-subscribe-btn').forEach(function(b) {
+      b.classList.add('subscribed');
+      b.textContent = 'فعال';
+    });
+    toast('نوتیفیکیشن فعال شد');
+  } catch(e) { toast('خطا: ' + (e.message || '')); }
+}
+async function unsubscribePush() {
+  try {
+    var reg = await navigator.serviceWorker.ready;
+    var sub = await reg.pushManager.getSubscription();
+    if (sub) await sub.unsubscribe();
+    pushSubscribed = false;
+    pushSubscription = null;
+    if (me && me.id) {
+      try { await db.from('push_subscriptions').delete().eq('user_id', me.id); } catch(e) {}
+    }
+    document.querySelectorAll('.push-subscribe-btn').forEach(function(b) {
+      b.classList.remove('subscribed');
+      b.textContent = 'فعال‌سازی';
+    });
+    toast('نوتیفیکیشن غیرفعال شد');
+  } catch(e) { toast('خطا: ' + (e.message || '')); }
+}
+function urlBase64ToUint8Array(base64String) {
+  var padding = '='.repeat((4 - base64String.length % 4) % 4);
+  var base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+  var rawData = atob(base64);
+  var outputArray = new Uint8Array(rawData.length);
+  for (var i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+function showPushNotification(title, body, icon, tag) {
+  if (isPageFocused) return;
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    var n = new Notification(title, { body: body, icon: icon || '/icon.png', tag: tag, silent: false });
+    n.onclick = function() { window.focus(); n.close(); };
+    setTimeout(function() { n.close(); }, 5000);
+  } catch(e) {}
+}
+
+// Extend addMsg to trigger notifications
+var origAddMsg = addMsg;
+addMsg = function(m) {
+  origAddMsg(m);
+  // Auto-clear search when new messages arrive
+  if (searchResults.length > 0 && $('searchBarContainer').classList.contains('show')) {
+    doSearch();
+  }
+  if (m.user_id !== (me && me.id) && !isPageFocused) {
+    var sender = (m.profiles && m.profiles.display_name) || 'کاربر';
+    var body = m.type === 'text' ? m.content : m.type === 'voice' ? 'پیام صوتی' : m.type === 'image' ? 'تصویر' : m.type === 'video' ? 'ویدیو' : 'فایل';
+    showPushNotification(sender, body, m.profiles && m.profiles.avatar_url, 'msg-' + m.id);
+  }
+};
+
+// Initialize push notifications after login
+var origEnterApp = enterApp;
+enterApp = function() {
+  origEnterApp();
+  initPushNotifications();
+};
+
+// Add push button to settings
+var origOpenSettings = openSettings;
+openSettings = async function() {
+  await origOpenSettings();
+  // Add push notification toggle to settings body
+  setTimeout(function() {
+    var body = document.querySelector('.settings-body');
+    if (body && !document.getElementById('pushNotifRow')) {
+      var section = body.querySelector('.settings-section:last-of-type');
+      if (section) {
+        var row = document.createElement('div');
+        row.id = 'pushNotifRow';
+        row.className = 'settings-row';
+        row.innerHTML = '<div class="settings-row-label"><div class="srl-title">نوتیفیکیشن Push</div><div class="srl-desc">اعلان در پس‌زمینه</div></div>' +
+          '<button class="push-subscribe-btn' + (pushSubscribed ? ' subscribed' : '') + '" onclick="togglePushNotifications()">' + (pushSubscribed ? 'فعال' : 'فعال‌سازی') + '</button>';
+        var sections = body.querySelectorAll('.settings-section');
+        sections[sections.length - 1].appendChild(row);
+      }
+    }
+  }, 200);
+};
+
 </script>
 
   <svg class="icon-sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
@@ -2532,6 +3071,16 @@ document.addEventListener('focusin', function(e) {
     <symbol id="pg-pen" viewBox="0 0 24 24"><path d="m4 16-.8 4.8L8 20l11-11a2.8 2.8 0 0 0-4-4z"/><path d="m13.5 6.5 4 4"/></symbol>
     <symbol id="pg-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></symbol>
     <symbol id="pg-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 10.5v6M12 7.4v.1"/></symbol>
+  
+    <symbol id="pg-voice" viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6l-5 4z"/><path d="M17 9a5 5 0 0 1 0 6" stroke-width="1.5"/><path d="M19.5 6.5a9 9 0 0 1 0 11" stroke-width="1.2" opacity=".5"/><circle cx="17" cy="12" r="8" stroke-dasharray="3 2" opacity=".4"/></symbol>
+    <symbol id="pg-status" viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"/><path d="M8 14v-3a4 4 0 0 1 8 0v3"/><path d="M5 21h14"/></symbol>
+    <symbol id="pg-moon" viewBox="0 0 24 24"><path d="M20 14.5A7.5 7.5 0 0 1 8.5 3 7.5 7.5 0 0 0 20 14.5z"/></symbol>
+    <symbol id="pg-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4l1.4-1.4M17 7l1.4-1.4"/></symbol>
+    <symbol id="pg-dnd" viewBox="0 0 24 24"><path d="M6 12h12"/><circle cx="12" cy="12" r="9"/></symbol>
+    <symbol id="pg-notification" viewBox="0 0 24 24"><path d="M6 17h12l-1.5-2v-4a4.5 4.5 0 0 0-9 0v4z"/><path d="M10 20h4"/><circle cx="17" cy="7" r="3.5"/></symbol>
+    <symbol id="pg-search-nav-up" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol>
+    <symbol id="pg-search-nav-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+
   </svg>
 </body>
 </html>
