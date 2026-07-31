@@ -1570,7 +1570,6 @@ function renderReactions(msgId) {
 // MEDIA
 $('mediaInput').addEventListener('change', function() {
   var f = this.files[0]; if (!f) return;
-  if (f.size > 50 * 1024 * 1024) { toast('حداکثر ۵۰MB'); this.value = ''; return; }
   pendingMediaFile = f; pendingMediaIsVideo = f.type.startsWith('video/');
   var url = URL.createObjectURL(f);
   if (pendingMediaIsVideo) { $('prevVid').src = url; $('prevVid').style.display = 'block'; $('prevImg').style.display = 'none'; }
@@ -1599,7 +1598,6 @@ document.addEventListener('drop', function(e) {
   var f = files[0];
   if (!curRoom) { toast('اول یه روم انتخاب کن'); return; }
   // Accept ALL file types - no MIME restriction
-  if (f.size > 50 * 1024 * 1024) { toast('حداکثر ۵۰MB'); return; }
   pendingMediaFile = f;
   pendingMediaIsVideo = f.type.startsWith('video/');
   var url = URL.createObjectURL(f);
