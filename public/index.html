@@ -2089,8 +2089,9 @@ window.uploadAvatar = async function(input) {
       return;
     }
     var ud = db.storage.from('avatars').getPublicUrl(path);
-    await db.from('profiles').update({ avatar_url: ud.data.publicUrl }).eq('id', me.id);
-    myProfile.avatar_url = ud.data.publicUrl;
+    var verUrl = ud.data.publicUrl + (ud.data.publicUrl.indexOf('?') > -1 ? '&' : '?') + 'v=' + Date.now();
+    await db.from('profiles').update({ avatar_url: verUrl }).eq('id', me.id);
+    myProfile.avatar_url = verUrl;
     rAv($('hav'), myProfile);
     openProfile(myProfile.display_name || myProfile.username);
     toast('✅');
