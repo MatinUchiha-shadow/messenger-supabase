@@ -705,30 +705,6 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
   <div id="input-bar">
     <div id="quickRepliesStrip" class="quick-strip"></div>
     <div class="media-preview" id="mediaPreview"><div class="file-queue" id="mediaQueueList"></div><button class="cancel-media" onclick="cancelMedia()" style="position:absolute;top:-8px;right:-8px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button></div>
-function renderFileQueue() {
-  var q = $('mediaQueueList');
-  q.innerHTML = '';
-  pendingMediaFiles.forEach(function(item, idx) {
-    var f = item.file;
-    var chip = document.createElement('div');
-    chip.className = 'file-chip';
-    if (f.type.startsWith('image/') && !item.thumbUrl) item.thumbUrl = URL.createObjectURL(f);
-    if (item.thumbUrl) {
-      chip.innerHTML = '<img class="chip-img-thumb" src="'+item.thumbUrl+'" alt=""><div class="chip-info"><div class="chip-name">'+esc(f.name)+'</div><div class="chip-size">'+(f.size<1024*1024?(f.size/1024).toFixed(0)+' KB':(f.size/(1024*1024)).toFixed(1)+' MB')+'</div></div><button class="chip-remove" onclick="removeFromQueue('+idx+')" title="حذف">&times;</button>';
-    } else {
-      var iconName = item.isVideo ? 'pg-file' : f.type.startsWith('audio/') ? 'pg-volume' : 'pg-file';
-      chip.innerHTML = '<div class="chip-icon"><svg class="ui-icon" aria-hidden="true"><use href="#'+iconName+'"></use></svg></div><div class="chip-info"><div class="chip-name">'+esc(f.name)+'</div><div class="chip-size">'+(f.size<1024*1024?(f.size/1024).toFixed(0)+' KB':(f.size/(1024*1024)).toFixed(1)+' MB')+'</div></div><button class="chip-remove" onclick="removeFromQueue('+idx+')" title="حذف">&times;</button>';
-    }
-    q.appendChild(chip);
-  });
-}
-window.removeFromQueue = function(idx) {
-  var item = pendingMediaFiles[idx];
-  if (item && item.thumbUrl) URL.revokeObjectURL(item.thumbUrl);
-  pendingMediaFiles.splice(idx, 1);
-  if (pendingMediaFiles.length === 0) cancelMedia();
-  else renderFileQueue();
-};
     <div class="irow">
       <label class="attach-btn" style="cursor:pointer"><svg class="ui-icon" aria-hidden="true"><use href="#pg-paperclip"></use></svg><input type="file" id="mediaInput" accept="*/*,.mcworld,.mcpack,.mcaddon,.mcmeta,.mctemplate,.mcstructure,.mcfunction,.jar,.json,.dat,.nbt,.lang,.properties,.mcgame,.mclevel" multiple style="display:none"></label>
       <label class="camera-btn" style="cursor:pointer"><svg class="ui-icon" aria-hidden="true"><use href="#pg-camera"></use></svg><input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none"></label>
@@ -1066,6 +1042,31 @@ function fmtVoiceTime(v) {
 }
 const peers = new Map(), voiceMembers = new Map();
 let pendingMediaFiles = [], pollTimer = null, lastMsgTime = null;
+function renderFileQueue() {
+  var q = $('mediaQueueList');
+  q.innerHTML = '';
+  pendingMediaFiles.forEach(function(item, idx) {
+    var f = item.file;
+    var chip = document.createElement('div');
+    chip.className = 'file-chip';
+    if (f.type.startsWith('image/') && !item.thumbUrl) item.thumbUrl = URL.createObjectURL(f);
+    if (item.thumbUrl) {
+      chip.innerHTML = '<img class="chip-img-thumb" src="'+item.thumbUrl+'" alt=""><div class="chip-info"><div class="chip-name">'+esc(f.name)+'</div><div class="chip-size">'+(f.size<1024*1024?(f.size/1024).toFixed(0)+' KB':(f.size/(1024*1024)).toFixed(1)+' MB')+'</div></div><button class="chip-remove" onclick="removeFromQueue('+idx+')" title="حذف">&times;</button>';
+    } else {
+      var iconName = item.isVideo ? 'pg-file' : f.type.startsWith('audio/') ? 'pg-volume' : 'pg-file';
+      chip.innerHTML = '<div class="chip-icon"><svg class="ui-icon" aria-hidden="true"><use href="#'+iconName+'"></use></svg></div><div class="chip-info"><div class="chip-name">'+esc(f.name)+'</div><div class="chip-size">'+(f.size<1024*1024?(f.size/1024).toFixed(0)+' KB':(f.size/(1024*1024)).toFixed(1)+' MB')+'</div></div><button class="chip-remove" onclick="removeFromQueue('+idx+')" title="حذف">&times;</button>';
+    }
+    q.appendChild(chip);
+  });
+}
+window.removeFromQueue = function(idx) {
+  var item = pendingMediaFiles[idx];
+  if (item && item.thumbUrl) URL.revokeObjectURL(item.thumbUrl);
+  pendingMediaFiles.splice(idx, 1);
+  if (pendingMediaFiles.length === 0) cancelMedia();
+  else renderFileQueue();
+};
+
 let replyToData = null, reactions = {}, audioSettings = { deviceId: null, echoCancellation: true, noiseSuppression: true, autoGainControl: true, notifications: true };
 const REACTIONS = [
   { key: 'like', icon: 'check', label: 'پسندیدن' },
