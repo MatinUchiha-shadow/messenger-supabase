@@ -543,6 +543,18 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
 .p-swatch::after{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,rgba(255,255,255,.15) 0%,transparent 55%);pointer-events:none}
 .p-check{display:none;position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:var(--accent);color:#fff;font-size:9px;font-weight:700;align-items:center;justify-content:center;z-index:2;line-height:1;border:2px solid var(--bg)}
 .p-chip.active .p-check{display:flex}
+/* DRAG & DROP */
+.drop-zone{position:fixed;inset:0;z-index:900;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);pointer-events:none}
+.drop-zone.active{display:flex;animation:fadeIn .2s ease}
+.drop-zone-border{width:calc(100% - 40px);height:calc(100% - 40px);border:3px dashed rgba(139,92,246,.5);border-radius:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;transition:all .3s;background:rgba(139,92,246,.04)}
+.drop-zone.active .drop-zone-border{border-color:var(--accent);background:rgba(139,92,246,.08);box-shadow:0 0 60px rgba(139,92,246,.15)}
+.drop-zone-icon{width:64px;height:64px;border-radius:50%;background:rgba(139,92,246,.12);display:flex;align-items:center;justify-content:center;color:var(--accent);animation:dropBounce .8s ease-in-out infinite}
+.drop-zone-icon .ui-icon{width:32px;height:32px}
+@keyframes dropBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.drop-zone-title{font-size:18px;font-weight:700;color:var(--text)}
+.drop-zone-sub{font-size:12px;color:var(--muted)}
+.file-drop-label{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--panel);border-radius:8px;font-size:12px;color:var(--text);margin-top:4px;border:1px solid var(--border)}
+.file-drop-label .ui-icon{width:16px;height:16px;color:var(--accent)}
 </style>
 </head>
 <body data-theme="default">
@@ -868,6 +880,15 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
 </div>
 
 <div id="toast"></div>
+
+<!-- DRAG & DROP ZONE -->
+<div class="drop-zone" id="dropZone">
+  <div class="drop-zone-border">
+    <div class="drop-zone-icon"><svg class="ui-icon" aria-hidden="true"><use href="#pg-upload"></use></svg></div>
+    <div class="drop-zone-title">فایل رو رها کن</div>
+    <div class="drop-zone-sub">عکس، ویدیو یا فایل</div>
+  </div>
+</div>
 <audio id="remoteAudio" autoplay playsinline style="display:none"></audio>
 <video id="remoteVideo" autoplay playsinline style="display:none"></video>
 
@@ -1562,7 +1583,43 @@ $('cameraInput').addEventListener('change', function() {
   $('prevImg').src = URL.createObjectURL(f); $('prevImg').style.display = 'block'; $('prevVid').style.display = 'none';
   $('mediaPreview').style.display = 'block'; this.value = '';
 });
-window.cancelMedia = function() { pendingMediaFile = null; $('mediaPreview').style.display = 'none'; $('prevImg').src = ''; $('prevVid').src = ''; };
+window.cancelMedia = function() { pendingMediaFile = null; $('mediaPreview').style.display = 'none'; $('prevImg').src = ''; $('prevVid').src = ''; var fl = $('mediaPreview').querySelector('.file-drop-label'); if (fl) fl.remove(); };
+
+// DRAG & DROP
+var dragCounter = 0;
+document.addEventListener('dragenter', function(e) { e.preventDefault(); dragCounter++; if (dragCounter === 1) $('dropZone').classList.add('active'); });
+document.addEventListener('dragleave', function(e) { e.preventDefault(); dragCounter--; if (dragCounter <= 0) { dragCounter = 0; if (!e.relatedTarget || e.relatedTarget.nodeName === 'HTML') $('dropZone').classList.remove('active'); } });
+document.addEventListener('dragover', function(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+document.addEventListener('drop', function(e) {
+  e.preventDefault();
+  dragCounter = 0;
+  $('dropZone').classList.remove('active');
+  var files = e.dataTransfer.files;
+  if (!files || !files.length) return;
+  var f = files[0];
+  if (!curRoom) { toast('اول یه روم انتخاب کن'); return; }
+  var allowed = /^(image\/|video\/|application\/pdf$|application\/zip$|application\/x-rar|application\/x-7z|audio\/|text\/)/.test(f.type);
+  if (!allowed) { toast('فرمت فایل پشتیبانی نمیشه'); return; }
+  if (f.size > 50 * 1024 * 1024) { toast('حداکثر ۵۰MB'); return; }
+  pendingMediaFile = f;
+  pendingMediaIsVideo = f.type.startsWith('video/');
+  var url = URL.createObjectURL(f);
+  if (pendingMediaIsVideo) { $('prevVid').src = url; $('prevVid').style.display = 'block'; $('prevImg').style.display = 'none'; }
+  else if (f.type.startsWith('image/')) { $('prevImg').src = url; $('prevImg').style.display = 'block'; $('prevVid').style.display = 'none'; }
+  else { $('prevImg').style.display = 'none'; $('prevVid').style.display = 'none'; }
+  $('mediaPreview').style.display = 'block';
+  // Show filename in preview for non-media files
+  var prevContainer = $('mediaPreview').querySelector('div');
+  var existingLabel = prevContainer.querySelector('.file-drop-label');
+  if (existingLabel) existingLabel.remove();
+  if (!f.type.startsWith('image/') && !f.type.startsWith('video/')) {
+    var lbl = document.createElement('div');
+    lbl.className = 'file-drop-label';
+    lbl.innerHTML = '<svg class="ui-icon" aria-hidden="true"><use href="#pg-file"></use></svg> ' + esc(f.name) + ' (' + (f.size < 1024*1024 ? (f.size/1024).toFixed(0)+' KB' : (f.size/(1024*1024)).toFixed(1)+' MB') + ')';
+    prevContainer.appendChild(lbl);
+  }
+  toast('فایل آماده ارسال - پیام رو بنویس و send کن');
+});
 
 async function sendMedia(inp, cap) {
   var file = pendingMediaFile, isV = pendingMediaIsVideo;
