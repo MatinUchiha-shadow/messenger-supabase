@@ -43,33 +43,59 @@ body[data-theme="blackhole"] #messages{background:transparent}
 body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0,.2)}
 
 /* AUTH */
-#auth{position:fixed;inset:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px}
-#auth::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 22%,rgba(2,3,9,.82));pointer-events:none}
-.auth-ui{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;gap:20px;animation:slideUp .6s cubic-bezier(.16,1,.3,1) both}
-.auth-brand{font-size:34px;font-weight:900;background:linear-gradient(130deg,#fff,var(--accent),var(--accent2),var(--teal),#fff);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:authGrad 6s ease infinite}
+#auth{position:fixed;inset:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;overflow:hidden}
+#auth::before{content:'';position:fixed;inset:0;background:
+  radial-gradient(ellipse 70% 55% at 50% -10%,rgba(139,92,246,.16),transparent 60%),
+  radial-gradient(ellipse 45% 40% at 12% 85%,rgba(236,72,153,.1),transparent 60%),
+  radial-gradient(ellipse 45% 40% at 88% 80%,rgba(6,182,212,.09),transparent 60%);pointer-events:none}
+.auth-orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:.5;pointer-events:none;z-index:0;animation:authOrb 16s ease-in-out infinite}
+.auth-orb.a{width:380px;height:380px;background:rgba(124,109,250,.35);top:-90px;right:-70px}
+.auth-orb.b{width:320px;height:320px;background:rgba(250,109,155,.28);bottom:-70px;left:-60px;animation-delay:-5s}
+.auth-orb.c{width:240px;height:240px;background:rgba(45,212,191,.22);top:55%;left:22%;animation-delay:-10s}
+@keyframes authOrb{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(40px,-30px) scale(1.12)}66%{transform:translate(-30px,25px) scale(.94)}}
+.auth-grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.35;background-image:linear-gradient(rgba(167,139,250,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(167,139,250,.06) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(ellipse 65% 55% at 50% 45%,#000 25%,transparent 75%);-webkit-mask-image:radial-gradient(ellipse 65% 55% at 50% 45%,#000 25%,transparent 75%)}
+.auth-ui{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;gap:18px;animation:slideUp .6s cubic-bezier(.16,1,.3,1) both}
+.auth-head{display:flex;flex-direction:column;align-items:center;gap:10px}
+.auth-logo{width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;background:linear-gradient(135deg,#7c6dfa,#a855f7 50%,#fa6d9b);box-shadow:0 10px 36px -8px rgba(124,109,250,.65),0 0 0 1px rgba(255,255,255,.12) inset;animation:authLogo 3.5s ease-in-out infinite}
+@keyframes authLogo{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6px) rotate(2deg)}}
+.auth-brand{font-size:32px;font-weight:900;background:linear-gradient(130deg,#fff,var(--accent),var(--accent2),var(--teal),#fff);background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:authGrad 6s ease infinite}
 @keyframes authGrad{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 .auth-tag{font-size:11px;color:var(--muted);letter-spacing:4px;text-transform:uppercase}
-.auth-card{position:relative;background:rgba(18,14,36,.9);border:1px solid rgba(167,139,250,.12);border-radius:28px;padding:32px 28px;width:360px;max-width:calc(100vw - 32px);display:flex;flex-direction:column;gap:16px;backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);box-shadow:0 30px 80px -20px rgba(0,0,0,.95),0 0 0 1px rgba(167,139,250,.06),0 0 80px -20px rgba(139,92,246,.15);animation:scaleIn .5s cubic-bezier(.16,1,.3,1) .1s both}
-.auth-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;border-radius:24px 24px 0 0;background:linear-gradient(90deg,transparent,rgba(124,109,250,.9),rgba(250,109,155,.7),rgba(45,212,191,.7),transparent);background-size:200% 100%;animation:shimmer 4s linear infinite}
-@keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
-.auth-tabs{display:flex;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:3px;gap:3px}
-.auth-tab{flex:1;padding:9px;border-radius:10px;font-size:13px;font-weight:700;color:var(--muted);transition:color .2s;text-align:center;position:relative;z-index:1}
-.auth-tab.active{color:var(--text)}
-.auth-tab.active::before{content:'';position:absolute;inset:0;border-radius:10px;z-index:-1;background:linear-gradient(135deg,rgba(124,109,250,.22),rgba(250,109,155,.12));border:1px solid rgba(124,109,250,.28);box-shadow:0 2px 14px rgba(124,109,250,.15)}
-.auth-form{display:none;flex-direction:column;gap:12px}
-.auth-form.active{display:flex}
-.fg{display:flex;flex-direction:column;gap:5px}
+.auth-card{position:relative;background:rgba(16,12,32,.72);border:1px solid rgba(167,139,250,.14);border-radius:26px;padding:30px 26px;width:380px;max-width:calc(100vw - 32px);display:flex;flex-direction:column;gap:18px;backdrop-filter:blur(46px);-webkit-backdrop-filter:blur(46px);box-shadow:0 34px 90px -24px rgba(0,0,0,.95),0 0 0 1px rgba(167,139,250,.05),0 0 90px -24px rgba(139,92,246,.22);animation:scaleIn .5s cubic-bezier(.16,1,.3,1) .08s both}
+.auth-card::before{content:'';position:absolute;inset:0;border-radius:26px;padding:1px;background:linear-gradient(150deg,rgba(124,109,250,.75),transparent 28%,transparent 72%,rgba(45,212,191,.5));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;pointer-events:none}
+.auth-card::after{content:'';position:absolute;top:0;left:24px;right:24px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);opacity:.4}
+.auth-tabs{position:relative;display:flex;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:4px;gap:4px}
+.auth-tab{flex:1;padding:10px;border-radius:11px;font-size:13.5px;font-weight:700;color:var(--muted);transition:color .25s,background .25s;text-align:center;position:relative;z-index:1}
+.auth-tab.active{color:#fff;background:linear-gradient(135deg,rgba(124,109,250,.32),rgba(250,109,155,.16));box-shadow:0 4px 18px rgba(124,109,250,.25),0 0 0 1px rgba(124,109,250,.3)}
+.auth-tab:not(.active):hover{color:var(--text)}
+.auth-form{display:none;flex-direction:column;gap:13px}
+.auth-form.active{display:flex;animation:scaleIn .3s cubic-bezier(.16,1,.3,1) both}
+.fg{display:flex;flex-direction:column;gap:6px}
 .fg label{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:1px}
-.fg input{padding:12px 14px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.08);border-radius:12px;font-size:14px;color:var(--text);transition:border-color .25s}
-.fg input:focus{border-color:rgba(124,109,250,.55)}
+.field{position:relative}
+.field i.lead{position:absolute;top:50%;right:13px;transform:translateY(-50%);font-size:13px;color:var(--muted);pointer-events:none;transition:color .25s}
+.field:focus-within i.lead{color:var(--accent)}
+.fg input{width:100%;padding:13px 38px 13px 14px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.08);border-radius:13px;font-size:14px;color:var(--text);transition:border-color .25s,box-shadow .25s,background .25s}
+.fg input:focus{border-color:rgba(124,109,250,.6);box-shadow:0 0 0 4px rgba(124,109,250,.13),0 4px 20px -8px rgba(124,109,250,.4);background:rgba(124,109,250,.05)}
 .fg input::placeholder{color:var(--muted)}
-.auth-btn{padding:13px;border-radius:12px;font-size:14px;font-weight:800;color:#fff;background:linear-gradient(135deg,#7c6dfa,#a855f7 50%,#fa6d9b);background-size:200% 200%;animation:authGrad 4s ease infinite;transition:transform .2s,box-shadow .2s}
-.auth-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(124,109,250,.5)}
-.auth-btn:active{transform:scale(.98)}
-.auth-btn:disabled{opacity:.5;pointer-events:none}
+.field:has(.pass-toggle) input{padding-left:42px}
+.pass-toggle{position:absolute;top:50%;left:10px;transform:translateY(-50%);width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;transition:color .2s,background .2s}
+.pass-toggle:hover{color:var(--text);background:rgba(255,255,255,.06)}
+.auth-btn{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:13px;font-size:14.5px;font-weight:800;color:#fff;background:linear-gradient(135deg,#7c6dfa,#a855f7 50%,#fa6d9b);background-size:200% 200%;animation:authGrad 4s ease infinite;transition:transform .2s,box-shadow .2s,filter .2s;overflow:hidden}
+.auth-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.25) 50%,transparent 70%);transform:translateX(-120%);transition:transform .6s}
+.auth-btn:hover{transform:translateY(-2px);box-shadow:0 10px 34px rgba(124,109,250,.5)}
+.auth-btn:hover::after{transform:translateX(120%)}
+.auth-btn:active{transform:scale(.97)}
+.auth-btn:disabled{opacity:.65;pointer-events:none}
+.auth-btn .spin{display:none;width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .7s linear infinite}
+.auth-btn.loading .spin{display:inline-block}
+.auth-btn.loading .btn-txt{opacity:.85}
+.auth-btn.loading i{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
 .auth-err{font-size:12px;color:var(--red);text-align:center;min-height:16px}
 .auth-err:not(:empty){animation:shake .3s}
-.auth-status{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:rgba(6,9,20,.88);border:1px solid rgba(124,109,250,.14);border-radius:99px;padding:6px 16px;font-size:11px;color:var(--muted)}
+.auth-foot{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:var(--muted)}
+.auth-status{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:rgba(6,9,20,.88);border:1px solid rgba(124,109,250,.14);border-radius:99px;padding:6px 16px;font-size:11px;color:var(--muted);z-index:10;backdrop-filter:blur(14px)}
 .auth-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
 
 /* APP */
@@ -573,26 +599,35 @@ button:active,.room-item:active{transform:scale(.97)}
 
 <!-- AUTH (must be OUTSIDE #app so it shows when app is hidden) -->
 <div id="auth">
+  <div class="auth-orb a"></div>
+  <div class="auth-orb b"></div>
+  <div class="auth-orb c"></div>
+  <div class="auth-grid-bg"></div>
   <div class="auth-ui">
-    <div style="text-align:center"><div class="auth-brand">GapChat</div><div class="auth-tag">پیام‌رسان نسل بعدی</div></div>
+    <div class="auth-head">
+      <div class="auth-logo"><i class="fas fa-bolt"></i></div>
+      <div class="auth-brand">GapChat</div>
+      <div class="auth-tag">پیام‌رسان نسل بعدی</div>
+    </div>
     <div class="auth-card">
       <div class="auth-tabs">
         <button class="auth-tab active" data-tab="login">ورود</button>
         <button class="auth-tab" data-tab="register">ثبت‌نام</button>
       </div>
       <form id="loginForm" class="auth-form active">
-        <div class="fg"><label>ایمیل</label><input type="email" id="loginEmail" placeholder="example@email.com" required></div>
-        <div class="fg"><label>رمز عبور</label><input type="password" id="loginPass" placeholder="حداقل ۶ کاراکتر" required></div>
+        <div class="fg"><label>ایمیل</label><div class="field"><i class="fas fa-envelope lead"></i><input type="email" id="loginEmail" placeholder="example@email.com" required autocomplete="email"></div></div>
+        <div class="fg"><label>رمز عبور</label><div class="field"><i class="fas fa-lock lead"></i><input type="password" id="loginPass" placeholder="حداقل ۶ کاراکتر" required autocomplete="current-password"><button type="button" class="pass-toggle" onclick="togglePass('loginPass',this)" tabindex="-1" aria-label="نمایش رمز"><i class="fas fa-eye"></i></button></div></div>
         <div class="auth-err" id="authErr"></div>
-        <button type="submit" class="auth-btn">ورود ←</button>
+        <button type="submit" class="auth-btn"><span class="spin"></span><span class="btn-txt">ورود</span><i class="fas fa-arrow-left"></i></button>
       </form>
       <form id="registerForm" class="auth-form">
-        <div class="fg"><label>اسم نمایشی</label><input type="text" id="regName" placeholder="مثلاً: علی" maxlength="20" required></div>
-        <div class="fg"><label>ایمیل</label><input type="email" id="regEmail" placeholder="example@email.com" required></div>
-        <div class="fg"><label>رمز عبور</label><input type="password" id="regPass" placeholder="حداقل ۶ کاراکتر" required minlength="6"></div>
+        <div class="fg"><label>اسم نمایشی</label><div class="field"><i class="fas fa-user lead"></i><input type="text" id="regName" placeholder="مثلاً: علی" maxlength="20" required autocomplete="nickname"></div></div>
+        <div class="fg"><label>ایمیل</label><div class="field"><i class="fas fa-envelope lead"></i><input type="email" id="regEmail" placeholder="example@email.com" required autocomplete="email"></div></div>
+        <div class="fg"><label>رمز عبور</label><div class="field"><i class="fas fa-lock lead"></i><input type="password" id="regPass" placeholder="حداقل ۶ کاراکتر" required minlength="6" autocomplete="new-password"><button type="button" class="pass-toggle" onclick="togglePass('regPass',this)" tabindex="-1" aria-label="نمایش رمز"><i class="fas fa-eye"></i></button></div></div>
         <div class="auth-err" id="authErr2"></div>
-        <button type="submit" class="auth-btn">ساخت حساب ←</button>
+        <button type="submit" class="auth-btn"><span class="spin"></span><span class="btn-txt">ساخت حساب</span><i class="fas fa-arrow-left"></i></button>
       </form>
+      <div class="auth-foot"><i class="fas fa-shield-halved" style="opacity:.5"></i> اطلاعات شما رمزنگاری‌شده است</div>
     </div>
   </div>
   <div class="auth-status"><div class="auth-dot"></div><span>آنلاین</span><span style="opacity:.3">·</span><span>TLS 1.3</span></div>
@@ -951,15 +986,27 @@ document.querySelectorAll('.auth-tab').forEach(b => b.addEventListener('click', 
   $('authErr2').textContent = '';
 }));
 
+window.togglePass = function(id, btn) {
+  var inp = $(id);
+  if (!inp) return;
+  var show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.innerHTML = show ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+};
+window.authLoading = function(form, on) {
+  var btn = form.querySelector('.auth-btn');
+  if (btn) btn.classList.toggle('loading', !!on);
+};
+
 $('loginForm').onsubmit = async function(e) {
   e.preventDefault();
   const email = $('loginEmail').value.trim(), pass = $('loginPass').value;
   if (!email || !pass) { $('authErr').textContent = 'پر کن'; return; }
   $('authErr').textContent = '';
   const btn = $('loginForm').querySelector('.auth-btn');
-  btn.disabled = true;
+  btn.disabled = true; authLoading($('loginForm'), true);
   const { error } = await db.auth.signInWithPassword({ email, password: pass });
-  if (error) { $('authErr').textContent = error.message.includes('Invalid') ? 'نادرست' : error.message; btn.disabled = false; return; }
+  if (error) { $('authErr').textContent = error.message.includes('Invalid') ? 'نادرست' : error.message; btn.disabled = false; authLoading($('loginForm'), false); return; }
   await loadSession();
 };
 
@@ -969,14 +1016,15 @@ $('registerForm').onsubmit = async function(e) {
   if (!name || !email || !pass) { $('authErr2').textContent = 'پر کن'; return; }
   $('authErr2').textContent = '';
   const btn = $('registerForm').querySelector('.auth-btn');
-  btn.disabled = true;
+  btn.disabled = true; authLoading($('registerForm'), true);
   const { data, error } = await db.auth.signUp({ email, password: pass, options: { data: { display_name: name } } });
-  if (error) { $('authErr2').textContent = error.message.includes('already') ? 'تکراری' : error.message; btn.disabled = false; return; }
+  if (error) { $('authErr2').textContent = error.message.includes('already') ? 'تکراری' : error.message; btn.disabled = false; authLoading($('registerForm'), false); return; }
   if (data.user) {
     const { count } = await db.from('profiles').select('*', { count: 'exact', head: true });
     await db.from('profiles').insert({ id: data.user.id, username: name, display_name: name, role: count === 0 ? 'owner' : 'user' });
   }
   $('authErr2').textContent = '';
+  authLoading($('registerForm'), false);
   toast('ثبت‌نام شد!');
   document.querySelectorAll('.auth-tab')[0].click();
   $('loginEmail').value = email;
