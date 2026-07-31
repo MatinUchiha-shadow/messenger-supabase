@@ -856,13 +856,52 @@ const $ = id => document.getElementById(id);
 
 let me = null, myProfile = null, curRoom = null, curType = null, curDm = null;
 let myStream = null, voiceChannel = null, presenceChannel = null, curVoiceRoom = null, voiceCallSeconds = 0, voiceTimerInterval = null, realtimeRelay = null;
-var totalVoiceSeconds = 0;
+var totalVoiceSeconds = 0, voiceDbOk = null, lastVoiceDbSave = 0;
 function voiceTotalKey() { return 'gapchat_voice_total_' + ((me && me.id) || 'anon'); }
-function loadVoiceTotal() { try { totalVoiceSeconds = parseInt(localStorage.getItem(voiceTotalKey()) || '0', 10) || 0; } catch(e) { totalVoiceSeconds = 0; } }
-function saveVoiceTotal() { try { localStorage.setItem(voiceTotalKey(), String(totalVoiceSeconds || 0)); } catch(e) {} }
-if (typeof window !== 'undefined') { window.addEventListener('pagehide', saveVoiceTotal); document.addEventListener('visibilitychange', function() { if (document.visibilityState === 'hidden') saveVoiceTotal(); }); }
-function fmtVoiceTime() {
-  var s = totalVoiceSeconds || 0;
+async function loadVoiceTotal() {
+  try { totalVoiceSeconds = parseInt(localStorage.getItem(voiceTotalKey()) || '0', 10) || 0; } catch(e) { totalVoiceSeconds = 0; }
+  if (!me || !me.id) return;
+  try {
+    var r = await db.from('profiles').select('voice_seconds').eq('id', me.id).single();
+    if (r.error) {
+      if (r.error.message && r.error.message.toLowerCase().includes('column')) {
+        voiceDbOk = false;
+        if (!window._voiceDbWarned) { window._voiceDbWarned = true; toast('❌ ستون voice_seconds وجود نداره! SQL اجرا کن'); }
+      }
+      return;
+    }
+    voiceDbOk = true;
+    if (r.data && typeof r.data.voice_seconds === 'number' && r.data.voice_seconds > totalVoiceSeconds) {
+      totalVoiceSeconds = r.data.voice_seconds;
+      try { localStorage.setItem(voiceTotalKey(), String(totalVoiceSeconds)); } catch(e) {}
+    }
+  } catch(e) {}
+}
+function saveVoiceTotal(force) {
+  try { localStorage.setItem(voiceTotalKey(), String(totalVoiceSeconds || 0)); } catch(e) {}
+  if (!me || !me.id || voiceDbOk === false) return;
+  var now = Date.now();
+  if (!force && now - lastVoiceDbSave < 30000) return;
+  lastVoiceDbSave = now;
+  db.from('profiles').select('voice_seconds').eq('id', me.id).single().then(function(r) {
+    if (r.error && r.error.message && r.error.message.toLowerCase().includes('column')) {
+      voiceDbOk = false;
+      if (!window._voiceDbWarned) { window._voiceDbWarned = true; toast('❌ ستون voice_seconds وجود نداره! SQL اجرا کن'); }
+      return;
+    }
+    var dbVal = (r.data && typeof r.data.voice_seconds === 'number') ? r.data.voice_seconds : 0;
+    var toSave = Math.max(totalVoiceSeconds || 0, dbVal);
+    return db.from('profiles').update({ voice_seconds: toSave }).eq('id', me.id).then(function(u) {
+      if (u.error && u.error.message && u.error.message.toLowerCase().includes('column')) {
+        voiceDbOk = false;
+        if (!window._voiceDbWarned) { window._voiceDbWarned = true; toast('❌ ستون voice_seconds وجود نداره! SQL اجرا کن'); }
+      }
+    });
+  }).catch(function() {});
+}
+if (typeof window !== 'undefined') { window.addEventListener('pagehide', function() { saveVoiceTotal(true); }); document.addEventListener('visibilitychange', function() { if (document.visibilityState === 'hidden') saveVoiceTotal(true); }); }
+function fmtVoiceTime(v) {
+  var s = (typeof v === 'number') ? v : (totalVoiceSeconds || 0);
   if (s <= 0) return '—';
   var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
   var pad = function(n) { return String(n).padStart(2, '0'); };
@@ -1096,6 +1135,7 @@ window.signOut = async function() {
 function enterApp() {
   $('auth').style.display = 'none';
   $('app').classList.add('show');
+  loadVoiceTotal();
   rAv($('hav'), myProfile);
   const n = myProfile.display_name || myProfile.username;
   $('hname').textContent = n + (myProfile.role === 'owner' ? ' 👑' : '');
@@ -1821,7 +1861,7 @@ function showFloatingVoice() {
   voiceTimerInterval = setInterval(function() {
     voiceCallSeconds++;
     totalVoiceSeconds++;
-    if (voiceCallSeconds % 5 === 0) saveVoiceTotal();
+    if (voiceCallSeconds % 5 === 0) saveVoiceTotal(false);
     var m = Math.floor(voiceCallSeconds / 60), s = voiceCallSeconds % 60;
     $('fvTimer').textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
   }, 1000);
@@ -1830,7 +1870,7 @@ function showFloatingVoice() {
 function hideFloatingVoice() {
   $('float-voice').classList.remove('show');
   clearInterval(voiceTimerInterval);
-  saveVoiceTotal();
+  saveVoiceTotal(true);
 }
 
 function toggleFsPreview() { var fsp = document.getElementById("float-screen"); if (!fsp) return; fsp.classList.toggle("fullscreen"); document.getElementById("floatScreenVideo").style.objectFit = fsp.classList.contains("fullscreen") ? "contain" : "contain"; }
@@ -2136,7 +2176,7 @@ window.openProfile = async function(name) {
   var upBtn = isMe ? '<label class="pf-upload"><i class="fas fa-camera"></i><input type="file" accept="image/*" onchange="openAvatarCrop(this)"></label>' : '';
   var nmE = isMe ? '<div id="pf-ne" style="display:none;width:100%;gap:4px;margin-top:6px"><input id="pf-ni" value="' + esc(data.display_name || '') + '" maxlength="20" style="flex:1;padding:7px 10px;font-size:12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text)"><button onclick="saveName()" style="padding:7px 12px;border-radius:8px;background:var(--accent);color:#fff;font-size:11px;font-weight:600;border:none;cursor:pointer">ذخیره</button></div>' : '';
   var bio = isMe ? '<div style="width:100%;margin-top:10px"><div id="pf-bd" style="font-size:12px;color:var(--muted);text-align:center;cursor:pointer;padding:6px;border-radius:8px" onclick="toggleBio()">' + (data.bio ? esc(data.bio) : '<span style="opacity:.4">بیو… (کلیک)</span>') + '</div><div id="pf-be" style="display:none;flex-direction:column;gap:4px;width:100%"><textarea id="pf-bi" maxlength="120" rows="2" style="resize:none;font-size:12px;padding:7px 10px;border-radius:8px;background:var(--panel);border:1px solid var(--border);color:var(--text)">' + esc(data.bio || '') + '</textarea><div style="display:flex;gap:4px"><button onclick="toggleBio()" style="flex:1;padding:6px;border-radius:8px;background:var(--panel);color:var(--muted);border:1px solid var(--border);font-size:11px;cursor:pointer">لغو</button><button onclick="saveBio()" style="flex:1;padding:6px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:11px;font-weight:600;cursor:pointer">ذخیره</button></div></div></div>' : (data.bio ? '<div style="font-size:12px;color:var(--muted);text-align:center;padding:6px;margin-top:6px">' + esc(data.bio) + '</div>' : '');
-  $('profile-body').innerHTML = '<div class="pf-avatar-wrap">' + avH + upBtn + '</div><div class="pf-name">' + esc(data.display_name || data.username) + (data.role === 'owner' ? ' 👑' : '') + (isMe ? ' <button onclick="toggleNE()" style="width:22px;height:22px;font-size:10px;background:var(--panel);border:none;border-radius:6px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center">✏️</button>' : '') + '</div>' + nmE + '<div class="pf-email">' + esc(data.username) + '</div><span class="pf-role-badge ' + data.role + '">' + rn + '</span>' + bio + '<div class="pf-stats"><div class="pf-stat"><div class="pf-stat-val">' + (mc || 0) + '</div><div class="pf-stat-lbl">پیام</div></div><div class="pf-stat"><div class="pf-stat-val">' + new Date(data.created_at).toLocaleDateString('fa-IR') + '</div><div class="pf-stat-lbl">عضویت</div></div>' + (isMe ? '<div class="pf-stat" style="grid-column:1/-1;background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(34,211,238,.06));border:1px solid rgba(139,92,246,.25)"><div class="pf-stat-val" style="color:var(--accent)">' + fmtVoiceTime() + '</div><div class="pf-stat-lbl">🎙 زمان در تماس صوتی</div></div>' : '') + '</div>';
+  $('profile-body').innerHTML = '<div class="pf-avatar-wrap">' + avH + upBtn + '</div><div class="pf-name">' + esc(data.display_name || data.username) + (data.role === 'owner' ? ' 👑' : '') + (isMe ? ' <button onclick="toggleNE()" style="width:22px;height:22px;font-size:10px;background:var(--panel);border:none;border-radius:6px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center">✏️</button>' : '') + '</div>' + nmE + '<div class="pf-email">' + esc(data.username) + '</div><span class="pf-role-badge ' + data.role + '">' + rn + '</span>' + bio + '<div class="pf-stats"><div class="pf-stat"><div class="pf-stat-val">' + (mc || 0) + '</div><div class="pf-stat-lbl">پیام</div></div><div class="pf-stat"><div class="pf-stat-val">' + new Date(data.created_at).toLocaleDateString('fa-IR') + '</div><div class="pf-stat-lbl">عضویت</div></div>' + '<div class="pf-stat" style="grid-column:1/-1;background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(34,211,238,.06));border:1px solid rgba(139,92,246,.25)"><div class="pf-stat-val" style="color:var(--accent)">' + fmtVoiceTime(isMe ? Math.max(totalVoiceSeconds || 0, (typeof data.voice_seconds === 'number') ? data.voice_seconds : 0) : (data.voice_seconds || 0)) + '</div><div class="pf-stat-lbl">🎙 زمان در تماس صوتی</div></div>' + '</div>';
 };
 
 window.toggleNE = function() { var e = $('pf-ne'); if (!e) return; e.style.display = e.style.display === 'none' ? 'flex' : 'none'; if (e.style.display === 'flex') { $('pf-ni').focus(); $('pf-ni').select(); } };
