@@ -346,6 +346,23 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .pf-stat-lbl{font-size:10px;color:var(--muted);margin-top:2px}
 
 
+/* CROP OVERLAY */
+#crop-overlay{position:fixed;inset:0;z-index:230;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.55)}
+#crop-overlay.show{display:flex}
+.crop-panel{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:22px;width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px;animation:scaleIn .3s var(--ease) both;backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px)}
+.crop-head{display:flex;align-items:center;justify-content:space-between}
+.crop-head h3{font-size:14px;font-weight:800}
+.crop-viewport{position:relative;width:min(70vw,230px);height:min(70vw,230px);margin:0 auto;border-radius:50%;overflow:hidden;background:var(--panel);box-shadow:0 0 0 3px var(--accent),0 10px 40px rgba(0,0,0,.5);cursor:grab;touch-action:none}
+.crop-viewport.dragging{cursor:grabbing}
+.crop-viewport img{position:absolute;top:50%;left:50%;max-width:none;user-select:none;-webkit-user-select:none;pointer-events:none}
+.crop-zoom-row{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
+.crop-zoom-row input[type=range]{flex:1;accent-color:var(--accent);height:4px}
+.crop-zoom-row span{min-width:44px;text-align:left;font-size:11px;color:var(--muted)}
+.crop-hint{font-size:10.5px;color:var(--muted);text-align:center}
+.crop-btns{display:flex;gap:8px}
+.crop-btns .btn{flex:1;padding:11px;border-radius:12px;font-size:13px;font-weight:700;text-align:center;cursor:pointer}
+.crop-btns .btn-primary{background:linear-gradient(135deg,#7c6dfa,#a855f7);color:#fff;border:none}
+.crop-btns .btn-ghost{background:var(--panel);color:var(--muted);border:1px solid var(--border)}
 /* SETTINGS OVERLAY */
 #settings-overlay{position:fixed;inset:0;z-index:170;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 #settings-overlay.show{display:flex;animation:fadeIn .25s ease}
@@ -660,6 +677,24 @@ button:active,.room-item:active{transform:scale(.97)}
   </div>
 </div>
 
+<!-- CROP OVERLAY -->
+<div id="crop-overlay" onclick="if(event.target===this)closeCrop()">
+  <div class="crop-panel" onclick="event.stopPropagation()">
+    <div class="crop-head"><h3>✂️ برش عکس پروفایل</h3><button class="icon-btn" onclick="closeCrop()" style="width:30px;height:30px;font-size:12px">✕</button></div>
+    <div class="crop-viewport" id="cropViewport"><img id="cropImg" alt=""></div>
+    <div class="crop-zoom-row">
+      <i class="fas fa-search-minus"></i>
+      <input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1" oninput="cropZoomSet(this.value)">
+      <i class="fas fa-search-plus"></i>
+      <span id="cropZoomVal">100%</span>
+    </div>
+    <div class="crop-hint"><i class="fas fa-hand-pointer"></i> بکشید تا جابه‌جا شود · اسکرول یا اسلایدر برای زوم</div>
+    <div class="crop-btns">
+      <button class="btn btn-ghost" onclick="closeCrop()">لغو</button>
+      <button class="btn btn-primary" onclick="confirmCrop()">تایید ✓</button>
+    </div>
+  </div>
+</div>
 <!-- SETTINGS OVERLAY -->
 <div id="settings-overlay" onclick="if(event.target===this)closeSettings()">
   <div class="settings-panel" onclick="event.stopPropagation()">
@@ -2098,7 +2133,7 @@ window.openProfile = async function(name) {
   var isMe = data.id === (me && me.id);
   var rn = data.role === 'owner' ? 'مالک' : data.role === 'admin' ? 'ادمین' : 'کاربر';
   var avH = data.avatar_url ? '<img src="' + esc(data.avatar_url) + '" alt=""/>' : (data.display_name || '?').charAt(0).toUpperCase();
-  var upBtn = isMe ? '<label class="pf-upload"><i class="fas fa-camera"></i><input type="file" accept="image/*" onchange="uploadAvatar(this)"></label>' : '';
+  var upBtn = isMe ? '<label class="pf-upload"><i class="fas fa-camera"></i><input type="file" accept="image/*" onchange="openAvatarCrop(this)"></label>' : '';
   var nmE = isMe ? '<div id="pf-ne" style="display:none;width:100%;gap:4px;margin-top:6px"><input id="pf-ni" value="' + esc(data.display_name || '') + '" maxlength="20" style="flex:1;padding:7px 10px;font-size:12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text)"><button onclick="saveName()" style="padding:7px 12px;border-radius:8px;background:var(--accent);color:#fff;font-size:11px;font-weight:600;border:none;cursor:pointer">ذخیره</button></div>' : '';
   var bio = isMe ? '<div style="width:100%;margin-top:10px"><div id="pf-bd" style="font-size:12px;color:var(--muted);text-align:center;cursor:pointer;padding:6px;border-radius:8px" onclick="toggleBio()">' + (data.bio ? esc(data.bio) : '<span style="opacity:.4">بیو… (کلیک)</span>') + '</div><div id="pf-be" style="display:none;flex-direction:column;gap:4px;width:100%"><textarea id="pf-bi" maxlength="120" rows="2" style="resize:none;font-size:12px;padding:7px 10px;border-radius:8px;background:var(--panel);border:1px solid var(--border);color:var(--text)">' + esc(data.bio || '') + '</textarea><div style="display:flex;gap:4px"><button onclick="toggleBio()" style="flex:1;padding:6px;border-radius:8px;background:var(--panel);color:var(--muted);border:1px solid var(--border);font-size:11px;cursor:pointer">لغو</button><button onclick="saveBio()" style="flex:1;padding:6px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:11px;font-weight:600;cursor:pointer">ذخیره</button></div></div></div>' : (data.bio ? '<div style="font-size:12px;color:var(--muted);text-align:center;padding:6px;margin-top:6px">' + esc(data.bio) + '</div>' : '');
   $('profile-body').innerHTML = '<div class="pf-avatar-wrap">' + avH + upBtn + '</div><div class="pf-name">' + esc(data.display_name || data.username) + (data.role === 'owner' ? ' 👑' : '') + (isMe ? ' <button onclick="toggleNE()" style="width:22px;height:22px;font-size:10px;background:var(--panel);border:none;border-radius:6px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center">✏️</button>' : '') + '</div>' + nmE + '<div class="pf-email">' + esc(data.username) + '</div><span class="pf-role-badge ' + data.role + '">' + rn + '</span>' + bio + '<div class="pf-stats"><div class="pf-stat"><div class="pf-stat-val">' + (mc || 0) + '</div><div class="pf-stat-lbl">پیام</div></div><div class="pf-stat"><div class="pf-stat-val">' + new Date(data.created_at).toLocaleDateString('fa-IR') + '</div><div class="pf-stat-lbl">عضویت</div></div>' + (isMe ? '<div class="pf-stat" style="grid-column:1/-1;background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(34,211,238,.06));border:1px solid rgba(139,92,246,.25)"><div class="pf-stat-val" style="color:var(--accent)">' + fmtVoiceTime() + '</div><div class="pf-stat-lbl">🎙 زمان در تماس صوتی</div></div>' : '') + '</div>';
@@ -2123,13 +2158,114 @@ window.saveBio = async function() {
     toast('✅');
   } catch(e) { toast('❌ ' + (e.message || 'خطا')); }
 };
-window.uploadAvatar = async function(input) {
-  var f = input.files[0]; if (!f || f.size > 5 * 1024 * 1024) { toast('حداکثر ۵MB'); return; }
+var cropState = null, cropDragBound = false;
+window.openAvatarCrop = function(input) {
+  var f = input.files[0];
+  if (!f) return;
+  if (f.size > 5 * 1024 * 1024) { toast('حداکثر ۵MB'); input.value = ''; return; }
+  var url = URL.createObjectURL(f);
+  var img = new Image();
+  img.onload = function() {
+    var vp = $('cropViewport');
+    var vpSize = vp.getBoundingClientRect().width;
+    cropState = { img: img, nw: img.naturalWidth, nh: img.naturalHeight, zoom: 1, dx: 0, dy: 0, baseScale: vpSize / Math.min(img.naturalWidth, img.naturalHeight), url: url };
+    var ci = $('cropImg');
+    ci.src = url;
+    $('cropZoom').value = 1;
+    $('cropZoomVal').textContent = '100%';
+    cropRender();
+    $('crop-overlay').classList.add('show');
+    cropBindDrag();
+    input.value = '';
+  };
+  img.onerror = function() { URL.revokeObjectURL(url); toast('❌ فایل نامعتبر'); input.value = ''; };
+  img.src = url;
+};
+function cropRender() {
+  if (!cropState) return;
+  var c = cropState, vp = $('cropViewport'), ci = $('cropImg');
+  var vpSize = vp.getBoundingClientRect().width;
+  var scale = c.baseScale * c.zoom;
+  var w = c.nw * scale, h = c.nh * scale;
+  var maxDx = Math.max(0, (w - vpSize) / 2), maxDy = Math.max(0, (h - vpSize) / 2);
+  c.dx = Math.max(-maxDx, Math.min(maxDx, c.dx));
+  c.dy = Math.max(-maxDy, Math.min(maxDy, c.dy));
+  ci.style.width = w + 'px';
+  ci.style.height = h + 'px';
+  ci.style.transform = 'translate(calc(-50% + ' + c.dx + 'px), calc(-50% + ' + c.dy + 'px))';
+}
+window.cropZoomSet = function(v) {
+  if (!cropState) return;
+  cropState.zoom = parseFloat(v) || 1;
+  var pct = $('cropZoomVal');
+  if (pct) pct.textContent = Math.round(cropState.zoom * 100) + '%';
+  cropRender();
+};
+function cropBindDrag() {
+  if (cropDragBound) return;
+  cropDragBound = true;
+  var vp = $('cropViewport');
+  var sx = 0, sy = 0, sdx = 0, sdy = 0, dragging = false;
+  vp.addEventListener('pointerdown', function(e) {
+    if (!cropState) return;
+    dragging = true;
+    sx = e.clientX; sy = e.clientY;
+    sdx = cropState.dx; sdy = cropState.dy;
+    vp.classList.add('dragging');
+    try { vp.setPointerCapture(e.pointerId); } catch(err) {}
+    e.preventDefault();
+  });
+  vp.addEventListener('pointermove', function(e) {
+    if (!dragging || !cropState) return;
+    cropState.dx = sdx + (e.clientX - sx);
+    cropState.dy = sdy + (e.clientY - sy);
+    cropRender();
+  });
+  function endDrag() { dragging = false; vp.classList.remove('dragging'); }
+  vp.addEventListener('pointerup', endDrag);
+  vp.addEventListener('pointercancel', endDrag);
+  vp.addEventListener('wheel', function(e) {
+    if (!cropState) return;
+    e.preventDefault();
+    var z = cropState.zoom * (e.deltaY < 0 ? 1.08 : 0.92);
+    cropZoomSet(Math.max(1, Math.min(4, z)));
+    var slider = $('cropZoom');
+    if (slider) slider.value = cropState.zoom;
+  }, { passive: false });
+}
+window.confirmCrop = function() {
+  if (!cropState) return;
+  var c = cropState, vp = $('cropViewport');
+  var vpSize = vp.getBoundingClientRect().width;
+  var scale = c.baseScale * c.zoom;
+  var natSize = vpSize / scale;
+  var cx = c.nw / 2 - c.dx / scale;
+  var cy = c.nh / 2 - c.dy / scale;
+  var sx = Math.max(0, Math.min(c.nw - natSize, cx - natSize / 2));
+  var sy = Math.max(0, Math.min(c.nh - natSize, cy - natSize / 2));
+  var out = 256;
+  var cv = document.createElement('canvas');
+  cv.width = out; cv.height = out;
+  var ctx = cv.getContext('2d');
+  ctx.drawImage(c.img, sx, sy, natSize, natSize, 0, 0, out, out);
+  closeCrop();
+  cv.toBlob(function(blob) {
+    if (!blob) { toast('❌'); return; }
+    uploadAvatarBlob(blob);
+  }, 'image/png');
+};
+window.closeCrop = function() {
+  $('crop-overlay').classList.remove('show');
+  if (cropState) {
+    if (cropState.url) URL.revokeObjectURL(cropState.url);
+    cropState = null;
+  }
+};
+window.uploadAvatarBlob = async function(blob) {
   try {
     toast('⏳');
-    var ext = f.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '');
-    var path = 'avatar_' + me.id + '.' + ext;
-    var result = await db.storage.from('avatars').upload(path, f, { upsert: true });
+    var path = 'avatar_' + me.id + '.png';
+    var result = await db.storage.from('avatars').upload(path, blob, { upsert: true });
     if (result.error) {
       if (result.error.message && result.error.message.includes('Bucket not found')) {
         toast('❌ bucket وجود نداره! SQL اجرا کن');
