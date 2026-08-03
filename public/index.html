@@ -224,6 +224,10 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .sfx-dur{font-size:10px;color:var(--muted);margin-top:2px}
 .sfx-del{width:28px;height:28px;border-radius:8px;border:none;background:rgba(229,51,74,.1);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
 .sfx-del:hover{background:rgba(229,51,74,.22)}
+.sfx-item.playing{border-color:var(--accent);box-shadow:0 0 0 2px rgba(139,92,246,.25);background:rgba(139,92,246,.08)}
+.sfx-item.playing .sfx-play{background:var(--accent);color:#fff;animation:sfxPulse .8s ease-in-out infinite}
+@keyframes sfxPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.sfx-now-playing{font-size:10px;color:var(--accent);text-align:center;padding:2px 12px 6px;display:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* SFX mobile */
 @media(max-width:420px){
   #sfxPanel,#sfxPreview{width:100%;max-width:100vw;border-radius:20px 20px 0 0;max-height:88vh;margin-top:auto;left:0;top:auto;bottom:0;transform:none}
@@ -817,6 +821,7 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
     <button class="sfx-close" onclick="$('sfxPanel').classList.remove('show')"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button>
   </div>
   <label class="sfx-upload"><svg class="ui-icon" aria-hidden="true"><use href="#pg-plus"></use></svg> افزودن صدا (حداکثر ۲۰ ثانیه)<input type="file" id="sfxInput" accept="audio/*" style="display:none" onchange="handleSfxUpload(this)"></label>
+  <div class="sfx-now-playing" id="sfxNowPlaying"></div>
   <div class="sfx-list" id="sfxList"></div>
 </div>
 
@@ -1395,7 +1400,9 @@ async function loadSession() {
 window.signOut = async function() {
   if (!confirm('خروج؟')) return;
   if (voiceChannel) { await db.removeChannel(voiceChannel); voiceChannel = null; } if (realtimeRelay) { await db.removeChannel(realtimeRelay); realtimeRelay = null; }
-  if (presenceChannel) { await db.removeChannel(presenceChannel); presenceChannel = null; } stopSfxSync();
+  if (presenceChannel) { await db.removeChannel(presenceChannel); presenceChannel = null; }
+  if (sfxRoomChannel) { await db.removeChannel(sfxRoomChannel); sfxRoomChannel = null; }
+  stopSfxSync();
   leaveVoice();
   await db.auth.signOut();
   me = null; myProfile = null;
@@ -1581,6 +1588,7 @@ async function openDm(userId, userName) {
 
 let msgSub = null;
 async function openRoom(id, name, type) {
+  if (sfxRoomChannel) { await db.removeChannel(sfxRoomChannel); sfxRoomChannel = null; }
   if (msgSub) { await db.removeChannel(msgSub); msgSub = null; }
   if (dmSub) { await db.removeChannel(dmSub); dmSub = null; }
   curRoom = id; curType = type; curDm = null;
@@ -1608,9 +1616,17 @@ async function openRoom(id, name, type) {
       if (msg) addMsg(msg);
     }).subscribe();
   } else {
-    // Voice room - show welcome message
+    // Voice room - show welcome message + start sfx channel (works without joining voice call)
     $('messages').style.display = 'flex';
     $('messages').innerHTML = '<div class="empty"><div class="empty-icon"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg></div><div class="empty-txt">اتاق صوتی فعاله</div></div>';
+    try {
+      sfxRoomChannel = db.channel('sfx-room:' + id);
+      sfxRoomChannel.on('broadcast', { event: 'sfx' }, function(payload) {
+        var d = payload.payload;
+        if (d && d.userId === me.id) return;
+        if (d && d.url) { var a = new Audio(d.url); a.volume = 1; a.play().catch(function(){}); }
+      }).subscribe();
+    } catch(e) {}
   }
 }
 
@@ -2004,7 +2020,7 @@ function leaveVoice() {
 }
 
 // === SOUNDBOARD (shared via DB, live sync) ===
-var sfxSounds = [], sfxBoardChannel = null, sfxTableMissing = false;
+var sfxSounds = [], sfxBoardChannel = null, sfxTableMissing = false, sfxRoomChannel = null;
 async function loadSfxList() {
   try {
     var { data, error } = await db.from('sound_effects').select('*, profiles:user_id (id, username, display_name, role, avatar_url)').order('created_at', { ascending: false }).limit(100);
@@ -2149,16 +2165,35 @@ window.confirmSfxUpload = async function() {
   closeSfxPreview();
   await uploadSfxFile(f, d, nm);
 };
+var sfxPlayingId = null;
 window.playSfx = function(id) {
   var s = sfxSounds.find(function(x) { return x.id === id; });
   if (!s) return;
+  // Visual feedback: highlight the currently playing sound
+  if (sfxPlayingId) { var prev = document.querySelector('.sfx-item[data-id="'+sfxPlayingId+'"]'); if (prev) prev.classList.remove('playing'); }
+  sfxPlayingId = id;
+  var item = document.querySelector('.sfx-item[data-id="'+id+'"]'); if (item) item.classList.add('playing');
   var a = new Audio(s.file_url); a.volume = 1; a.play().catch(function() {});
-  if (voiceChannel) {
+  a.onended = function() { if (sfxPlayingId === id) sfxPlayingId = null; if (item) item.classList.remove('playing'); };
+  a.onerror = function() { if (sfxPlayingId === id) sfxPlayingId = null; if (item) item.classList.remove('playing'); };
+  // Broadcast via room-scoped channel (works regardless of voice call state)
+  if (sfxRoomChannel) {
+    sfxRoomChannel.send({ type: 'broadcast', event: 'sfx', payload: { url: s.file_url, name: s.name, userId: me.id } });
+  } else if (voiceChannel) {
     voiceChannel.send({ type: 'broadcast', event: 'sfx', payload: { url: s.file_url, name: s.name, userId: me.id } });
   } else {
-    toast('برای پخش برای بقیه، وارد تماس صوتی شو');
+    toast('برای پخش برای بقیه، وارد اتاق صوتی شو');
   }
+  // Show who played what in voice bar
+  try {
+    var nm = (me && myProfile && (myProfile.display_name || myProfile.username)) || 'کاربر';
+    var info = $('sfxNowPlaying');
+    if (info) { info.textContent = 'در حال پخش: ' + s.name + ' (' + nm + ')'; info.style.display = 'block'; }
+    clearTimeout(sfxPlayingInfoTimer);
+    sfxPlayingInfoTimer = setTimeout(function() { if (info) info.style.display = 'none'; }, 3000);
+  } catch(e) {}
 };
+var sfxPlayingInfoTimer = null;
 window.deleteSfx = async function(id) {
   var s = sfxSounds.find(function(x) { return x.id === id; });
   var del = await db.from('sound_effects').delete().eq('id', id);
