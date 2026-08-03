@@ -1,35 +1,29 @@
 -- ============================================
--- COMPLETE FIX: Run this in Supabase SQL Editor
+-- fix-all.sql — همه مهاجرت‌های ضروری در یک فایل
+-- کافیست این فایل رو توی SQL Editor اجرا کنی
 -- ============================================
 
--- 1. Add bio column to profiles (if not exists)
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS bio TEXT DEFAULT '';
+-- 1. ستون banner_url برای بنر پروفایل
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS banner_url TEXT;
 
--- 2. Create storage buckets
-INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', true) ON CONFLICT DO NOTHING;
-INSERT INTO storage.buckets (id, name, public) VALUES ('uploads', 'uploads', true) ON CONFLICT DO NOTHING;
-INSERT INTO storage.buckets (id, name, public) VALUES ('chat-images', 'chat-images', true) ON CONFLICT DO NOTHING;
-INSERT INTO storage.buckets (id, name, public) VALUES ('chat-videos', 'chat-videos', true) ON CONFLICT DO NOTHING;
+-- 2. ستون video_type برای پیام‌های صوتی/ویدیویی
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS video_type TEXT;
 
--- 3. Drop old policies if they exist
-DROP POLICY IF EXISTS "avatars_upload" ON storage.objects;
-DROP POLICY IF EXISTS "avatars_select" ON storage.objects;
-DROP POLICY IF EXISTS "avatars_update" ON storage.objects;
-DROP POLICY IF EXISTS "avatars_delete" ON storage.objects;
-DROP POLICY IF EXISTS "uploads_insert" ON storage.objects;
-DROP POLICY IF EXISTS "uploads_select" ON storage.objects;
-DROP POLICY IF EXISTS "chat-images-insert" ON storage.objects;
-DROP POLICY IF EXISTS "chat-images-select" ON storage.objects;
-DROP POLICY IF EXISTS "chat-videos-insert" ON storage.objects;
-DROP POLICY IF EXISTS "chat-videos-select" ON storage.objects;
+-- 3. گسترش رنک‌ها به ۶ تا
+ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
+ALTER TABLE profiles ADD CONSTRAINT profiles_role_check 
+  CHECK (role IN ('owner', 'admin', 'mod', 'vip', 'active', 'user'));
 
--- 4. Create storage policies (allow all for authenticated)
-CREATE POLICY "avatars_all" ON storage.objects FOR ALL USING (bucket_id = 'avatars') WITH CHECK (bucket_id = 'avatars');
-CREATE POLICY "uploads_all" ON storage.objects FOR ALL USING (bucket_id = 'uploads') WITH CHECK (bucket_id = 'uploads');
-CREATE POLICY "chat-images_all" ON storage.objects FOR ALL USING (bucket_id = 'chat-images') WITH CHECK (bucket_id = 'chat-images');
-CREATE POLICY "chat-videos_all" ON storage.objects FOR ALL USING (bucket_id = 'chat-videos') WITH CHECK (bucket_id = 'chat-videos');
+-- 4. پالیسی آپدیت پروفایل (برای بنر و رنک)
+DROP POLICY IF EXISTS "profiles_update_banner" ON profiles;
+CREATE POLICY "profiles_update_banner" ON profiles FOR UPDATE 
+  USING (auth.uid() = id);
 
--- 5. Auto-cleanup function: Delete old chat media files (called by cron or client)
--- This runs as a Supabase Edge Function or can be called manually
--- Files older than 3 hours are deleted from chat-images and chat-videos buckets
--- Profile avatars are NOT affected (different bucket)
+DROP POLICY IF EXISTS "profiles_update_role" ON profiles;
+CREATE POLICY "profiles_update_role" ON profiles FOR UPDATE 
+  USING (auth.uid() = id OR auth.uid() IN (SELECT id FROM profiles WHERE role = 'owner'));
+
+-- 5. پالیسی حذف اتاق (owner + admin + mod)
+DROP POLICY IF EXISTS "rooms_delete" ON rooms;
+CREATE POLICY "rooms_delete" ON rooms FOR DELETE 
+  USING (auth.uid() = created_by OR auth.uid() IN (SELECT id FROM profiles WHERE role IN ('owner', 'admin', 'mod')));
