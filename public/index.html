@@ -869,33 +869,6 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
   <video id="floatScreenVideo" autoplay muted playsinline></video>
 </div>
 
-<div id="sfxPanel">
-  <div class="sfx-head">
-    <div class="sfx-title"><svg class="ui-icon" aria-hidden="true"><use href="#pg-music"></use></svg> افکت صوتی</div>
-    <button class="sfx-close" onclick="$('sfxPanel').classList.remove('show')"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button>
-  </div>
-  <label class="sfx-upload"><svg class="ui-icon" aria-hidden="true"><use href="#pg-plus"></use></svg> افزودن صدا (حداکثر ۲۰ ثانیه)<input type="file" id="sfxInput" accept="audio/*" style="display:none" onchange="handleSfxUpload(this)"></label>
-  <div class="sfx-now-playing" id="sfxNowPlaying"></div>
-  <div class="sfx-list" id="sfxList"></div>
-</div>
-
-<!-- SOUND PREVIEW MODAL -->
-<div id="sfxPreview">
-  <div class="sfx-prev-head">
-    <div class="sfx-title"><svg class="ui-icon" aria-hidden="true"><use href="#pg-music"></use></svg> پیش‌نمایش صدا</div>
-    <button class="sfx-close" onclick="closeSfxPreview()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button>
-  </div>
-  <div class="sfx-prev-body">
-    <audio class="sfx-prev-audio" id="sfxPrevAudio" controls preload="metadata"></audio>
-    <div class="sfx-prev-dur" id="sfxPrevDur"></div>
-    <input class="sfx-prev-input" id="sfxPrevName" maxlength="40" placeholder="اسم صدا...">
-    <div class="sfx-prev-actions">
-      <button class="sfx-prev-btn confirm" onclick="confirmSfxUpload()">آپلود</button>
-      <button class="sfx-prev-btn cancel" onclick="closeSfxPreview()">انصراف</button>
-    </div>
-  </div>
-</div>
-
 <!-- AUTH (must be OUTSIDE #app so it shows when app is hidden) -->
 <div id="auth">
   <div class="auth-orb a"></div>
@@ -2371,7 +2344,7 @@ window.showInviteModal = function() {
   $('inviteExpHours').value = '24';
   $('inviteMaxUses').value = '0';
 };
-window.closeInviteModal = function() { $('inviteModal').style.display = 'none'; $('inviteModal').classList.remove('show'); };
+window.closeInviteModal = function() { $('inviteModal').classList.remove('show'); };
 window.copyInviteLink = function() {
   var inp = $('inviteLink');
   if (!inp.value) return toast('اول لینک بساز');
