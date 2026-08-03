@@ -110,8 +110,11 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .sb-info{flex:1;min-width:0}
 .sb-name{font:600 13px inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sb-role{font-size:10px;padding:2px 8px;border-radius:6px;display:inline-block;margin-top:2px}
-.sb-role.owner{background:rgba(124,109,250,.15);color:var(--accent)}
-.sb-role.admin{background:rgba(250,109,155,.15);color:var(--accent2)}
+.sb-role.owner{background:rgba(251,191,36,.15);color:#fbbf24}
+.sb-role.admin{background:rgba(239,68,68,.12);color:#ef4444}
+.sb-role.mod{background:rgba(249,115,22,.12);color:#f97316}
+.sb-role.vip{background:rgba(168,85,247,.12);color:#a855f7}
+.sb-role.active{background:rgba(6,182,212,.12);color:#06b6d4}
 .sb-role.user{background:var(--panel);color:var(--muted)}
 .sb-body{flex:1;overflow-y:auto;padding:8px}
 .sb-section{margin-bottom:12px}
@@ -424,8 +427,11 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .pf-name{font-size:16px;font-weight:700;display:flex;align-items:center;gap:6px}
 .pf-email{font-size:12px;color:var(--muted)}
 .pf-role-badge{padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;margin-top:4px}
-.pf-role-badge.owner{background:rgba(124,109,250,.12);color:var(--accent)}
-.pf-role-badge.admin{background:rgba(250,109,155,.12);color:var(--accent2)}
+.pf-role-badge.owner{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)}
+.pf-role-badge.admin{background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.25)}
+.pf-role-badge.mod{background:rgba(249,115,22,.12);color:#f97316;border:1px solid rgba(249,115,22,.25)}
+.pf-role-badge.vip{background:rgba(168,85,247,.12);color:#a855f7;border:1px solid rgba(168,85,247,.25)}
+.pf-role-badge.active{background:rgba(6,182,212,.12);color:#06b6d4;border:1px solid rgba(6,182,212,.25)}
 .pf-role-badge.user{background:var(--panel);color:var(--muted)}
 .pf-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;margin-top:12px}
 .pf-stat{background:var(--panel);border-radius:10px;padding:10px;text-align:center}
@@ -1543,7 +1549,7 @@ function enterApp() {
   const n = myProfile.display_name || myProfile.username;
   $('hname').textContent = n + (myProfile.role === 'owner' ? '  · مالک' : '');
   const r = $('hrole');
-  r.innerHTML = (myProfile.role === 'owner' ? svgIcon('crown') : '') + (myProfile.role === 'owner' ? 'مالک' : myProfile.role === 'admin' ? 'ادمین' : 'کاربر');
+  r.innerHTML = getRoleBadge(myProfile.role);
   r.className = 'sb-role ' + myProfile.role;
   const a = ['owner', 'admin'].includes(myProfile.role);
   $('addTextBtn').classList.toggle('show', a);
@@ -1556,6 +1562,10 @@ function enterApp() {
   initQuickReplies();
 }
 
+var RANKS = { owner: { name: "مالک", color: "#fbbf24", icon: "pg-crown" }, admin: { name: "ادمین", color: "#ef4444", icon: "pg-shield" }, mod: { name: "مدیر", color: "#f97316", icon: "pg-gavel" }, vip: { name: "ویژه", color: "#a855f7", icon: "pg-star" }, active: { name: "فعال", color: "#06b6d4", icon: "pg-fire" }, user: { name: "کاربر", color: "var(--muted)", icon: "" } };
+function getRoleName(r) { return RANKS[r] ? RANKS[r].name : "کاربر"; }
+function getRoleColor(r) { return RANKS[r] ? RANKS[r].color : "var(--muted)"; }
+function getRoleBadge(r) { var ri = RANKS[r]; if (!ri || !ri.icon) return ri ? ri.name : "کاربر"; return svgIcon(ri.icon) + " " + ri.name; }
 function rAv(el, p) {
   if (p && p.avatar_url) {
     var isVid = /\.(mp4|webm|gif)(\?|$)/i.test(p.avatar_url);
@@ -1680,7 +1690,7 @@ window.searchDmUsers = async function() {
   data.forEach(function(u) {
     const d = document.createElement('div');
     d.className = 'dm-user';
-    d.innerHTML = '<div class="dm-user-av" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff">' + (function(avurl,fb){if(avurl){var isV=/.(mp4|webm|gif)(\?|$)/i.test(avurl);if(isV)return'<video src='+esc(avurl)+' autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;border-radius:50%"></video>';return'<img src='+esc(avurl)+' alt/>'}return fb})(u.avatar_url,(u.display_name||'?').charAt(0).toUpperCase()) + '</div><div class="dm-user-info"><div class="dm-user-name">' + esc(u.display_name || u.username) + '</div><div class="dm-user-role">' + (u.role === 'owner' ? 'مالک' : u.role === 'admin' ? 'ادمین' : 'کاربر') + '</div></div>';
+    d.innerHTML = '<div class="dm-user-av" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff">' + (function(avurl,fb){if(avurl){var isV=/.(mp4|webm|gif)(\?|$)/i.test(avurl);if(isV)return'<video src='+esc(avurl)+' autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;border-radius:50%"></video>';return'<img src='+esc(avurl)+' alt/>'}return fb})(u.avatar_url,(u.display_name||'?').charAt(0).toUpperCase()) + '</div><div class="dm-user-info"><div class="dm-user-name">' + esc(u.display_name || u.username) + '</div><div class="dm-user-role">' + getRoleName(u.role) + '</div></div>';
     d.onclick = function() { closeDmPanel(); openDm(u.id, u.display_name || u.username); };
     $('dmBody').appendChild(d);
   });
@@ -1788,7 +1798,8 @@ function addMsg(m) {
   var msgId = m.id;
   var avStyle = own ? 'background:var(--accent);color:#fff' : 'background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff';
   var avContent = (function(){ if (u && u.avatar_url) { var isVid = /\.(mp4|webm|gif)(\?|$)/i.test(u.avatar_url); if (isVid) return '<video src="' + esc(u.avatar_url) + '" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;border-radius:50%"></video>'; return '<img src="' + esc(u.avatar_url) + '" alt=""/>'; } return (u && u.display_name || '?').charAt(0).toUpperCase(); })();
-  d.innerHTML = (gapTop ? '<div class="msg-av" onclick="openProfile(\'' + esc(u && u.display_name || '?') + '\')" style="' + avStyle + '">' + avContent + '</div>' : '<div class="msg-ph"></div>') +
+  var uRole = u && u.role ? '<span class="msg-role ' + u.role + '">' + getRoleBadge(u.role) + '</span>' : '';
+  d.innerHTML = (gapTop ? '<div class="msg-av" onclick="openProfile(\'' + esc(u && u.display_name || '?') + ' ' + uRole + '\')" style="' + avStyle + '">' + avContent + '</div>' : '<div class="msg-ph"></div>') +
     '<div class="msg-c">' + (!own && gapTop ? '<div class="msg-name" onclick="openProfile(\'' + esc(u && u.display_name || '') + '\')">' + esc(u && u.display_name || '') + '</div>' : '') +
     '<div class="msg-bubble' + (own ? ' mine' : '') + '">' + replyHtml + content + '</div>' +
     '<div class="reactions-row" id="reactions-' + msgId + '"></div>' +
@@ -2230,7 +2241,7 @@ function renderSfxList() {
   el.innerHTML = '';
   if (sfxTableMissing) { el.innerHTML = '<div class="sfx-empty">ابتدا جدول sound_effects را بسازید</div>'; return; }
   if (!sfxSounds.length) { el.innerHTML = '<div class="sfx-empty">هنوز صدایی اضافه نشده — اولین نفر باش</div>'; return; }
-  var isAdmin = myProfile && ['owner', 'admin'].indexOf(myProfile.role) !== -1;
+  var isAdmin = myProfile && ['owner', 'admin', 'mod'].indexOf(myProfile.role) !== -1;
   sfxSounds.forEach(function(s) {
     var own = s.user_id === (me && me.id);
     var who = (s.profiles && (s.profiles.display_name || s.profiles.username)) || 'کاربر';
@@ -2931,16 +2942,27 @@ window.openProfile = async function(name) {
   var mc = (await db.from('messages').select('*', { count: 'exact', head: true }).eq('user_id', data.id)).count;
   var vc = parseInt(localStorage.getItem('gapchat_voice_seconds_' + data.id) || '0');
   var isMe = data.id === (me && me.id);
-  var rn = (data.role === 'owner' ? svgIcon('crown') : '') + (data.role === 'owner' ? 'مالک' : data.role === 'admin' ? 'ادمین' : 'کاربر');
+  var rn = getRoleBadge(data.role);
   var isVidAv = data.avatar_url && /\.(mp4|webm|gif)(\?|$)/i.test(data.avatar_url);
   var avH = isVidAv ? '<video src="' + esc(data.avatar_url) + '" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;border-radius:50%"></video>' : (data.avatar_url ? '<img src="' + esc(data.avatar_url) + '" alt=""/>' : (data.display_name || '?').charAt(0).toUpperCase());
   var upBtn = isMe ? '<label class="pf-upload" title="تغییر عکس پروفایل"><svg class="ui-icon" aria-hidden="true"><use href="#pg-camera"></use></svg><input type="file" accept="image/*,.mp4,.webm,.gif" onchange="handleProfilePic(this)"></label>' : '';
   var nmE = isMe ? '<div id="pf-ne" style="display:none;width:100%;gap:4px;margin-top:6px"><input id="pf-ni" value="' + esc(data.display_name || '') + '" maxlength="20" style="flex:1;padding:7px 10px;font-size:12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text)"><button onclick="saveName()" style="padding:7px 12px;border-radius:8px;background:var(--accent);color:#fff;font-size:11px;font-weight:600;border:none;cursor:pointer">ذخیره</button></div>' : '';
   var bio = isMe ? '<div style="width:100%;margin-top:10px"><div id="pf-bd" style="font-size:12px;color:var(--muted);text-align:center;cursor:pointer;padding:6px;border-radius:8px" onclick="toggleBio()">' + (data.bio ? esc(data.bio) : '<span style="opacity:.4">بیو… (کلیک)</span>') + '</div><div id="pf-be" style="display:none;flex-direction:column;gap:4px;width:100%"><textarea id="pf-bi" maxlength="120" rows="2" style="resize:none;font-size:12px;padding:7px 10px;border-radius:8px;background:var(--panel);border:1px solid var(--border);color:var(--text)">' + esc(data.bio || '') + '</textarea><div style="display:flex;gap:4px"><button onclick="toggleBio()" style="flex:1;padding:6px;border-radius:8px;background:var(--panel);color:var(--muted);border:1px solid var(--border);font-size:11px;cursor:pointer">لغو</button><button onclick="saveBio()" style="flex:1;padding:6px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:11px;font-weight:600;cursor:pointer">ذخیره</button></div></div></div>' : (data.bio ? '<div style="font-size:12px;color:var(--muted);text-align:center;padding:6px;margin-top:6px">' + esc(data.bio) + '</div>' : '');
-  var pfHeader = $('pfHeader'); if (pfHeader) { pfHeader.className = 'pf-header'; pfHeader.style.backgroundImage = ''; var bimgs = pfHeader.querySelectorAll('.pf-banner-img'); bimgs.forEach(function(b){b.remove();}); if (data.banner_url) { pfHeader.classList.add('has-banner'); var isBannerVid = /\.(mp4|webm|gif)(\?|$)/i.test(data.banner_url); if (isBannerVid) { var bvid = document.createElement('video'); bvid.className = 'pf-banner-img'; bvid.src = data.banner_url; bvid.autoplay = true; bvid.loop = true; bvid.muted = true; bvid.playsInline = true; pfHeader.appendChild(bvid); } else { var bimg = document.createElement('img'); bimg.className = 'pf-banner-img'; bimg.src = data.banner_url; pfHeader.appendChild(bimg); } } } var bannerUpEl = $('pfBannerUpload'); if (bannerUpEl) bannerUpEl.style.display = isMe ? 'inline-flex' : 'none'; $('profile-body').innerHTML = '<div class="pf-avatar-wrap">' + avH + upBtn + '</div><div class="pf-name">' + esc(data.display_name || data.username) + (data.role === 'owner' ? '  · مالک' : '') + (isMe ? ' <button onclick="toggleNE()" style="width:22px;height:22px;font-size:10px;background:var(--panel);border:none;border-radius:6px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg class="ui-icon" aria-hidden="true"><use href="#pg-pen"></use></svg></button>' : '') + '</div>' + nmE + '<div class="pf-email">' + esc(data.username) + '</div><span class="pf-role-badge ' + data.role + '">' + rn + '</span>' + bio + '<div class="pf-stats"><div class="pf-stat"><div class="pf-stat-val">' + (mc || 0) + '</div><div class="pf-stat-lbl">پیام</div></div><div class="pf-stat"><div class="pf-stat-val">' + new Date(data.created_at).toLocaleDateString('fa-IR') + '</div><div class="pf-stat-lbl">عضویت</div></div>' + '<div class="pf-stat" style="grid-column:1/-1;background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(34,211,238,.06));border:1px solid rgba(139,92,246,.25)"><div class="pf-stat-val" style="color:var(--accent)">' + fmtVoiceTime(isMe ? Math.max(totalVoiceSeconds || 0, (typeof data.voice_seconds === 'number') ? data.voice_seconds : 0) : (data.voice_seconds || 0)) + '</div><div class="pf-stat-lbl"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg> زمان در تماس صوتی</div></div>' + '</div>';
+  var pfHeader = $('pfHeader'); if (pfHeader) { pfHeader.className = 'pf-header'; pfHeader.style.backgroundImage = ''; var bimgs = pfHeader.querySelectorAll('.pf-banner-img'); bimgs.forEach(function(b){b.remove();}); if (data.banner_url) { pfHeader.classList.add('has-banner'); var isBannerVid = /\.(mp4|webm|gif)(\?|$)/i.test(data.banner_url); if (isBannerVid) { var bvid = document.createElement('video'); bvid.className = 'pf-banner-img'; bvid.src = data.banner_url; bvid.autoplay = true; bvid.loop = true; bvid.muted = true; bvid.playsInline = true; pfHeader.appendChild(bvid); } else { var bimg = document.createElement('img'); bimg.className = 'pf-banner-img'; bimg.src = data.banner_url; pfHeader.appendChild(bimg); } } } var bannerUpEl = $('pfBannerUpload'); if (bannerUpEl) bannerUpEl.style.display = isMe ? 'inline-flex' : 'none'; $('profile-body').innerHTML = '<div class="pf-avatar-wrap">' + avH + upBtn + '</div><div class="pf-name">' + esc(data.display_name || data.username) + '' + (isMe ? ' <button onclick="toggleNE()" style="width:22px;height:22px;font-size:10px;background:var(--panel);border:none;border-radius:6px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg class="ui-icon" aria-hidden="true"><use href="#pg-pen"></use></svg></button>' : '') + '</div>' + nmE + '<div class="pf-email">' + esc(data.username) + '</div><span class="pf-role-badge ' + data.role + '">' + rn + '</span>' + (myProfile && myProfile.role === 'owner' && !isMe ? '<div style="margin-top:8px;width:100%"><select onchange="setUserRank(\'' + data.id + '\', this.value)" style="width:100%;padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;cursor:pointer"><option value="">-- تغییر رنک --</option><option value="owner" ' + (data.role === 'owner' ? 'selected' : '') + '>مالک</option><option value="admin" ' + (data.role === 'admin' ? 'selected' : '') + '>ادمین</option><option value="mod" ' + (data.role === 'mod' ? 'selected' : '') + '>مدیر</option><option value="vip" ' + (data.role === 'vip' ? 'selected' : '') + '>ویژه</option><option value="active" ' + (data.role === 'active' ? 'selected' : '') + '>فعال</option><option value="user" ' + (data.role === 'user' ? 'selected' : '') + '>کاربر</option></select></div>' : '') + bio + '<div class="pf-stats"><div class="pf-stat"><div class="pf-stat-val">' + (mc || 0) + '</div><div class="pf-stat-lbl">پیام</div></div><div class="pf-stat"><div class="pf-stat-val">' + new Date(data.created_at).toLocaleDateString('fa-IR') + '</div><div class="pf-stat-lbl">عضویت</div></div>' + '<div class="pf-stat" style="grid-column:1/-1;background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(34,211,238,.06));border:1px solid rgba(139,92,246,.25)"><div class="pf-stat-val" style="color:var(--accent)">' + fmtVoiceTime(isMe ? Math.max(totalVoiceSeconds || 0, (typeof data.voice_seconds === 'number') ? data.voice_seconds : 0) : (data.voice_seconds || 0)) + '</div><div class="pf-stat-lbl"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg> زمان در تماس صوتی</div></div>' + '</div>';
 };
 
 window.toggleNE = function() { var e = $('pf-ne'); if (!e) return; e.style.display = e.style.display === 'none' ? 'flex' : 'none'; if (e.style.display === 'flex') { $('pf-ni').focus(); $('pf-ni').select(); } };
+window.setUserRank = async function(userId, newRole) {
+  if (!myProfile || myProfile.role !== "owner") { toast("فقط مالک میتونه رنک تغییر بده"); return; }
+  if (!newRole) return;
+  try {
+    await db.from("profiles").update({ role: newRole }).eq("id", userId);
+    toast("رنک به " + getRoleName(newRole) + " تغییر کرد");
+    // Refresh profile
+    var profileName = document.querySelector(".pf-name");
+    if (profileName) { var nameText = profileName.textContent.replace(/  ·.*/, "").trim(); openProfile(nameText); }
+  } catch(e) { toast("خطا: " + (e.message || "")); }
+};
 window.saveName = async function() { var n = $('pf-ni').value.trim(); if (!n || n.length > 20) return; try { await db.from('profiles').update({ display_name: n }).eq('id', me.id); myProfile.display_name = n; $('hname').textContent = n + (myProfile.role === 'owner' ? '  · مالک' : ''); openProfile(n); toast('نام ذخیره شد'); } catch(e) { toast('خطا: عملیات انجام نشد'); } };
 window.toggleBio = function() { var d = $('pf-bd'), e = $('pf-be'); if (!e) return; var s = e.style.display === 'none'; e.style.display = s ? 'flex' : 'none'; if (d) d.style.display = s ? 'none' : 'block'; };
 window.saveBio = async function() {
@@ -3726,6 +3748,10 @@ openSettings = async function() {
     <symbol id="pg-pen" viewBox="0 0 24 24"><path d="m4 16-.8 4.8L8 20l11-11a2.8 2.8 0 0 0-4-4z"/><path d="m13.5 6.5 4 4"/></symbol>
     <symbol id="pg-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></symbol>
     <symbol id="pg-star" viewBox="0 0 24 24"><path d="m12 2 3 6.5 7 .8-5 4.8 1.5 7-6.5-3.6-6.5 3.6 1.5-7-5-4.8 7-.8z"/></symbol>
+    <symbol id="pg-crown" viewBox="0 0 24 24"><path d="M2 8l3.5 6h13L22 8l-5 3-5-7-5 7-5-3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="7" cy="7" r="1.5"/><circle cx="17" cy="7" r="1.5"/><circle cx="12" cy="5" r="1.5"/></symbol>
+    <symbol id="pg-shield" viewBox="0 0 24 24"><path d="M12 2s8 4 8 8v4c0 5-8 8-8 8s-8-3-8-8v-4c0-4 8-8 8-8z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+    <symbol id="pg-gavel" viewBox="0 0 24 24"><path d="M6 2v4m12-4v4M4 6l4 4m8 0l4-4M6 12h12v6a4 4 0 01-4 4h-4a4 4 0 01-4-4v-6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><rect x="10" y="10" width="4" height="4" rx="1"/></symbol>
+    <symbol id="pg-fire" viewBox="0 0 24 24"><path d="M12 22c4-2 6-6 6-10a6 6 0 00-12 0c0 4 2 8 6 10z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 22V12" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M15 8a3 3 0 00-6 0" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
     <symbol id="pg-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 10.5v6M12 7.4v.1"/></symbol>
   
     <symbol id="pg-voice" viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6l-5 4z"/><path d="M17 9a5 5 0 0 1 0 6" stroke-width="1.5"/><path d="M19.5 6.5a9 9 0 0 1 0 11" stroke-width="1.2" opacity=".5"/><circle cx="17" cy="12" r="8" stroke-dasharray="3 2" opacity=".4"/></symbol>
