@@ -200,80 +200,48 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
   #voice-bar{padding:6px 8px;gap:6px}
   #voice-bar .vb-members{flex-wrap:nowrap;white-space:nowrap;overflow-x:auto;scrollbar-width:none;max-width:60vw}
   #voice-bar .vb-members::-webkit-scrollbar{display:none}
-  #voice-bar .sfx-btn{flex-shrink:0;padding:4px 10px;font-size:10px;border-radius:6px}
+  #voice-bar 
   #voice-bar .vm-chip{padding:3px 8px;font-size:10px}
   #voice-bar .vm-av{width:22px;height:22px;font-size:10px}
 }
 .vb-members{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
 .vm-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;background:var(--panel);border:1px solid var(--border);font-size:12px}
-.vm-chip .vm-sfx-icon{width:13px;height:13px;color:var(--accent);display:none;flex-shrink:0;animation:sfxIconIn .3s ease-out}
-.vm-chip .vm-sfx-icon.show{display:block}
-@keyframes sfxIconIn{from{transform:scale(0);opacity:.3}to{transform:scale(1);opacity:1}}
+
+
+to{transform:scale(1);opacity:1}}
 .vm-av{width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.vm-av.rippling{position:relative;overflow:visible}
-.vm-av.rippling::before{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--accent);animation:vuRipple .8s ease-out infinite}
-.vm-av.rippling::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--accent);animation:vuRipple .8s ease-out infinite .4s}
-@keyframes vuRipple{0%{transform:scale(.8);opacity:1}100%{transform:scale(2);opacity:0}}
-@media(max-width:768px){.vm-av.rippling::before,.vm-av.rippling::after{inset:-2px}}
-@media(max-width:768px){.vm-av.rippling::before,.vm-av.rippling::after{inset:-2px}}
+
+
+100%{transform:scale(2);opacity:0}}
+@media(max-width:768px){.vm-av.rippling::before,}
+@media(max-width:768px){.vm-av.rippling::before,}
 .vm-name{font-size:12px;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vb-join{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.2);transition:all .15s;white-space:nowrap}
 .vb-join:hover{background:rgba(34,197,94,.22)}
 .vb-join.leave{background:rgba(229,51,74,.1);color:var(--red);border-color:rgba(229,51,74,.25)}
 
-/* SOUNDBOARD */
-.sfx-btn{padding:6px 10px;border-radius:8px;font-size:12px;font-weight:600;background:rgba(139,92,246,.12);color:var(--accent);border:1px solid rgba(139,92,246,.25);transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
-.sfx-btn:hover{background:rgba(139,92,246,.22)}
-.sfx-btn>.ui-icon{width:15px;height:15px}
-#sfxPanel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:260;width:340px;max-width:92vw;max-height:70vh;background:var(--surface,#151a23);border:1px solid var(--border);border-radius:16px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.5)}
-#sfxPanel.show{display:flex}
-.sfx-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:600;flex-shrink:0}
-.sfx-head .sfx-title{display:flex;align-items:center;gap:8px}
-.sfx-close{width:28px;height:28px;border-radius:8px;border:none;background:var(--panel);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center}
-.sfx-close:hover{background:var(--border)}
-.sfx-upload{display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 16px;padding:10px 12px;border-radius:10px;background:rgba(139,92,246,.08);border:1px dashed rgba(139,92,246,.3);color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
-.sfx-upload:hover{background:rgba(139,92,246,.15)}
-.sfx-list{flex:1;overflow-y:auto;padding:0 12px 14px}
-.sfx-empty{font-size:12px;color:var(--muted);text-align:center;padding:24px 0}
-.sfx-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--panel);border:1px solid var(--border);margin-bottom:8px}
-.sfx-play{width:34px;height:34px;border-radius:10px;border:none;background:rgba(139,92,246,.15);color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
-.sfx-play:hover{background:rgba(139,92,246,.28);transform:scale(1.05)}
-/* New prominent play button */
-.sfx-play-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;cursor:pointer;flex-shrink:0;transition:all .2s;font-size:12px;font-weight:700;box-shadow:0 3px 12px rgba(139,92,246,.3)}
-.sfx-play-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(139,92,246,.45);filter:brightness(1.1)}
-.sfx-play-btn:active{transform:translateY(0);box-shadow:0 2px 8px rgba(139,92,246,.25)}
-.sfx-play-btn .ui-icon{width:16px;height:16px}
-.sfx-info{flex:1;min-width:0}
-.sfx-name{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sfx-dur{font-size:10px;color:var(--muted);margin-top:2px}
-.sfx-del{width:28px;height:28px;border-radius:8px;border:none;background:rgba(229,51,74,.1);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
-.sfx-del:hover{background:rgba(229,51,74,.22)}
-.sfx-item.playing{border-color:var(--accent);box-shadow:0 0 0 2px rgba(139,92,246,.25);background:rgba(139,92,246,.08)}
-.sfx-item.playing .sfx-play-btn{animation:sfxPulse .6s ease-in-out infinite;box-shadow:0 0 20px rgba(139,92,246,.6)}
-@keyframes sfxPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-.sfx-now-playing{font-size:10px;color:var(--accent);text-align:center;padding:2px 12px 6px;display:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* SFX mobile */
+/* SFX removed */
 @media(max-width:420px){
   #sfxPanel,#sfxPreview{width:100%;max-width:100vw;border-radius:20px 20px 0 0;max-height:88vh;margin-top:auto;left:0;top:auto;bottom:0;transform:none}
   #sfxPanel.show,#sfxPreview.show{display:flex;animation:sheetUp .3s cubic-bezier(.16,1,.3,1)}
   .sfx-head,.sfx-prev-head{padding:10px 14px}
-  .sfx-upload{margin:10px 12px;font-size:11px;padding:8px 10px}
-  .sfx-list{padding:0 8px 12px}
-  .sfx-item{padding:6px 8px;gap:6px}
-  .sfx-play{width:30px;height:30px;border-radius:8px}
-  .sfx-play-btn{padding:5px 10px;font-size:11px;border-radius:8px;gap:4px}
-  .sfx-play-btn .ui-icon{width:14px;height:14px}
-  .sfx-del{width:24px;height:24px;border-radius:6px}
-  .sfx-name{font-size:11px}
-  .sfx-dur{font-size:9px}
+  
+  
+  
+  
+  
+  
+  
+  
+  
   .sfx-prev-body{padding:12px;gap:10px}
   .sfx-prev-audio{height:38px}
   .sfx-prev-input{font-size:12px;padding:8px 10px}
   .sfx-prev-btn{font-size:11px;padding:9px}
 }
-@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.sfx-edit{width:28px;height:28px;border-radius:8px;border:none;background:rgba(139,92,246,.08);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
-.sfx-edit:hover{background:rgba(139,92,246,.22);color:var(--accent)}
+to{transform:translateY(0)}}
+
+
 #sfxPreview{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:270;width:360px;max-width:92vw;background:var(--surface,#151a23);border:1px solid var(--border);border-radius:16px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.5)}
 #sfxPreview.show{display:flex}
 .sfx-prev-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:600;flex-shrink:0}
@@ -545,7 +513,7 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:220}
-.modal-overlay.show{display:flex;animation:fadeIn .2s ease}@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-overlay.show{display:flex;animation:fadeIn .2s ease}to{opacity:1}}
 .modal-card{background:var(--surface);border-radius:16px;padding:20px;width:90%;max-width:340px;border:1px solid var(--border);animation:scaleIn .2s}
 .modal-card h2{font:700 15px inherit;margin-bottom:14px}
 .modal-card input,.modal-card select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--panel);color:var(--text);font:13px inherit;margin-bottom:8px}
@@ -755,7 +723,7 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
 @media(max-width:600px){.typing-indicator{font-size:10px;padding:2px 8px;gap:4px}.typing-dots span{width:4px;height:4px}}
 /* Mobile touch targets - min 44px for all small buttons */
 @media(max-width:768px){
-  .sfx-del,.sfx-edit{width:36px;height:36px;min-width:36px;min-height:36px;border-radius:10px;font-size:15px}
+  .sfx-del,
   .msg-menu-item{padding:10px 14px;min-height:44px;font-size:13px}
   .icon-btn{min-width:36px;min-height:36px}
   .reaction-btn{width:36px;height:36px;min-width:36px;min-height:36px}
@@ -893,7 +861,7 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
   <button class="search-nav-btn" id="searchNextBtn" onclick="searchNext()" disabled title="بعدی"><svg class="ui-icon" aria-hidden="true"><use href="#pg-search-nav-down"></use></svg></button>
   <button class="search-nav-btn" onclick="closeSearch()" title="بستن"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button>
 </div>
-  <div id="voice-bar"><div style="flex:1"><div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:3px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg> صوتی</div><div class="vb-members" id="vbMembers"><span style="font-size:11px;color:var(--muted)">خالی</span></div></div><button class="sfx-btn" onclick="toggleSfxPanel()" title="افکت صوتی"><svg class="ui-icon" aria-hidden="true"><use href="#pg-music"></use></svg> افکت</button></div>
+  <div id="voice-bar"><div style="flex:1"><div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:3px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg> صوتی</div><div class="vb-members" id="vbMembers"><span style="font-size:11px;color:var(--muted)">خالی</span></div></div></div>
   <div id="welcome" class="welcome"><div class="welcome-icon"><svg class="ui-icon" aria-hidden="true"><use href="#pg-chat"></use></svg></div><h2 style="font-size:18px;font-weight:600">GapChat</h2><p style="font-size:12px">یه اتاق یا پیام خصوصی انتخاب کن</p></div>
   <div id="messages" style="display:none"></div>
   <div id="replyBar" class="reply-bar" style="display:none"><div class="reply-bar-content"><div class="reply-bar-name" id="replyBarName"></div><div class="reply-bar-text" id="replyBarText"></div></div><button class="icon-btn" onclick="cancelReply()" style="width:26px;height:26px;font-size:10px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button></div>
@@ -921,7 +889,7 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
   <div class="fv-timer" id="fvTimer">00:00</div>
   <button class="fv-btn mute" id="fvMuteBtn" onclick="event.stopPropagation();toggleMute()" title="میکروفون"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg></button>
   <button class="fv-btn screen" id="fvScreenBtn" onclick="event.stopPropagation();shareScreen()" title="اشتراک صفحه"><svg class="ui-icon" aria-hidden="true"><use href="#pg-screen"></use></svg></button>
-  <button class="fv-btn" onclick="event.stopPropagation();toggleSfxPanel()" title="افکت صوتی"><svg class="ui-icon" aria-hidden="true"><use href="#pg-music"></use></svg></button>
+  
   <button class="fv-btn hangup" onclick="event.stopPropagation();leaveVoice()" title="قطع تماس"><svg class="ui-icon" aria-hidden="true"><use href="#pg-phone"></use></svg></button>
 </div>
 
@@ -939,7 +907,7 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
     <button class="sfx-close" onclick="$('sfxPanel').classList.remove('show')"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button>
   </div>
   <label class="sfx-upload"><svg class="ui-icon" aria-hidden="true"><use href="#pg-plus"></use></svg> افزودن صدا (حداکثر ۲۰ ثانیه)<input type="file" id="sfxInput" accept="audio/*" style="display:none" onchange="handleSfxUpload(this)"></label>
-  <div class="sfx-now-playing" id="sfxNowPlaying"></div>
+  
   <div class="sfx-list" id="sfxList"></div>
 </div>
 
@@ -1179,7 +1147,7 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
   <div class="call-controls">
     <button class="call-ctrl mic" id="callMuteBtn" onclick="event.stopPropagation();toggleMute()" title="میکروفون"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg></button>
     <button class="call-ctrl screen" id="callScreenBtn" onclick="event.stopPropagation();shareScreen()" title="اشتراک صفحه"><svg class="ui-icon" aria-hidden="true"><use href="#pg-screen"></use></svg></button>
-    <button class="call-ctrl" onclick="event.stopPropagation();toggleSfxPanel()" title="افکت صوتی" style="background:var(--bg3,#1e2c3a);color:#fff"><svg class="ui-icon" aria-hidden="true"><use href="#pg-music"></use></svg></button>
+    
     <button class="call-ctrl" id="fullscreenBtn" onclick="event.stopPropagation();toggleFullscreen()" title="تمام‌صفحه" style="background:var(--bg3,#1e2c3a);color:#fff"><svg class="ui-icon" aria-hidden="true"><use href="#pg-expand"></use></svg></button>
     <button class="call-ctrl leave" onclick="leaveVoice()" title="پایان"><svg class="ui-icon" aria-hidden="true"><use href="#pg-phone"></use></svg></button>
   </div>
@@ -1542,9 +1510,6 @@ window.signOut = async function() {
   if (!confirm('خروج؟')) return;
   if (voiceChannel) { await db.removeChannel(voiceChannel); voiceChannel = null; } if (realtimeRelay) { await db.removeChannel(realtimeRelay); realtimeRelay = null; }
   if (presenceChannel) { await db.removeChannel(presenceChannel); presenceChannel = null; }
-  if (sfxRoomChannel) { await db.removeChannel(sfxRoomChannel); sfxRoomChannel = null; }
-  if (sfxSub) { await db.removeChannel(sfxSub); sfxSub = null; }
-  sfxMemberTimers = {}; sfxPlayingId = null;
   stopSfxSync();
   leaveVoice();
   await db.auth.signOut();
@@ -1643,35 +1608,8 @@ async function startRelay() {
     if (payload.payload.user_id === (me && me.id)) return;
     addMsg(payload.payload);
     scrollBottom();
-  }).on('broadcast', { event: 'sfx' }, function(payload) {
-    var d = payload.payload;
-    if (!d || d.userId === (me && me.id)) return;
-    if (d.room_id && d.room_id !== curRoom) return;
-    if (d.url) {
-      var a = new Audio(d.url); a.volume = 1;
-      var playPromise = a.play();
-      if (playPromise) playPromise.catch(function() {
-        // Android autoplay blocked - add click-to-play fallback
-        toast('صدای ' + (d.name || 'افکت') + ' دریافت شد — برای شنیدن کلیک کن');
-        var resumePlay = function() {
-          a.play().catch(function(){});
-          document.removeEventListener('click', resumePlay, true);
-          document.removeEventListener('touchstart', resumePlay, true);
-        };
-        document.addEventListener('click', resumePlay, true);
-        document.addEventListener('touchstart', resumePlay, true);
-        setTimeout(function() {
-          document.removeEventListener('click', resumePlay, true);
-          document.removeEventListener('touchstart', resumePlay, true);
-        }, 10000);
-      });
-    }
-    if (d.userId) showSfxPlayingOnMember(d.userId);
-  });
-  await realtimeRelay.subscribe();
-  console.log('realtimeRelay subscribed OK');
+  }).subscribe();
 }
-
 // PRESENCE
 async function startPresence() {
   if (presenceChannel) await db.removeChannel(presenceChannel);
@@ -1769,9 +1707,7 @@ window.searchDmUsers = async function() {
 
 let dmSub = null;
 async function openDm(userId, userName) {
-  if (sfxRoomChannel) { await db.removeChannel(sfxRoomChannel); sfxRoomChannel = null; }
   if (msgSub) { await db.removeChannel(msgSub); msgSub = null; }
-  if (sfxSub) { await db.removeChannel(sfxSub); sfxSub = null; }
   if (dmSub) { await db.removeChannel(dmSub); dmSub = null; }
   curDm = userId; curRoom = null;
   $('welcome').style.display = 'none'; $('messages').style.display = 'flex'; $('chatHeader').style.display = 'flex';
@@ -1798,9 +1734,8 @@ async function openDm(userId, userName) {
   }).subscribe();
 }
 
-let msgSub = null, sfxSub = null;
+let msgSub = null;
 async function openRoom(id, name, type) {
-  if (sfxRoomChannel) { await db.removeChannel(sfxRoomChannel); sfxRoomChannel = null; }
   if (msgSub) { await db.removeChannel(msgSub); msgSub = null; }
   if (dmSub) { await db.removeChannel(dmSub); dmSub = null; }
   curRoom = id; curType = type; curDm = null;
@@ -1829,41 +1764,12 @@ async function openRoom(id, name, type) {
       const { data: msg } = await db.from('messages').select('*, profiles:user_id (id,username,display_name,role,avatar_url)').eq('id', p.new.id).single();
       if (msg) addMsg(msg);
     }).subscribe();
-    // SFX events subscription (DB-based, works for ALL room types)
-    sfxSub = db.channel('sfx-events:' + id).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sfx_events', filter: 'room_id=eq.' + id }, function(p) {
-      var d = p.new;
-      if (!d || d.user_id === (me && me.id)) return;
-      if (d.sound_url) {
-        var a = new Audio(d.sound_url); a.volume = 1;
-        var playPromise = a.play();
-        if (playPromise) playPromise.catch(function() {
-          toast('صدای ' + (d.sound_name || 'افکت') + ' دریافت شد — برای شنیدن کلیک کن');
-          var resume = function() { a.play().catch(function(){}); };
-          document.addEventListener('click', resume, { once: true });
-          document.addEventListener('touchstart', resume, { once: true });
-          setTimeout(function() { document.removeEventListener('click', resume); document.removeEventListener('touchstart', resume); }, 10000);
-        });
-      }
-      if (d.user_id) showSfxPlayingOnMember(d.user_id);
-    }).subscribe();
+    
   } else {
     // Voice room - show welcome message + start sfx channel (works without joining voice call)
     $('messages').style.display = 'flex';
     $('messages').innerHTML = '<div class="empty"><div class="empty-icon"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg></div><div class="empty-txt">اتاق صوتی فعاله</div></div>';
-    try {
-      sfxRoomChannel = db.channel('sfx-room:' + id);
-      sfxRoomChannel.on('broadcast', { event: 'sfx' }, function(payload) {
-        var d = payload.payload;
-        if (!d || d.userId === (me && me.id)) return;
-        if (d.room_id && d.room_id !== curRoom) return;
-        if (d && d.url) { var a = new Audio(d.url); a.volume = 1; a.play().catch(function(){}); }
-        if (d && d.userId) showSfxPlayingOnMember(d.userId);
-      });
-      await sfxRoomChannel.subscribe(function(status) {
-        if (status !== 'SUBSCRIBED') console.log('sfxRoomChannel status:', status);
-      });
-    } catch(e) { console.log('sfxRoomChannel error:', e); }
-  }
+
 }
 
 let lastUid = '';
@@ -2252,16 +2158,6 @@ async function joinVoice() {
         if (lbl) lbl.remove();
         tile.classList.remove('screen-sharing');
       }
-    }).on('broadcast', { event: 'sfx' }, function(payload) {
-      var d = payload.payload;
-      if (!d || d.userId === (me && me.id)) return;
-      if (d.url) {
-        var a = new Audio(d.url); a.volume = 1;
-        a.play().catch(function() {
-          toast('صدای ' + (d.name || 'افکت') + ' دریافت شد - برای شنیدن کلیک کن');
-        });
-      }
-      if (d.userId) showSfxPlayingOnMember(d.userId);
     }).on('broadcast', { event: 'leave' }, function(payload) {
       var m = voiceMembers.get(payload.payload.userId);
       if (m) toast(m.username + ' از تماس صوتی خارج شد');
@@ -2288,14 +2184,12 @@ function leaveVoice() {
   stopScreenShare();
   // Clean up all per-peer audio elements
   document.querySelectorAll('audio[data-peer]').forEach(function(el) { el.srcObject = null; el.remove(); });
-  sfxMemberTimers = {}; sfxPlayingId = null; sfxSub = null;
   peers.forEach(function(pc) { pc.close(); }); peers.clear(); voiceMembers.clear();
   hideFloatingVoice(); curVoiceRoom = null; var fs5 = document.getElementById('float-screen'); if (fs5) { fs5.classList.remove('show'); var fsv5 = document.getElementById('floatScreenVideo'); if (fsv5) fsv5.srcObject = null; }
   clearInterval(voiceTimerInterval);
 }
 
 // === SOUNDBOARD (shared via DB, live sync) ===
-var sfxSounds = [], sfxBoardChannel = null, sfxTableMissing = false, sfxRoomChannel = null;
 async function loadSfxList() {
   try {
     var { data, error } = await db.from('sound_effects').select('*, profiles:user_id (id, username, display_name, role, avatar_url)').order('created_at', { ascending: false }).limit(100);
@@ -2442,7 +2336,6 @@ window.confirmSfxUpload = async function() {
   closeSfxPreview();
   await uploadSfxFile(f, d, nm);
 };
-var sfxPlayingId = null;
 window.playSfx = function(id) {
   var s = sfxSounds.find(function(x) { return x.id === id; });
   if (!s) return;
@@ -2457,27 +2350,7 @@ window.playSfx = function(id) {
   a.onended = function() { if (sfxPlayingId === id) sfxPlayingId = null; if (item) item.classList.remove('playing'); };
   a.onerror = function() { if (sfxPlayingId === id) sfxPlayingId = null; if (item) item.classList.remove('playing'); };
   // Show play icon on my own chip in voice-bar
-  if (me && me.id) showSfxPlayingOnMember(me.id);
-  // Insert into sfx_events - triggers postgres_changes for all users in room (DB transport)
-  if (curRoom && me && me.id) {
-    db.from('sfx_events').insert({
-      room_id: curRoom,
-      user_id: me.id,
-      sound_url: s.file_url,
-      sound_name: s.name
-    }).then(function(r) {
-      if (r.error) {
-        console.log('sfx db insert err:', r.error);
-        if (r.error.message && r.error.message.includes('does not exist')) {
-          toast('جدول sfx_events وجود نداره — SQL رو اجرا کن');
-        }
-      }
-    }).catch(function(e) {
-      console.log('sfx db err:', e);
-    });
-  } else {
-    toast('وارد اتاق نشدی');
-  }
+    // SFX removed
   // Show who played what in voice bar
   try {
     var nm = (me && myProfile && (myProfile.display_name || myProfile.username)) || 'کاربر';
@@ -2487,7 +2360,7 @@ window.playSfx = function(id) {
     sfxPlayingInfoTimer = setTimeout(function() { if (info) info.style.display = 'none'; }, 3000);
   } catch(e) {}
 };
-var sfxPlayingInfoTimer = null, lastTypingBroadcast = 0, typingTimers = {};
+var lastTypingBroadcast = 0, typingTimers = {};
 window.showTypingIndicator = function(name) {
   var el = $('typingIndicator'), label = $('typingLabel');
   if (!el || !label) return;
@@ -3000,22 +2873,7 @@ function renderVoiceMembers() {
   });
   if (!voiceMembers.size) $('vbMembers').innerHTML = '<span style="font-size:11px;color:var(--muted)">خالی</span>';
 
-var sfxMemberTimers = {};
-function showSfxPlayingOnMember(uid) {
-  var chip = document.querySelector('.vm-chip[data-uid="' + uid + '"]');
-  if (!chip) return;
-  var av = chip.querySelector('.vm-av');
-  var icon = chip.querySelector('.vm-sfx-icon');
-  // Show icon + ripple on avatar
-  if (icon) icon.classList.add('show');
-  if (av) av.classList.add('rippling');
-  if (sfxMemberTimers[uid]) clearTimeout(sfxMemberTimers[uid]);
-  sfxMemberTimers[uid] = setTimeout(function() {
-    if (icon) icon.classList.remove('show');
-    if (av) av.classList.remove('rippling');
-    delete sfxMemberTimers[uid];
-  }, 2500);
-}
+
 }
 
 // SCREEN SHARE
@@ -3813,6 +3671,7 @@ openSettings = async function() {
     }
   }, 200);
 };
+}
 
 </script>
 
