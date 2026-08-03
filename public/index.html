@@ -237,13 +237,18 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .sfx-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--panel);border:1px solid var(--border);margin-bottom:8px}
 .sfx-play{width:34px;height:34px;border-radius:10px;border:none;background:rgba(139,92,246,.15);color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
 .sfx-play:hover{background:rgba(139,92,246,.28);transform:scale(1.05)}
+/* New prominent play button */
+.sfx-play-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;cursor:pointer;flex-shrink:0;transition:all .2s;font-size:12px;font-weight:700;box-shadow:0 3px 12px rgba(139,92,246,.3)}
+.sfx-play-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(139,92,246,.45);filter:brightness(1.1)}
+.sfx-play-btn:active{transform:translateY(0);box-shadow:0 2px 8px rgba(139,92,246,.25)}
+.sfx-play-btn .ui-icon{width:16px;height:16px}
 .sfx-info{flex:1;min-width:0}
 .sfx-name{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sfx-dur{font-size:10px;color:var(--muted);margin-top:2px}
 .sfx-del{width:28px;height:28px;border-radius:8px;border:none;background:rgba(229,51,74,.1);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
 .sfx-del:hover{background:rgba(229,51,74,.22)}
 .sfx-item.playing{border-color:var(--accent);box-shadow:0 0 0 2px rgba(139,92,246,.25);background:rgba(139,92,246,.08)}
-.sfx-item.playing .sfx-play{background:var(--accent);color:#fff;animation:sfxPulse .8s ease-in-out infinite}
+.sfx-item.playing .sfx-play-btn{animation:sfxPulse .6s ease-in-out infinite;box-shadow:0 0 20px rgba(139,92,246,.6)}
 @keyframes sfxPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 .sfx-now-playing{font-size:10px;color:var(--accent);text-align:center;padding:2px 12px 6px;display:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* SFX mobile */
@@ -253,8 +258,11 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
   .sfx-head,.sfx-prev-head{padding:10px 14px}
   .sfx-upload{margin:10px 12px;font-size:11px;padding:8px 10px}
   .sfx-list{padding:0 8px 12px}
-  .sfx-item{padding:6px 8px;gap:8px}
+  .sfx-item{padding:6px 8px;gap:6px}
   .sfx-play{width:30px;height:30px;border-radius:8px}
+  .sfx-play-btn{padding:5px 10px;font-size:11px;border-radius:8px;gap:4px}
+  .sfx-play-btn .ui-icon{width:14px;height:14px}
+  .sfx-del{width:24px;height:24px;border-radius:6px}
   .sfx-name{font-size:11px}
   .sfx-dur{font-size:9px}
   .sfx-prev-body{padding:12px;gap:10px}
@@ -2247,9 +2255,11 @@ function renderSfxList() {
     var who = (s.profiles && (s.profiles.display_name || s.profiles.username)) || 'کاربر';
     var d = document.createElement('div');
     d.className = 'sfx-item';
-    d.innerHTML = '<button class="sfx-play" onclick="playSfx(\'' + s.id + '\')" title="پخش"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg></button>' +
-      '<div class="sfx-info"><div class="sfx-name">' + esc(s.name) + '</div><div class="sfx-dur">' + (s.duration ? s.duration + ' ثانیه' : '') + (own ? '' : ' · ' + esc(who)) + '</div></div>' +
-      ((own || isAdmin) ? '<button class="sfx-edit" onclick="renameSfx(\'' + s.id + '\')" title="تغییر اسم"><svg class="ui-icon" aria-hidden="true"><use href="#pg-pencil"></use></svg></button><button class="sfx-del" onclick="deleteSfx(\'' + s.id + '\')" title="حذف"><svg class="ui-icon" aria-hidden="true"><use href="#pg-trash"></use></svg></button>' : '');
+    d.setAttribute('data-id', s.id);
+    d.innerHTML = '<div class="sfx-info"><div class="sfx-name">' + esc(s.name) + '</div><div class="sfx-dur">' + (s.duration ? s.duration + ' ثانیه' : '') + (own ? '' : ' · ' + esc(who)) + '</div></div>' +
+      ((own || isAdmin) ? '<button class="sfx-edit" onclick="renameSfx(\'' + s.id + '\')" title="تغییر اسم"><svg class="ui-icon" aria-hidden="true"><use href="#pg-pencil"></use></svg></button>' : '') +
+      '<button class="sfx-play-btn" onclick="playSfx(\'' + s.id + '\')" title="پخش برای همه"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg><span>پخش</span></button>' +
+      ((own || isAdmin) ? '<button class="sfx-del" onclick="deleteSfx(\'' + s.id + '\')" title="حذف"><svg class="ui-icon" aria-hidden="true"><use href="#pg-trash"></use></svg></button>' : '');
     el.appendChild(d);
   });
 }
@@ -2344,9 +2354,12 @@ window.playSfx = function(id) {
   var s = sfxSounds.find(function(x) { return x.id === id; });
   if (!s) return;
   // Visual feedback: highlight the currently playing sound
-  if (sfxPlayingId) { var prev = document.querySelector('.sfx-item[data-id="'+sfxPlayingId+'"]'); if (prev) prev.classList.remove('playing'); }
+  if (sfxPlayingId && sfxPlayingId !== id) { var prev = document.querySelector('.sfx-item[data-id="'+sfxPlayingId+'"]'); if (prev) prev.classList.remove('playing'); }
   sfxPlayingId = id;
   var item = document.querySelector('.sfx-item[data-id="'+id+'"]'); if (item) item.classList.add('playing');
+  // Change button text while playing
+  var btn = item ? item.querySelector('.sfx-play-btn span') : null;
+  if (btn) { btn.textContent = 'در حال پخش...'; setTimeout(function() { if (btn) btn.textContent = 'پخش'; }, 2500); }
   var a = new Audio(s.file_url); a.volume = 1; a.play().catch(function() {});
   a.onended = function() { if (sfxPlayingId === id) sfxPlayingId = null; if (item) item.classList.remove('playing'); };
   a.onerror = function() { if (sfxPlayingId === id) sfxPlayingId = null; if (item) item.classList.remove('playing'); };
