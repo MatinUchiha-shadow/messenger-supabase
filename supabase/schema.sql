@@ -87,6 +87,7 @@ CREATE POLICY "messages_insert" ON messages FOR INSERT WITH CHECK (auth.uid() = 
 CREATE POLICY "sound_effects_select" ON sound_effects FOR SELECT USING (auth.uid() IS NOT NULL);
 CREATE POLICY "sound_effects_insert" ON sound_effects FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "sound_effects_delete" ON sound_effects FOR DELETE USING (auth.uid() = user_id OR auth.uid() IN (SELECT id FROM profiles WHERE role IN ('owner', 'admin')));
+CREATE POLICY "sound_effects_update" ON sound_effects FOR UPDATE USING (auth.uid() = user_id OR auth.uid() IN (SELECT id FROM profiles WHERE role IN ('owner', 'admin')));
 
 -- ============================================
 -- 6. Function: Auto-create profile on signup

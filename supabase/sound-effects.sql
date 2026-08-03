@@ -28,6 +28,11 @@ CREATE POLICY "sound_effects_delete" ON sound_effects FOR DELETE USING (
   auth.uid() = user_id
   OR auth.uid() IN (SELECT id FROM profiles WHERE role IN ('owner', 'admin'))
 );
+-- Rename: owner can rename own sounds; owner/admin can rename any
+CREATE POLICY "sound_effects_update" ON sound_effects FOR UPDATE USING (
+  auth.uid() = user_id
+  OR auth.uid() IN (SELECT id FROM profiles WHERE role IN ('owner', 'admin'))
+);
 
 -- 4. Realtime: live refresh when someone adds/deletes a sound
 ALTER PUBLICATION supabase_realtime ADD TABLE sound_effects;

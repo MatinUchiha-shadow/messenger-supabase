@@ -223,6 +223,24 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .sfx-dur{font-size:10px;color:var(--muted);margin-top:2px}
 .sfx-del{width:28px;height:28px;border-radius:8px;border:none;background:rgba(229,51,74,.1);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
 .sfx-del:hover{background:rgba(229,51,74,.22)}
+.sfx-edit{width:28px;height:28px;border-radius:8px;border:none;background:rgba(139,92,246,.08);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.sfx-edit:hover{background:rgba(139,92,246,.22);color:var(--accent)}
+#sfxPreview{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:270;width:360px;max-width:92vw;background:var(--surface,#151a23);border:1px solid var(--border);border-radius:16px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+#sfxPreview.show{display:flex}
+.sfx-prev-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:600;flex-shrink:0}
+.sfx-prev-head .sfx-title{display:flex;align-items:center;gap:8px}
+.sfx-prev-body{padding:16px;display:flex;flex-direction:column;gap:12px}
+.sfx-prev-audio{width:100%;height:42px;border-radius:10px;background:var(--panel)}
+.sfx-prev-dur{font-size:11px;color:var(--muted);text-align:center}
+.sfx-prev-input{width:100%;padding:10px 12px;border-radius:10px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-size:13px;outline:none;transition:border-color .15s;box-sizing:border-box}
+.sfx-prev-input:focus{border-color:var(--accent)}
+.sfx-prev-input.err{border-color:var(--red)}
+.sfx-prev-actions{display:flex;gap:8px}
+.sfx-prev-btn{flex:1;padding:10px;border-radius:10px;border:none;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
+.sfx-prev-btn.confirm{background:var(--accent);color:#fff}
+.sfx-prev-btn.confirm:hover{filter:brightness(1.15)}
+.sfx-prev-btn.cancel{background:var(--panel);color:var(--muted)}
+.sfx-prev-btn.cancel:hover{background:var(--border)}
 
 /* MEET-LIKE CALL PANEL */
 #callPanel{position:fixed;inset:0;z-index:150;display:none;flex-direction:column;background:#0a0e14}
@@ -772,6 +790,23 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
   </div>
   <label class="sfx-upload"><svg class="ui-icon" aria-hidden="true"><use href="#pg-plus"></use></svg> افزودن صدا (حداکثر ۲۰ ثانیه)<input type="file" id="sfxInput" accept="audio/*" style="display:none" onchange="handleSfxUpload(this)"></label>
   <div class="sfx-list" id="sfxList"></div>
+</div>
+
+<!-- SOUND PREVIEW MODAL -->
+<div id="sfxPreview">
+  <div class="sfx-prev-head">
+    <div class="sfx-title"><svg class="ui-icon" aria-hidden="true"><use href="#pg-music"></use></svg> پیش‌نمایش صدا</div>
+    <button class="sfx-close" onclick="closeSfxPreview()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button>
+  </div>
+  <div class="sfx-prev-body">
+    <audio class="sfx-prev-audio" id="sfxPrevAudio" controls preload="metadata"></audio>
+    <div class="sfx-prev-dur" id="sfxPrevDur"></div>
+    <input class="sfx-prev-input" id="sfxPrevName" maxlength="40" placeholder="اسم صدا...">
+    <div class="sfx-prev-actions">
+      <button class="sfx-prev-btn confirm" onclick="confirmSfxUpload()">آپلود</button>
+      <button class="sfx-prev-btn cancel" onclick="closeSfxPreview()">انصراف</button>
+    </div>
+  </div>
 </div>
 
 <!-- AUTH (must be OUTSIDE #app so it shows when app is hidden) -->
@@ -1977,6 +2012,7 @@ function startSfxSync() {
   try {
     sfxBoardChannel = db.channel('sfx-board')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sound_effects' }, function() { if (!sfxTableMissing) loadSfxList(); })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'sound_effects' }, function() { if (!sfxTableMissing) loadSfxList(); })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'sound_effects' }, function() { if (!sfxTableMissing) loadSfxList(); })
       .subscribe();
   } catch(e) {}
@@ -1995,7 +2031,7 @@ function renderSfxList() {
     d.className = 'sfx-item';
     d.innerHTML = '<button class="sfx-play" onclick="playSfx(\'' + s.id + '\')" title="پخش"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg></button>' +
       '<div class="sfx-info"><div class="sfx-name">' + esc(s.name) + '</div><div class="sfx-dur">' + (s.duration ? s.duration + ' ثانیه' : '') + (own ? '' : ' · ' + esc(who)) + '</div></div>' +
-      ((own || isAdmin) ? '<button class="sfx-del" onclick="deleteSfx(\'' + s.id + '\')" title="حذف"><svg class="ui-icon" aria-hidden="true"><use href="#pg-trash"></use></svg></button>' : '');
+      ((own || isAdmin) ? '<button class="sfx-edit" onclick="renameSfx(\'' + s.id + '\')" title="تغییر اسم"><svg class="ui-icon" aria-hidden="true"><use href="#pg-pencil"></use></svg></button><button class="sfx-del" onclick="deleteSfx(\'' + s.id + '\')" title="حذف"><svg class="ui-icon" aria-hidden="true"><use href="#pg-trash"></use></svg></button>' : '');
     el.appendChild(d);
   });
 }
@@ -2011,15 +2047,14 @@ function validateSfxFile(file) {
     a.preload = 'metadata';
     a.onloadedmetadata = function() {
       var dur = a.duration || 0;
-      URL.revokeObjectURL(url);
-      if (dur > 20.5) reject(new Error('حداکثر ۲۰ ثانیه'));
-      else resolve(Math.round(dur));
+      if (dur > 20.5) { URL.revokeObjectURL(url); reject(new Error('حداکثر ۲۰ ثانیه')); return; }
+      resolve({ dur: Math.round(dur), url: url });
     };
     a.onerror = function() { URL.revokeObjectURL(url); reject(new Error('فایل نامعتبر')); };
     a.src = url;
   });
 }
-async function uploadSfxFile(file, dur) {
+async function uploadSfxFile(file, dur, customName) {
   var ext = ((file.name || '').split('.').pop() || 'mp3').toLowerCase().replace(/[^a-z0-9]/g, '') || 'mp3';
   var path = 'sfx/' + Date.now() + '_' + Math.random().toString(36).slice(2, 6) + '.' + ext;
   try {
@@ -2037,13 +2072,14 @@ async function uploadSfxFile(file, dur) {
       });
     });
     var ud = db.storage.from('chat-images').getPublicUrl(path);
-    var nm = (file.name || 'صدا').replace(/\.[^.]+$/, '') || 'صدا';
+    var nm = (customName && customName.trim()) || (file.name || 'صدا').replace(/\.[^.]+$/, '') || 'صدا';
     var ins = await db.from('sound_effects').insert({ user_id: me.id, name: nm, file_url: ud.data.publicUrl, duration: dur }).select('id').single();
     if (ins.error) { toast('خطا در ثبت صدا'); return; }
     await loadSfxList();
     toast('افکت صوتی اضافه شد');
   } catch(e) { toast('خطا: ' + (e.message || 'نامشخص')); }
 }
+var sfxPendingFile = null, sfxPendingUrl = null, sfxPendingDur = 0;
 window.handleSfxUpload = async function(input) {
   var f = input && input.files && input.files[0];
   input.value = '';
@@ -2051,9 +2087,39 @@ window.handleSfxUpload = async function(input) {
   if (!f.type.startsWith('audio/')) { toast('فقط فایل صوتی'); return; }
   toast('در حال بررسی...');
   try {
-    var dur = await validateSfxFile(f);
-    await uploadSfxFile(f, dur);
+    var info = await validateSfxFile(f);
+    openSfxPreview(f, info);
   } catch(e) { toast(e.message || 'خطا'); }
+};
+function openSfxPreview(file, info) {
+  if (sfxPendingUrl && sfxPendingUrl !== info.url) URL.revokeObjectURL(sfxPendingUrl);
+  sfxPendingFile = file; sfxPendingUrl = info.url; sfxPendingDur = info.dur;
+  $('sfxPrevAudio').src = info.url;
+  $('sfxPrevDur').textContent = info.dur + ' ثانیه (حداکثر ۲۰ ثانیه)';
+  var base = (file.name || 'صدا').replace(/\.[^.]+$/, '') || 'صدا';
+  $('sfxPrevName').value = base;
+  $('sfxPrevName').classList.remove('err');
+  $('sfxPreview').classList.add('show');
+  var inp = $('sfxPrevName'); inp.focus(); inp.select();
+}
+window.closeSfxPreview = function() {
+  $('sfxPreview').classList.remove('show');
+  $('sfxPrevAudio').pause(); $('sfxPrevAudio').src = '';
+  if (sfxPendingUrl) { URL.revokeObjectURL(sfxPendingUrl); sfxPendingUrl = null; }
+  sfxPendingFile = null; sfxPendingDur = 0; sfxRenameId = null;
+  var title = document.querySelector('#sfxPreview .sfx-title');
+  if (title) title.innerHTML = '<svg class="ui-icon" aria-hidden="true"><use href="#pg-music"></use></svg> پیش‌نمایش صدا';
+  var confirmBtn = document.querySelector('#sfxPreview .sfx-prev-btn.confirm');
+  if (confirmBtn) confirmBtn.textContent = 'آپلود';
+};
+window.confirmSfxUpload = async function() {
+  if (sfxRenameId) { await saveSfxRename(); return; }
+  var nm = $('sfxPrevName').value.trim();
+  if (!nm) { $('sfxPrevName').classList.add('err'); $('sfxPrevName').focus(); return; }
+  if (!sfxPendingFile) return;
+  var f = sfxPendingFile, d = sfxPendingDur;
+  closeSfxPreview();
+  await uploadSfxFile(f, d, nm);
 };
 window.playSfx = function(id) {
   var s = sfxSounds.find(function(x) { return x.id === id; });
@@ -2077,6 +2143,38 @@ window.deleteSfx = async function(id) {
   toast('حذف شد');
 };
 
+
+var sfxRenameId = null;
+window.renameSfx = function(id) {
+  var s = sfxSounds.find(function(x) { return x.id === id; });
+  if (!s) return;
+  sfxRenameId = id;
+  sfxPendingFile = null; sfxPendingUrl = null; sfxPendingDur = 0;
+  $('sfxPrevAudio').src = s.file_url;
+  $('sfxPrevAudio').load();
+  $('sfxPrevDur').textContent = (s.duration ? s.duration + ' ثانیه' : '');
+  $('sfxPrevName').value = s.name;
+  $('sfxPrevName').classList.remove('err');
+  var title = document.querySelector('#sfxPreview .sfx-title');
+  if (title) title.innerHTML = '<svg class="ui-icon" aria-hidden="true"><use href="#pg-pencil"></use></svg> تغییر اسم';
+  var confirmBtn = document.querySelector('#sfxPreview .sfx-prev-btn.confirm');
+  if (confirmBtn) confirmBtn.textContent = 'ذخیره';
+  $('sfxPreview').classList.add('show');
+  var inp = $('sfxPrevName'); inp.focus(); inp.select();
+};
+async function saveSfxRename() {
+  var nm = $('sfxPrevName').value.trim();
+  if (!nm) { $('sfxPrevName').classList.add('err'); $('sfxPrevName').focus(); return; }
+  var id = sfxRenameId;
+  var cur = sfxSounds.find(function(x) { return x.id === id; });
+  if (cur && nm === cur.name) { closeSfxPreview(); return; }
+  sfxRenameId = null;
+  closeSfxPreview();
+  var up = await db.from('sound_effects').update({ name: nm }).eq('id', id);
+  if (up.error) { toast('خطا در تغییر اسم'); return; }
+  await loadSfxList();
+  toast('اسم صدا تغییر کرد');
+}
 function showCallPanel() { showFloatingVoice(); return;
   $('callPanel').classList.add('show');
   $('callRoomName').textContent = $('roomTitle').textContent;
@@ -3240,6 +3338,7 @@ openSettings = async function() {
     <symbol id="pg-crown" viewBox="0 0 24 24"><path d="m4 7 4 4 4-6 4 6 4-4-2 11H6z"/><path d="M6 21h12"/></symbol>
     <symbol id="pg-volume" viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6l-5 4zM17 9a5 5 0 0 1 0 6M19.5 6.5a9 9 0 0 1 0 11"/></symbol>
     <symbol id="pg-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="16.5" r="2.5"/></symbol>
+    <symbol id="pg-pencil" viewBox="0 0 24 24"><path d="m4 20 4-1L19 8l-3-3L5 16z"/><path d="m13.5 6.5 3 3"/></symbol>
     <symbol id="pg-camera" viewBox="0 0 24 24"><path d="M4 8h4l1.5-2h5L16 8h4v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
     <symbol id="pg-send" viewBox="0 0 24 24"><path d="m3 4 18 8-18 8 3-8z"/><path d="M6 12h15"/></symbol>
     <symbol id="pg-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
