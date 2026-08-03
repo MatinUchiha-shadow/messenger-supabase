@@ -192,8 +192,17 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .empty-txt{font-size:12px;color:var(--muted)}
 
 /* VOICE BAR */
-#voice-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:none;align-items:center;gap:12px;flex-shrink:0}
+#voice-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:none;align-items:center;gap:12px;flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#voice-bar::-webkit-scrollbar{display:none}
 #voice-bar.show{display:flex}
+@media(max-width:600px){
+  #voice-bar{padding:6px 8px;gap:6px}
+  #voice-bar .vb-members{flex-wrap:nowrap;white-space:nowrap;overflow-x:auto;scrollbar-width:none;max-width:60vw}
+  #voice-bar .vb-members::-webkit-scrollbar{display:none}
+  #voice-bar .sfx-btn{flex-shrink:0;padding:4px 10px;font-size:10px;border-radius:6px}
+  #voice-bar .vm-chip{padding:3px 8px;font-size:10px}
+  #voice-bar .vm-av{width:22px;height:22px;font-size:10px}
+}
 .vb-members{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
 .vm-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;background:var(--panel);border:1px solid var(--border);font-size:12px}
 .vm-chip .vm-sfx-icon{width:13px;height:13px;color:var(--accent);display:none;flex-shrink:0;animation:sfxIconIn .3s ease-out}
@@ -366,6 +375,7 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 
 /* INPUT */
 #input-bar{padding:8px 12px 12px;background:var(--surface);border-top:1px solid var(--border);display:none;flex-direction:column;gap:6px;flex-shrink:0;min-height:56px;position:relative;z-index:5}
+@media(max-width:768px){#input-bar{padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px))}}
 #input-bar.show{display:flex!important}
 .reply-bar{display:flex;align-items:center;gap:8px;padding:6px 12px;background:rgba(124,109,250,.06);border-top:1px solid rgba(124,109,250,.15)}
 .reply-bar-content{flex:1;min-width:0}
@@ -608,7 +618,16 @@ textarea,input[type="text"],input[type="email"],input[type="password"]{-webkit-u
 #float-voice .fv-btn.screen.on{background:var(--accent);color:#fff}
 #float-voice .fv-btn.hangup{background:var(--red);color:#fff;width:40px;height:40px}
 #float-voice .fv-btn:hover{transform:scale(1.12);filter:brightness(1.2)}
-@media(max-width:768px){#float-voice{bottom:12px;padding:8px 14px;gap:8px;border-radius:40px}}
+@media(max-width:768px){
+  #float-voice{bottom:calc(12px + env(safe-area-inset-bottom, 0px));padding:8px 14px;gap:8px;border-radius:40px;max-width:92vw}
+  #float-voice .fv-av{width:28px;height:28px;font-size:11px}
+  #float-voice .fv-name{font-size:10px}
+  #float-voice .fv-count{font-size:9px}
+  #float-voice .fv-timer{font-size:10px;min-width:30px}
+  #float-voice .fv-btn{width:32px;height:32px;font-size:12px}
+  #float-voice .fv-btn.hangup{width:36px;height:36px}
+  #float-screen{bottom:calc(12px + env(safe-area-inset-bottom, 0px))}
+}
 
 
 .icon-sprite{position:absolute;width:0;height:0;overflow:hidden;pointer-events:none}
@@ -669,6 +688,27 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
 .voice-record-timer{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;color:var(--red);white-space:nowrap;display:none}
 .voice-record-btn.recording + .voice-record-timer{display:block}
 #input-bar .irow{position:relative}
+/* CHAT HEADER MOBILE - voice actions always visible */
+@media(max-width:600px){
+  .chat-header{padding:8px 10px;gap:4px;flex-wrap:wrap}
+  .chat-title{flex:1;min-width:0}
+  .chat-title h2{font-size:13px}
+  .chat-badge{font-size:9px;padding:2px 6px}
+  #searchToggleBtn{width:28px;height:28px;font-size:11px}
+  #meetBtn{width:28px;height:28px;font-size:11px}
+  #inviteBtn{width:28px;height:28px;font-size:11px}
+  .typing-indicator{max-width:120px;overflow:hidden;text-overflow:ellipsis}
+  #voiceActions{flex-shrink:0}
+  #voiceActions .vb-join{padding:5px 10px;font-size:11px;border-radius:6px}
+  #voiceActions .icon-btn{width:28px;height:28px;font-size:11px}
+}
+@media(max-width:380px){
+  .chat-header{gap:2px}
+  #searchToggleBtn{display:none}
+  #inviteBtn{display:none}
+  #voiceActions{display:flex!important}
+  #voiceActions .vb-join{padding:4px 8px;font-size:10px}
+}
 @media(max-width:400px){.attach-btn,.camera-btn,.voice-record-btn{width:36px;height:36px;border-radius:10px;font-size:13px}.btn-send{width:36px;height:36px;padding:0;font-size:14px}#msg-input{padding:9px 12px;font-size:13px}}
 
 /* TYPING INDICATOR */
@@ -1696,6 +1736,7 @@ async function openRoom(id, name, type) {
   const b = $('roomBadge'); b.textContent = type === 'voice' ? 'صوتی' : 'گروه'; b.className = 'chat-badge' + (type === 'voice' ? ' voice' : '');
   $('input-bar').classList.add('show'); // always show input
   $('voiceActions').style.display = type === 'voice' ? 'flex' : 'none';
+  $('voiceActions').style.cssText = type === 'voice' ? 'display:flex!important;gap:4px;align-items:center;flex-shrink:0' : 'display:none';
   $('voice-bar').classList.toggle('show', type === 'voice'); // show voice bar for voice rooms
   document.querySelectorAll('.room-item,.dm-item').forEach(function(el) { el.classList.remove('active'); });
   const activeEl = document.querySelector('.room-item[data-id="' + id + '"]');
