@@ -136,6 +136,9 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 
 /* MAIN */
 .main{flex:1;display:flex;flex-direction:column;background:var(--bg);min-width:0;position:relative;z-index:1;overflow:hidden;min-height:0}
+.main.bg-grid{background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:32px 32px}
+.main.bg-dots{background-image:radial-gradient(rgba(255,255,255,.04) 1px,transparent 1px);background-size:20px 20px}
+.main.bg-gradient{background:linear-gradient(180deg,var(--bg),rgba(139,92,246,.04) 40%,rgba(236,72,153,.03) 70%,var(--bg))}
 .chat-header{padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center;background:rgba(12,10,24,.7);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);flex-shrink:0}
 .chat-title{display:flex;align-items:center;gap:8px;min-width:0}
 .chat-title h2{font:600 14px inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -915,6 +918,29 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
 </div>
 
 
+  <!-- INVITE MODAL -->
+  <div class="modal-overlay" id="inviteModal" style="display:none">
+    <div class="modal-box" style="max-width:400px;text-align:center">
+      <h3 style="margin:0 0 12px;font-size:16px">دعوت به اتاق</h3>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 16px">لینک زیر رو بفرست برای دوستات تا مستقیم وارد اتاق بشن</p>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input id="inviteLink" readonly style="flex:1;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text);direction:ltr;text-align:left" value="">
+        <button class="btn btn-primary" onclick="copyInviteLink()" style="white-space:nowrap;font-size:12px;padding:8px 14px">کپی</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:4px;flex-wrap:wrap">
+        <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px">
+          <input type="number" id="inviteExpHours" value="24" min="1" max="720" inputmode="numeric" style="width:50px;padding:8px 6px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text);min-height:40px">ساعت اعتبار
+        </label>
+        <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px">
+          <input type="number" id="inviteMaxUses" value="0" min="0" max="100" inputmode="numeric" style="width:50px;padding:8px 6px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text);min-height:40px">حداکثر استفاده (0=نامحدود)
+        </label>
+      </div>
+      <button class="btn btn-primary" onclick="createInviteLink()" style="width:100%;margin-bottom:8px">ساخت لینک جدید</button>
+      <button class="btn btn-ghost" onclick="closeInviteModal()" style="width:100%;font-size:12px">بستن</button>
+    </div>
+  </div>
+
+  
   <!-- INVITE MODAL -->
   <div class="modal-overlay" id="inviteModal" style="display:none">
     <div class="modal-box" style="max-width:400px;text-align:center">
@@ -1734,7 +1760,7 @@ function addMsg(m) {
   const c = $('messages'), d = document.createElement('div');
   const own = m.user_id === (me && me.id);
   const u = m.profiles;
-  const time = new Date(m.created_at).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+  const time = formatRelativeTime(m.created_at);
   const gapTop = m.user_id !== lastUid;
   lastUid = m.user_id;
   let content = '';
@@ -1767,6 +1793,8 @@ function addMsg(m) {
   if (reactions[msgId]) renderReactions(msgId);
 }
 
+function formatRelativeTime(d){ var dt=new Date(d),n=new Date(),df=n-dt; if(df<6e4)return"همین الان"; if(df<36e5)return Math.floor(df/6e4)+" دقیقه پیش"; if(df<864e5)return Math.floor(df/36e5)+" ساعت پیش"; if(df<6048e5)return Math.floor(df/864e5)+" روز پیش"; return dt.toLocaleDateString("fa-IR",{month:"short",day:"numeric"})+" "+dt.toLocaleTimeString("fa-IR",{hour:"2-digit",minute:"2-digit"}); }
+function formatVoiceTime(s){ if(!s||s<60)return"کمتر از ۱ دقیقه"; var m=Math.floor(s/60),h=Math.floor(m/60); if(h>0)return h+" ساعت و "+(m%60)+" دقیقه"; return m+" دقیقه"; }
 function scrollBottom() {
   var c = $('messages');
   requestAnimationFrame(function() { c.scrollTop = c.scrollHeight; });
@@ -2344,7 +2372,7 @@ window.showInviteModal = function() {
   $('inviteExpHours').value = '24';
   $('inviteMaxUses').value = '0';
 };
-window.closeInviteModal = function() { $('inviteModal').classList.remove('show'); };
+window.closeInviteModal = function() { $('inviteModal').style.display = 'none'; $('inviteModal').classList.remove('show'); };
 window.copyInviteLink = function() {
   var inp = $('inviteLink');
   if (!inp.value) return toast('اول لینک بساز');
@@ -2890,6 +2918,7 @@ window.openProfile = async function(name) {
   var data = result.data;
   if (!data) { $('profile-body').innerHTML = '<div style="padding:30px;text-align:center;color:var(--muted)">ناموجود</div>'; return; }
   var mc = (await db.from('messages').select('*', { count: 'exact', head: true }).eq('user_id', data.id)).count;
+  var vc = parseInt(localStorage.getItem('gapchat_voice_seconds_' + data.id) || '0');
   var isMe = data.id === (me && me.id);
   var rn = (data.role === 'owner' ? svgIcon('crown') : '') + (data.role === 'owner' ? 'مالک' : data.role === 'admin' ? 'ادمین' : 'کاربر');
   var avH = data.avatar_url ? '<img src="' + esc(data.avatar_url) + '" alt=""/>' : (data.display_name || '?').charAt(0).toUpperCase();
@@ -3382,6 +3411,7 @@ window.searchPrev = function() {
 // === AUTO THEME ===
 var themeMode = localStorage.getItem('gapchat_theme_mode') || 'auto'; // auto | dark | light
 var systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+var systemDark = window.matchMedia("(prefers-color-scheme: dark)");
 function isDarkByTime() {
   var h = new Date().getHours();
   return h >= 19 || h < 6; // 7PM to 6AM = dark
@@ -3646,6 +3676,7 @@ openSettings = async function() {
     <symbol id="pg-shield" viewBox="0 0 24 24"><path d="M12 3 19 6v5c0 5-3 8-7 10-4-2-7-5-7-10V6zM9 12l2 2 4-4"/></symbol>
     <symbol id="pg-pen" viewBox="0 0 24 24"><path d="m4 16-.8 4.8L8 20l11-11a2.8 2.8 0 0 0-4-4z"/><path d="m13.5 6.5 4 4"/></symbol>
     <symbol id="pg-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></symbol>
+    <symbol id="pg-star" viewBox="0 0 24 24"><path d="m12 2 3 6.5 7 .8-5 4.8 1.5 7-6.5-3.6-6.5 3.6 1.5-7-5-4.8 7-.8z"/></symbol>
     <symbol id="pg-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 10.5v6M12 7.4v.1"/></symbol>
   
     <symbol id="pg-voice" viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6l-5 4z"/><path d="M17 9a5 5 0 0 1 0 6" stroke-width="1.5"/><path d="M19.5 6.5a9 9 0 0 1 0 11" stroke-width="1.2" opacity=".5"/><circle cx="17" cy="12" r="8" stroke-dasharray="3 2" opacity=".4"/></symbol>
