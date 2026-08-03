@@ -419,11 +419,18 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 #profile-overlay.show #profile-card{transform:scale(1);opacity:1}
 .pf-header{height:130px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:20px 20px 0 0;position:relative;background-size:cover;background-position:center;overflow:hidden}
 .pf-header.has-banner{background:#0a0a0f}
-.pf-header.has-banner::before{content:"";position:absolute;inset:0;background:url(attr(data-banner url));background-size:cover;background-position:center}
 .pf-banner-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
 .pf-banner-upload{position:absolute;top:8px;right:8px;padding:5px 10px;border-radius:8px;background:rgba(0,0,0,.45);color:#fff;font-size:11px;font-weight:500;display:inline-flex;align-items:center;gap:5px;cursor:pointer;border:1px solid rgba(255,255,255,.15);transition:all .15s;z-index:2}
 .pf-banner-upload:hover{background:rgba(0,0,0,.65)}
 .pf-banner-upload input{display:none}
+.upload-progress{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:300;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 20px;display:none;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.4);min-width:280px}
+.upload-progress.show{display:flex}
+.upload-progress-bar{flex:1;height:6px;background:var(--panel);border-radius:3px;overflow:hidden}
+.upload-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;animation:uploadPulse 1.5s ease-in-out infinite;width:0%}
+.upload-progress-fill.done{width:100%;animation:none;background:#22c55e}
+@keyframes uploadPulse{0%{width:5%}50%{width:90%}100%{width:5%}}
+.upload-progress-text{font-size:12px;color:var(--muted);white-space:nowrap}
+.upload-progress-cancel{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.1);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;border:none}
 .pf-close{position:absolute;top:8px;left:8px;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.3);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px}
 .pf-avatar-wrap{width:72px;height:72px;border-radius:50%;margin:-36px auto 0;border:3px solid var(--surface);background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:30px;overflow:hidden;position:relative}
 .pf-avatar-wrap img,.pf-avatar-wrap video{width:100%;height:100%;object-fit:cover;border-radius:50%}
@@ -913,7 +920,15 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
   </div>
 </div>
 
-<!-- AUTH (must be OUTSIDE #app so it shows when app is hidden) -->
+
+<!-- UPLOAD PROGRESS BAR -->
+<div class="upload-progress" id="uploadProgress">
+  <span class="upload-progress-text" id="uploadProgressText">آپلود...</span>
+  <div class="upload-progress-bar"><div class="upload-progress-fill" id="uploadProgressFill"></div></div>
+  <button class="upload-progress-cancel" onclick="cancelUpload()" title="لغو">✕</button>
+</div>
+
+<!-- AUTH #app so it shows when app is hidden) -->
 <div id="auth">
   <div class="auth-orb a"></div>
   <div class="auth-orb b"></div>
@@ -1594,6 +1609,26 @@ var RANKS = { owner: { name: "مالک", color: "#fbbf24", icon: "pg-crown" }, a
 function getRoleName(r) { return RANKS[r] ? RANKS[r].name : "کاربر"; }
 function getRoleColor(r) { return RANKS[r] ? RANKS[r].color : "var(--muted)"; }
 function getRoleBadge(r) { var ri = RANKS[r]; if (!ri || !ri.icon) return ri ? ri.name : "کاربر"; return svgIcon(ri.icon) + " " + ri.name; }
+var uploadAbortController = null;
+function showUploadProgress(text) {
+  var el = $("uploadProgress"), fill = $("uploadProgressFill"), txt = $("uploadProgressText");
+  if (!el) return;
+  el.classList.add("show");
+  fill.className = "upload-progress-fill";
+  if (txt) txt.textContent = text || "در حال آپلود...";
+}
+function hideUploadProgress() {
+  var el = $("uploadProgress");
+  if (!el) return;
+  var fill = $("uploadProgressFill");
+  if (fill) fill.className = "upload-progress-fill done";
+  setTimeout(function() { el.classList.remove("show"); }, 600);
+}
+window.cancelUpload = function() {
+  if (uploadAbortController) { uploadAbortController.abort(); uploadAbortController = null; }
+  hideUploadProgress();
+  toast("آپلود لغو شد");
+};
 function rAv(el, p) {
   if (p && p.avatar_url) {
     var isVid = /\.(mp4|webm|gif)(\?|$)/i.test(p.avatar_url);
@@ -2976,7 +3011,7 @@ window.openProfile = async function(name) {
   var upBtn = isMe ? '<label class="pf-upload" title="تغییر عکس پروفایل"><svg class="ui-icon" aria-hidden="true"><use href="#pg-camera"></use></svg><input type="file" accept="image/*,.mp4,.webm,.gif" onchange="handleProfilePic(this)"></label>' : '';
   var nmE = isMe ? '<div id="pf-ne" style="display:none;width:100%;gap:4px;margin-top:6px"><input id="pf-ni" value="' + esc(data.display_name || '') + '" maxlength="20" style="flex:1;padding:7px 10px;font-size:12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text)"><button onclick="saveName()" style="padding:7px 12px;border-radius:8px;background:var(--accent);color:#fff;font-size:11px;font-weight:600;border:none;cursor:pointer">ذخیره</button></div>' : '';
   var bio = isMe ? '<div style="width:100%;margin-top:10px"><div id="pf-bd" style="font-size:12px;color:var(--muted);text-align:center;cursor:pointer;padding:6px;border-radius:8px" onclick="toggleBio()">' + (data.bio ? esc(data.bio) : '<span style="opacity:.4">بیو… (کلیک)</span>') + '</div><div id="pf-be" style="display:none;flex-direction:column;gap:4px;width:100%"><textarea id="pf-bi" maxlength="120" rows="2" style="resize:none;font-size:12px;padding:7px 10px;border-radius:8px;background:var(--panel);border:1px solid var(--border);color:var(--text)">' + esc(data.bio || '') + '</textarea><div style="display:flex;gap:4px"><button onclick="toggleBio()" style="flex:1;padding:6px;border-radius:8px;background:var(--panel);color:var(--muted);border:1px solid var(--border);font-size:11px;cursor:pointer">لغو</button><button onclick="saveBio()" style="flex:1;padding:6px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:11px;font-weight:600;cursor:pointer">ذخیره</button></div></div></div>' : (data.bio ? '<div style="font-size:12px;color:var(--muted);text-align:center;padding:6px;margin-top:6px">' + esc(data.bio) + '</div>' : '');
-  var pfHeader = $('pfHeader'); if (pfHeader) { pfHeader.className = 'pf-header'; pfHeader.style.backgroundImage = ''; var bimgs = pfHeader.querySelectorAll('.pf-banner-img'); bimgs.forEach(function(b){b.remove();}); if (data.banner_url) { pfHeader.classList.add('has-banner'); var isBannerVid = /\.(mp4|webm|gif)(\?|$)/i.test(data.banner_url); if (isBannerVid) { var bvid = document.createElement('video'); bvid.className = 'pf-banner-img'; bvid.src = data.banner_url; bvid.autoplay = true; bvid.loop = true; bvid.muted = true; bvid.playsInline = true; bvid.preload = 'auto'; bvid.setAttribute('playsinline',''); bvid.setAttribute('webkit-playsinline',''); bvid.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:0'; bvid.onerror = function() { bvid.style.display = 'none'; }; bvid.onloadeddata = function() { bvid.style.display = ''; }; pfHeader.appendChild(bvid); } else { var bimg = document.createElement('img'); bimg.className = 'pf-banner-img'; bimg.src = data.banner_url; pfHeader.appendChild(bimg); } } } var bannerUpEl = $('pfBannerUpload'); if (bannerUpEl) bannerUpEl.style.display = isMe ? 'inline-flex' : 'none';
+  var pfHeader = $('pfHeader'); if (pfHeader) { pfHeader.className = 'pf-header'; pfHeader.style.backgroundImage = 'none'; var bimgs = pfHeader.querySelectorAll('.pf-banner-img'); bimgs.forEach(function(b){b.remove();}); if (data.banner_url) { pfHeader.classList.add('has-banner'); var isBannerVid = /\.(mp4|webm|gif)(\?|$)/i.test(data.banner_url); if (isBannerVid) { var bvid = document.createElement('video'); bvid.className = 'pf-banner-img'; bvid.src = data.banner_url; bvid.autoplay = true; bvid.loop = true; bvid.muted = true; bvid.playsInline = true; bvid.preload = 'auto'; bvid.setAttribute('playsinline',''); bvid.setAttribute('webkit-playsinline',''); bvid.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:0'; bvid.onerror = function() { bvid.style.display = 'none'; }; bvid.onloadeddata = function() { bvid.style.display = ''; }; pfHeader.appendChild(bvid); } else { var bimg = document.createElement('img'); bimg.className = 'pf-banner-img'; bimg.src = data.banner_url; pfHeader.appendChild(bimg); } } } var bannerUpEl = $('pfBannerUpload'); if (bannerUpEl) bannerUpEl.style.display = isMe ? 'inline-flex' : 'none';
   $('profile-body').innerHTML = '<div class="pf-avatar-wrap">' + avH + upBtn + '</div><div class="pf-name">' + esc(data.display_name || data.username) + '' + (isMe ? ' <button onclick="toggleNE()" style="width:22px;height:22px;font-size:10px;background:var(--panel);border:none;border-radius:6px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg class="ui-icon" aria-hidden="true"><use href="#pg-pen"></use></svg></button>' : '') + '</div>' + nmE + '<div class="pf-email">' + esc(data.username) + '</div><span class="pf-role-badge ' + data.role + '">' + rn + '</span>' + (myProfile && myProfile.role === 'owner' && !isMe ? '<div style="margin-top:8px;width:100%"><select onchange="setUserRank(\'' + data.id + '\', this.value)" style="width:100%;padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;cursor:pointer"><option value="">-- تغییر رنک --</option><option value="owner" ' + (data.role === 'owner' ? 'selected' : '') + '>مالک</option><option value="admin" ' + (data.role === 'admin' ? 'selected' : '') + '>ادمین</option><option value="mod" ' + (data.role === 'mod' ? 'selected' : '') + '>مدیر</option><option value="vip" ' + (data.role === 'vip' ? 'selected' : '') + '>ویژه</option><option value="active" ' + (data.role === 'active' ? 'selected' : '') + '>فعال</option><option value="user" ' + (data.role === 'user' ? 'selected' : '') + '>کاربر</option></select></div>' : '') + bio + '<div class="pf-stats"><div class="pf-stat"><div class="pf-stat-val">' + (mc || 0) + '</div><div class="pf-stat-lbl">پیام</div></div><div class="pf-stat"><div class="pf-stat-val">' + new Date(data.created_at).toLocaleDateString('fa-IR') + '</div><div class="pf-stat-lbl">عضویت</div></div>' + '<div class="pf-stat" style="grid-column:1/-1;background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(34,211,238,.06));border:1px solid rgba(139,92,246,.25)"><div class="pf-stat-val" style="color:var(--accent)">' + fmtVoiceTime(isMe ? Math.max(totalVoiceSeconds || 0, (typeof data.voice_seconds === 'number') ? data.voice_seconds : 0) : (data.voice_seconds || 0)) + '</div><div class="pf-stat-lbl"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg> زمان در تماس صوتی</div></div>' + '</div>';
 };
 
@@ -3201,7 +3236,7 @@ window.confirmBannerCrop = function() {
 })();
 window.uploadBannerBlob = async function(blob) {
   try {
-    toast("در حال آپلود بنر...");
+    showUploadProgress("پردازش و آپلود بنر...");
     var bpath = "banner_" + me.id + ".jpg";
     var result = await db.storage.from("avatars").upload(bpath, blob, { upsert: true });
     if (result.error) { toast("خطا: " + (result.error.message || "")); return; }
@@ -3210,10 +3245,11 @@ window.uploadBannerBlob = async function(blob) {
     var patchRes = await db.from("profiles").update({ banner_url: verUrl }).eq("id", me.id);
     if (patchRes.error) { console.error("banner PATCH 400:", patchRes.error); toast("ستون banner_url در دیتابیس نیست! SQL اجرا کن"); return; }
     myProfile.banner_url = verUrl;
+    hideUploadProgress();
     openProfile(myProfile.display_name || myProfile.username);
     console.log("uploadBanner success, refreshing profile");
     toast("بنر ذخیره شد");
-  } catch(e) { console.error("uploadBanner error:", e); toast("خطا: " + (e.message || "")); }
+  } catch(e) { hideUploadProgress(); console.error("uploadBanner error:", e); toast("خطا: " + (e.message || "")); }
 };
 window.uploadBanner = async function(input) {
   console.log("uploadBanner called");
@@ -3223,7 +3259,7 @@ window.uploadBanner = async function(input) {
   console.log("uploadBanner isVideo:", isVideo, "type:", f.type, "name:", f.name);
   var maxSize = isVideo ? 30 * 1024 * 1024 : 10 * 1024 * 1024;
   if (f.size > maxSize) { toast("حجم بنر باید کمتر از " + (isVideo ? "۳۰" : "۱۰") + " مگابایت باشه"); input.value = ""; return; }
-  toast("در حال آپلود بنر...");
+  showUploadProgress("آپلود بنر...");
   try {
     var blob = f, ext = ".jpg";
     if (isVideo) { var m = f.name.match(/\.(mp4|webm|mov|avi|mkv|3gp|m4v|ts)/i); ext = m ? m[0].toLowerCase() : ".mp4"; blob = f; }
@@ -3243,9 +3279,10 @@ window.uploadBanner = async function(input) {
     var patchRes2 = await db.from("profiles").update({ banner_url: verUrl }).eq("id", me.id);
     if (patchRes2.error) { console.error("banner PATCH 400:", patchRes2.error); toast("ستون banner_url در دیتابیس نیست! SQL اجرا کن"); return; }
     myProfile.banner_url = verUrl;
+    hideUploadProgress();
     openProfile(myProfile.display_name || myProfile.username);
     toast("بنر ذخیره شد");
-  } catch(e) { toast("خطا: " + (e.message || "")); }
+  } catch(e) { hideUploadProgress(); toast("خطا: " + (e.message || "")); }
   input.value = "";
 };
 window.uploadAvatarBlob = async function(blob, originalName) {
