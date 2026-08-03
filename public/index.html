@@ -196,6 +196,9 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 #voice-bar.show{display:flex}
 .vb-members{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
 .vm-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;background:var(--panel);border:1px solid var(--border);font-size:12px}
+.vm-chip .vm-sfx-icon{width:13px;height:13px;color:var(--accent);display:none;flex-shrink:0;animation:sfxIconIn .3s ease-out}
+.vm-chip .vm-sfx-icon.show{display:block}
+@keyframes sfxIconIn{from{transform:scale(0);opacity:.3}to{transform:scale(1);opacity:1}}
 .vm-av{width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .vm-name{font-size:12px;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vb-join{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.2);transition:all .15s;white-space:nowrap}
@@ -1625,6 +1628,7 @@ async function openRoom(id, name, type) {
         var d = payload.payload;
         if (d && d.userId === me.id) return;
         if (d && d.url) { var a = new Audio(d.url); a.volume = 1; a.play().catch(function(){}); }
+        if (d && d.userId) showSfxPlayingOnMember(d.userId);
       }).subscribe();
     } catch(e) {}
   }
@@ -1993,6 +1997,7 @@ async function joinVoice() {
       var d = payload.payload;
       if (d && d.userId === me.id) return;
       if (d && d.url) { var a = new Audio(d.url); a.volume = 1; a.play().catch(function(){}); }
+      if (d && d.userId) showSfxPlayingOnMember(d.userId);
     }).on('broadcast', { event: 'leave' }, function(payload) {
       var m = voiceMembers.get(payload.payload.userId);
       if (m) toast(m.username + ' از تماس صوتی خارج شد');
@@ -2176,6 +2181,8 @@ window.playSfx = function(id) {
   var a = new Audio(s.file_url); a.volume = 1; a.play().catch(function() {});
   a.onended = function() { if (sfxPlayingId === id) sfxPlayingId = null; if (item) item.classList.remove('playing'); };
   a.onerror = function() { if (sfxPlayingId === id) sfxPlayingId = null; if (item) item.classList.remove('playing'); };
+  // Show play icon on my own chip in voice-bar
+  if (me && me.id) showSfxPlayingOnMember(me.id);
   // Broadcast via room-scoped channel (works regardless of voice call state)
   if (sfxRoomChannel) {
     sfxRoomChannel.send({ type: 'broadcast', event: 'sfx', payload: { url: s.file_url, name: s.name, userId: me.id } });
@@ -2582,11 +2589,26 @@ function renderVoiceMembers() {
   voiceMembers.forEach(function(m, uid) {
     var d = document.createElement('div');
     d.className = 'vm-chip';
+    d.setAttribute('data-uid', uid);
     var isMe = uid === me.id;
-    d.innerHTML = '<div class="vm-av" style="background:' + (isMe ? 'var(--accent)' : 'var(--panel)') + ';color:#fff">' + (m.username || '?').charAt(0).toUpperCase() + '</div><span class="vm-name">' + esc(m.username || '') + (isMe ? ' (شما)' : '') + '</span>';
+    d.innerHTML = '<span class="vm-sfx-icon"><svg class="ui-icon" aria-hidden="true" style="width:13px;height:13px"><use href="#pg-music"></use></svg></span><div class="vm-av" style="background:' + (isMe ? 'var(--accent)' : 'var(--panel)') + ';color:#fff">' + (m.username || '?').charAt(0).toUpperCase() + '</div><span class="vm-name">' + esc(m.username || '') + (isMe ? ' (شما)' : '') + '</span>';
     $('vbMembers').appendChild(d);
   });
   if (!voiceMembers.size) $('vbMembers').innerHTML = '<span style="font-size:11px;color:var(--muted)">خالی</span>';
+
+var sfxMemberTimers = {};
+function showSfxPlayingOnMember(uid) {
+  var chip = document.querySelector('.vm-chip[data-uid="' + uid + '"]');
+  if (!chip) return;
+  var icon = chip.querySelector('.vm-sfx-icon');
+  if (!icon) return;
+  icon.classList.add('show');
+  if (sfxMemberTimers[uid]) clearTimeout(sfxMemberTimers[uid]);
+  sfxMemberTimers[uid] = setTimeout(function() {
+    if (icon) icon.classList.remove('show');
+    delete sfxMemberTimers[uid];
+  }, 2500);
+}
 }
 
 // SCREEN SHARE
