@@ -1570,6 +1570,8 @@ window.searchDmUsers = async function() {
 
 let dmSub = null;
 async function openDm(userId, userName) {
+  if (sfxRoomChannel) { await db.removeChannel(sfxRoomChannel); sfxRoomChannel = null; }
+  if (msgSub) { await db.removeChannel(msgSub); msgSub = null; }
   if (dmSub) { await db.removeChannel(dmSub); dmSub = null; }
   curDm = userId; curRoom = null;
   $('welcome').style.display = 'none'; $('messages').style.display = 'flex'; $('chatHeader').style.display = 'flex';
