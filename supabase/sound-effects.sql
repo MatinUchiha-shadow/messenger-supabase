@@ -1,6 +1,7 @@
 -- ============================================
--- Sound Effects / Soundboard (Shared) - v2
--- Run this in Supabase SQL Editor.
+-- Sound Effects / Soundboard (Shared) - v3
+-- Idempotent: safe to run multiple times.
+-- Run ALL of this in Supabase SQL Editor.
 -- ============================================
 
 -- 1. Table
@@ -19,6 +20,12 @@ CREATE INDEX IF NOT EXISTS idx_sound_effects_created_at ON sound_effects(created
 -- 3. RLS
 ALTER TABLE sound_effects ENABLE ROW LEVEL SECURITY;
 
+-- Drop old versions of policies first (so re-running never errors)
+DROP POLICY IF EXISTS "sound_effects_select" ON sound_effects;
+DROP POLICY IF EXISTS "sound_effects_insert" ON sound_effects;
+DROP POLICY IF EXISTS "sound_effects_delete" ON sound_effects;
+DROP POLICY IF EXISTS "sound_effects_update" ON sound_effects;
+
 -- Everyone (authenticated) can see all sounds -> shared soundboard
 CREATE POLICY "sound_effects_select" ON sound_effects FOR SELECT USING (auth.uid() IS NOT NULL);
 -- Owner can insert their own sounds
@@ -34,5 +41,13 @@ CREATE POLICY "sound_effects_update" ON sound_effects FOR UPDATE USING (
   OR auth.uid() IN (SELECT id FROM profiles WHERE role IN ('owner', 'admin'))
 );
 
--- 4. Realtime: live refresh when someone adds/deletes a sound
-ALTER PUBLICATION supabase_realtime ADD TABLE sound_effects;
+-- 4. Realtime: live refresh when someone adds/edits/deletes a sound
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND tablename = 'sound_effects'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE sound_effects;
+  END IF;
+END $$;
