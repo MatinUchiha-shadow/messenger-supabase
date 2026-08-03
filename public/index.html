@@ -162,6 +162,12 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .msg-av img{width:100%;height:100%;object-fit:cover;border-radius:inherit}
 .msg-ph{width:30px;flex-shrink:0}
 .msg-c{display:flex;flex-direction:column;max-width:68%}
+.msg-role{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:1px 6px;border-radius:6px;margin-left:4px;vertical-align:middle;border:none!important}
+.msg-role.owner{background:rgba(251,191,36,.15);color:#fbbf24}
+.msg-role.admin{background:rgba(239,68,68,.12);color:#ef4444}
+.msg-role.mod{background:rgba(249,115,22,.12);color:#f97316}
+.msg-role.vip{background:rgba(168,85,247,.12);color:#a855f7}
+.msg-role.active{background:rgba(6,182,212,.12);color:#06b6d4}
 .msg-g.mine .msg-c{align-items:flex-end}
 .msg-name{font-size:11px;font-weight:600;color:var(--accent);margin-bottom:2px;padding:0 4px}
 .msg-bubble{padding:10px 14px;border-radius:var(--radius);font-size:14px;line-height:1.6;word-break:break-word;transition:all .2s var(--ease);position:relative;overflow:hidden}
@@ -446,6 +452,7 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .crop-head{display:flex;align-items:center;justify-content:space-between}
 .crop-head h3{font-size:14px;font-weight:800}
 .crop-viewport{position:relative;width:min(70vw,230px);height:min(70vw,230px);margin:0 auto;border-radius:50%;overflow:hidden;background:var(--panel);box-shadow:0 0 0 3px var(--accent),0 10px 40px rgba(0,0,0,.5);cursor:grab;touch-action:none}
+.crop-viewport::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px dashed rgba(255,255,255,.4);pointer-events:none;z-index:2}
 .crop-viewport.dragging{cursor:grabbing}
 .crop-viewport img{position:absolute;top:50%;left:50%;max-width:none;user-select:none;-webkit-user-select:none;pointer-events:none}
 .crop-zoom-row{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
@@ -885,6 +892,27 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
   <video id="floatScreenVideo" autoplay muted playsinline></video>
 </div>
 
+
+
+<!-- BANNER CROP OVERLAY -->
+<div id="banner-crop-overlay" onclick="if(event.target===this)closeBannerCrop()" style="position:fixed;inset:0;z-index:235;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.65)">
+  <div class="crop-panel" onclick="event.stopPropagation()" style="max-width:600px">
+    <div class="crop-head"><h3><svg class="ui-icon" aria-hidden="true"><use href="#pg-crop"></use></svg> تنظیم بنر</h3><button class="icon-btn" onclick="closeBannerCrop()" style="width:30px;height:30px;font-size:12px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button></div>
+    <div class="crop-viewport" id="bannerCropViewport" style="aspect-ratio:3/1;border-radius:8px"><img id="bannerCropImg" alt=""></div>
+    <div class="crop-zoom-row">
+      <svg class="ui-icon" aria-hidden="true"><use href="#pg-search"></use></svg>
+      <input type="range" id="bannerCropZoom" min="1" max="4" step="0.01" value="1" oninput="bannerCropZoomSet(this.value)">
+      <svg class="ui-icon" aria-hidden="true"><use href="#pg-search"></use></svg>
+      <span id="bannerCropZoomVal">100%</span>
+    </div>
+    <div class="crop-hint"><svg class="ui-icon" aria-hidden="true"><use href="#pg-hand"></use></svg> بکشید تا جابه‌جا شود · اسکرول یا اسلایدر برای زوم</div>
+    <div class="crop-btns">
+      <button class="btn btn-ghost" onclick="closeBannerCrop()">لغو</button>
+      <button class="btn btn-primary" onclick="confirmBannerCrop()">تایید <svg class="ui-icon" aria-hidden="true"><use href="#pg-check"></use></svg></button>
+    </div>
+  </div>
+</div>
+
 <!-- AUTH (must be OUTSIDE #app so it shows when app is hidden) -->
 <div id="auth">
   <div class="auth-orb a"></div>
@@ -989,7 +1017,7 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
 <!-- PROFILE -->
 <div id="profile-overlay" onclick="if(event.target===this)closeProfile()">
   <div id="profile-card">
-    <div class="pf-header" id="pfHeader"><button class="pf-close" onclick="closeProfile()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button><label class="pf-banner-upload" id="pfBannerUpload" style="display:none"><svg class="ui-icon" aria-hidden="true"><use href="#pg-camera"></use></svg> تغییر بنر<input type="file" accept="image/*,video/*" onchange="uploadBanner(this)"></label></div>
+    <div class="pf-header" id="pfHeader"><button class="pf-close" onclick="closeProfile()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button><label class="pf-banner-upload" id="pfBannerUpload" style="display:none"><svg class="ui-icon" aria-hidden="true"><use href="#pg-camera"></use></svg> تغییر بنر<input type="file" accept="image/*" onchange="openBannerCrop(this)"></label><label class="pf-banner-upload" id="pfBannerVidUpload" style="display:none"><svg class="ui-icon" aria-hidden="true"><use href="#pg-video"></use></svg> بنر ویدیو<input type="file" accept="video/*" onchange="uploadBanner(this)"></label></div>
     <div class="pf-body" id="profile-body"></div>
   </div>
 </div>
@@ -1799,8 +1827,8 @@ function addMsg(m) {
   var avStyle = own ? 'background:var(--accent);color:#fff' : 'background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff';
   var avContent = (function(){ if (u && u.avatar_url) { var isVid = /\.(mp4|webm|gif)(\?|$)/i.test(u.avatar_url); if (isVid) return '<video src="' + esc(u.avatar_url) + '" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;border-radius:50%"></video>'; return '<img src="' + esc(u.avatar_url) + '" alt=""/>'; } return (u && u.display_name || '?').charAt(0).toUpperCase(); })();
   var uRole = u && u.role ? '<span class="msg-role ' + u.role + '">' + getRoleBadge(u.role) + '</span>' : '';
-  d.innerHTML = (gapTop ? '<div class="msg-av" onclick="openProfile(\'' + esc(u && u.display_name || '?') + ' ' + uRole + '\')" style="' + avStyle + '">' + avContent + '</div>' : '<div class="msg-ph"></div>') +
-    '<div class="msg-c">' + (!own && gapTop ? '<div class="msg-name" onclick="openProfile(\'' + esc(u && u.display_name || '') + '\')">' + esc(u && u.display_name || '') + '</div>' : '') +
+  d.innerHTML = (gapTop ? '<div class="msg-av" onclick="openProfile(\'' + esc(u && u.display_name || '?') + '\')" style="' + avStyle + '">' + avContent + '</div>' : '<div class="msg-ph"></div>') +
+    '<div class="msg-c">' + (!own && gapTop ? '<div class="msg-name" onclick="openProfile(\'' + esc(u && u.display_name || '') + '\')">' + esc(u && u.display_name || '') + uRole + '</div>' : '') +
     '<div class="msg-bubble' + (own ? ' mine' : '') + '">' + replyHtml + content + '</div>' +
     '<div class="reactions-row" id="reactions-' + msgId + '"></div>' +
     '<div class="msg-meta"><span>' + time + '</span>' + (own ? '<span class="msg-check"><svg class="ui-icon" aria-hidden="true"><use href="#pg-check"></use></svg></span>' : '') + '</div></div>';
@@ -2948,7 +2976,8 @@ window.openProfile = async function(name) {
   var upBtn = isMe ? '<label class="pf-upload" title="تغییر عکس پروفایل"><svg class="ui-icon" aria-hidden="true"><use href="#pg-camera"></use></svg><input type="file" accept="image/*,.mp4,.webm,.gif" onchange="handleProfilePic(this)"></label>' : '';
   var nmE = isMe ? '<div id="pf-ne" style="display:none;width:100%;gap:4px;margin-top:6px"><input id="pf-ni" value="' + esc(data.display_name || '') + '" maxlength="20" style="flex:1;padding:7px 10px;font-size:12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text)"><button onclick="saveName()" style="padding:7px 12px;border-radius:8px;background:var(--accent);color:#fff;font-size:11px;font-weight:600;border:none;cursor:pointer">ذخیره</button></div>' : '';
   var bio = isMe ? '<div style="width:100%;margin-top:10px"><div id="pf-bd" style="font-size:12px;color:var(--muted);text-align:center;cursor:pointer;padding:6px;border-radius:8px" onclick="toggleBio()">' + (data.bio ? esc(data.bio) : '<span style="opacity:.4">بیو… (کلیک)</span>') + '</div><div id="pf-be" style="display:none;flex-direction:column;gap:4px;width:100%"><textarea id="pf-bi" maxlength="120" rows="2" style="resize:none;font-size:12px;padding:7px 10px;border-radius:8px;background:var(--panel);border:1px solid var(--border);color:var(--text)">' + esc(data.bio || '') + '</textarea><div style="display:flex;gap:4px"><button onclick="toggleBio()" style="flex:1;padding:6px;border-radius:8px;background:var(--panel);color:var(--muted);border:1px solid var(--border);font-size:11px;cursor:pointer">لغو</button><button onclick="saveBio()" style="flex:1;padding:6px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:11px;font-weight:600;cursor:pointer">ذخیره</button></div></div></div>' : (data.bio ? '<div style="font-size:12px;color:var(--muted);text-align:center;padding:6px;margin-top:6px">' + esc(data.bio) + '</div>' : '');
-  var pfHeader = $('pfHeader'); if (pfHeader) { pfHeader.className = 'pf-header'; pfHeader.style.backgroundImage = ''; var bimgs = pfHeader.querySelectorAll('.pf-banner-img'); bimgs.forEach(function(b){b.remove();}); if (data.banner_url) { pfHeader.classList.add('has-banner'); var isBannerVid = /\.(mp4|webm|gif)(\?|$)/i.test(data.banner_url); if (isBannerVid) { var bvid = document.createElement('video'); bvid.className = 'pf-banner-img'; bvid.src = data.banner_url; bvid.autoplay = true; bvid.loop = true; bvid.muted = true; bvid.playsInline = true; pfHeader.appendChild(bvid); } else { var bimg = document.createElement('img'); bimg.className = 'pf-banner-img'; bimg.src = data.banner_url; pfHeader.appendChild(bimg); } } } var bannerUpEl = $('pfBannerUpload'); if (bannerUpEl) bannerUpEl.style.display = isMe ? 'inline-flex' : 'none'; $('profile-body').innerHTML = '<div class="pf-avatar-wrap">' + avH + upBtn + '</div><div class="pf-name">' + esc(data.display_name || data.username) + '' + (isMe ? ' <button onclick="toggleNE()" style="width:22px;height:22px;font-size:10px;background:var(--panel);border:none;border-radius:6px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg class="ui-icon" aria-hidden="true"><use href="#pg-pen"></use></svg></button>' : '') + '</div>' + nmE + '<div class="pf-email">' + esc(data.username) + '</div><span class="pf-role-badge ' + data.role + '">' + rn + '</span>' + (myProfile && myProfile.role === 'owner' && !isMe ? '<div style="margin-top:8px;width:100%"><select onchange="setUserRank(\'' + data.id + '\', this.value)" style="width:100%;padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;cursor:pointer"><option value="">-- تغییر رنک --</option><option value="owner" ' + (data.role === 'owner' ? 'selected' : '') + '>مالک</option><option value="admin" ' + (data.role === 'admin' ? 'selected' : '') + '>ادمین</option><option value="mod" ' + (data.role === 'mod' ? 'selected' : '') + '>مدیر</option><option value="vip" ' + (data.role === 'vip' ? 'selected' : '') + '>ویژه</option><option value="active" ' + (data.role === 'active' ? 'selected' : '') + '>فعال</option><option value="user" ' + (data.role === 'user' ? 'selected' : '') + '>کاربر</option></select></div>' : '') + bio + '<div class="pf-stats"><div class="pf-stat"><div class="pf-stat-val">' + (mc || 0) + '</div><div class="pf-stat-lbl">پیام</div></div><div class="pf-stat"><div class="pf-stat-val">' + new Date(data.created_at).toLocaleDateString('fa-IR') + '</div><div class="pf-stat-lbl">عضویت</div></div>' + '<div class="pf-stat" style="grid-column:1/-1;background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(34,211,238,.06));border:1px solid rgba(139,92,246,.25)"><div class="pf-stat-val" style="color:var(--accent)">' + fmtVoiceTime(isMe ? Math.max(totalVoiceSeconds || 0, (typeof data.voice_seconds === 'number') ? data.voice_seconds : 0) : (data.voice_seconds || 0)) + '</div><div class="pf-stat-lbl"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg> زمان در تماس صوتی</div></div>' + '</div>';
+  var pfHeader = $('pfHeader'); if (pfHeader) { pfHeader.className = 'pf-header'; pfHeader.style.backgroundImage = ''; var bimgs = pfHeader.querySelectorAll('.pf-banner-img'); bimgs.forEach(function(b){b.remove();}); if (data.banner_url) { pfHeader.classList.add('has-banner'); var isBannerVid = /\.(mp4|webm|gif)(\?|$)/i.test(data.banner_url); if (isBannerVid) { var bvid = document.createElement('video'); bvid.className = 'pf-banner-img'; bvid.src = data.banner_url; bvid.autoplay = true; bvid.loop = true; bvid.muted = true; bvid.playsInline = true; bvid.preload = 'auto'; pfHeader.appendChild(bvid); } else { var bimg = document.createElement('img'); bimg.className = 'pf-banner-img'; bimg.src = data.banner_url; pfHeader.appendChild(bimg); } } } var bannerUpEl = $('pfBannerUpload'); if (bannerUpEl) bannerUpEl.style.display = isMe ? 'inline-flex' : 'none';
+  var bannerVidEl = $('pfBannerVidUpload'); if (bannerVidEl) bannerVidEl.style.display = isMe ? 'inline-flex' : 'none'; $('profile-body').innerHTML = '<div class="pf-avatar-wrap">' + avH + upBtn + '</div><div class="pf-name">' + esc(data.display_name || data.username) + '' + (isMe ? ' <button onclick="toggleNE()" style="width:22px;height:22px;font-size:10px;background:var(--panel);border:none;border-radius:6px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg class="ui-icon" aria-hidden="true"><use href="#pg-pen"></use></svg></button>' : '') + '</div>' + nmE + '<div class="pf-email">' + esc(data.username) + '</div><span class="pf-role-badge ' + data.role + '">' + rn + '</span>' + (myProfile && myProfile.role === 'owner' && !isMe ? '<div style="margin-top:8px;width:100%"><select onchange="setUserRank(\'' + data.id + '\', this.value)" style="width:100%;padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;cursor:pointer"><option value="">-- تغییر رنک --</option><option value="owner" ' + (data.role === 'owner' ? 'selected' : '') + '>مالک</option><option value="admin" ' + (data.role === 'admin' ? 'selected' : '') + '>ادمین</option><option value="mod" ' + (data.role === 'mod' ? 'selected' : '') + '>مدیر</option><option value="vip" ' + (data.role === 'vip' ? 'selected' : '') + '>ویژه</option><option value="active" ' + (data.role === 'active' ? 'selected' : '') + '>فعال</option><option value="user" ' + (data.role === 'user' ? 'selected' : '') + '>کاربر</option></select></div>' : '') + bio + '<div class="pf-stats"><div class="pf-stat"><div class="pf-stat-val">' + (mc || 0) + '</div><div class="pf-stat-lbl">پیام</div></div><div class="pf-stat"><div class="pf-stat-val">' + new Date(data.created_at).toLocaleDateString('fa-IR') + '</div><div class="pf-stat-lbl">عضویت</div></div>' + '<div class="pf-stat" style="grid-column:1/-1;background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(34,211,238,.06));border:1px solid rgba(139,92,246,.25)"><div class="pf-stat-val" style="color:var(--accent)">' + fmtVoiceTime(isMe ? Math.max(totalVoiceSeconds || 0, (typeof data.voice_seconds === 'number') ? data.voice_seconds : 0) : (data.voice_seconds || 0)) + '</div><div class="pf-stat-lbl"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg> زمان در تماس صوتی</div></div>' + '</div>';
 };
 
 window.toggleNE = function() { var e = $('pf-ne'); if (!e) return; e.style.display = e.style.display === 'none' ? 'flex' : 'none'; if (e.style.display === 'flex') { $('pf-ni').focus(); $('pf-ni').select(); } };
@@ -3091,6 +3120,87 @@ window.closeCrop = function() {
     if (cropState.url) URL.revokeObjectURL(cropState.url);
     cropState = null;
   }
+};
+var bannerCropState = null;
+window.openBannerCrop = function(input) {
+  var f = input.files[0]; if (!f) return;
+  var url = URL.createObjectURL(f);
+  var img = new Image();
+  img.onload = function() {
+    var vp = $("bannerCropViewport"), vpW = 600;
+    bannerCropState = { img: img, nw: img.naturalWidth, nh: img.naturalHeight, zoom: 1, dx: 0, dy: 0, baseScale: vpW / img.naturalWidth, url: url };
+    $("bannerCropImg").src = url;
+    $("banner-crop-overlay").style.display = "flex";
+    $("bannerCropZoom").value = 1;
+    $("bannerCropZoomVal").textContent = "100%";
+    applyBannerCropTransform();
+  };
+  img.src = url;
+};
+window.closeBannerCrop = function() {
+  $("banner-crop-overlay").style.display = "none";
+  if (bannerCropState) { if (bannerCropState.url) URL.revokeObjectURL(bannerCropState.url); bannerCropState = null; }
+};
+function applyBannerCropTransform() {
+  if (!bannerCropState) return;
+  var c = bannerCropState, vp = $("bannerCropViewport");
+  var vpW = vp.getBoundingClientRect().width;
+  c.baseScale = vpW / c.nw;
+  var scale = c.baseScale * c.zoom;
+  $("bannerCropImg").style.transform = "translate(" + c.dx + "px," + c.dy + "px) scale(" + c.zoom + ")";
+  $("bannerCropImg").style.transformOrigin = "center center";
+}
+window.bannerCropZoomSet = function(v) {
+  if (!bannerCropState) return;
+  bannerCropState.zoom = parseFloat(v) || 1;
+  $("bannerCropZoomVal").textContent = Math.round(bannerCropState.zoom * 100) + "%";
+  applyBannerCropTransform();
+};
+window.confirmBannerCrop = function() {
+  if (!bannerCropState) return;
+  var c = bannerCropState, vp = $("bannerCropViewport");
+  var vpW = vp.getBoundingClientRect().width, vpH = vp.getBoundingClientRect().height;
+  var scale = c.baseScale * c.zoom;
+  var natW = vpW / scale, natH = vpH / scale;
+  var cx = c.nw / 2 - c.dx / scale, cy = c.nh / 2 - c.dy / scale;
+  var sx = Math.max(0, Math.min(c.nw - natW, cx - natW / 2));
+  var sy = Math.max(0, Math.min(c.nh - natH, cy - natH / 2));
+  var outW = 1200, outH = Math.round(outW * (vpH / vpW));
+  var cv = document.createElement("canvas");
+  cv.width = outW; cv.height = outH;
+  var ctx = cv.getContext("2d");
+  ctx.drawImage(c.img, sx, sy, natW, natH, 0, 0, outW, outH);
+  closeBannerCrop();
+  cv.toBlob(function(blob) {
+    if (!blob) { toast("خطا: ساخت بنر انجام نشد"); return; }
+    uploadBannerBlob(blob);
+  }, "image/jpeg", .9);
+};
+// Banner drag events
+(function() {
+  var sx, sy, sdx, sdy, dragging = false;
+  document.addEventListener("mousedown", function(e) { if (!bannerCropState) return; var vp = $("bannerCropViewport"); if (!vp || !vp.contains(e.target)) return; sx = e.clientX; sy = e.clientY; sdx = bannerCropState.dx; sdy = bannerCropState.dy; dragging = true; });
+  document.addEventListener("mousemove", function(e) { if (!dragging || !bannerCropState) return; bannerCropState.dx = sdx + (e.clientX - sx); bannerCropState.dy = sdy + (e.clientY - sy); applyBannerCropTransform(); });
+  document.addEventListener("mouseup", function() { dragging = false; });
+  document.addEventListener("wheel", function(e) { if (!bannerCropState) return; var vp = $("bannerCropViewport"); if (!vp || !vp.contains(e.target)) return; e.preventDefault(); var z = bannerCropState.zoom * (e.deltaY < 0 ? 1.08 : .92); z = Math.max(.5, Math.min(4, z)); bannerCropState.zoom = z; $("bannerCropZoom").value = z; $("bannerCropZoomVal").textContent = Math.round(z * 100) + "%"; applyBannerCropTransform(); }, { passive: false });
+  // Touch support
+  document.addEventListener("touchstart", function(e) { if (!bannerCropState || e.touches.length !== 1) return; var vp = $("bannerCropViewport"); if (!vp || !vp.contains(e.target)) return; sx = e.touches[0].clientX; sy = e.touches[0].clientY; sdx = bannerCropState.dx; sdy = bannerCropState.dy; dragging = true; });
+  document.addEventListener("touchmove", function(e) { if (!dragging || !bannerCropState) return; e.preventDefault(); bannerCropState.dx = sdx + (e.touches[0].clientX - sx); bannerCropState.dy = sdy + (e.touches[0].clientY - sy); applyBannerCropTransform(); }, { passive: false });
+  document.addEventListener("touchend", function() { dragging = false; });
+})();
+window.uploadBannerBlob = async function(blob) {
+  try {
+    toast("در حال آپلود بنر...");
+    var bpath = "banner_" + me.id + ".jpg";
+    var result = await db.storage.from("avatars").upload(bpath, blob, { upsert: true });
+    if (result.error) { toast("خطا: " + (result.error.message || "")); return; }
+    var ud = db.storage.from("avatars").getPublicUrl(bpath);
+    var verUrl = ud.data.publicUrl + (ud.data.publicUrl.indexOf("?") > -1 ? "&" : "?") + "v=" + Date.now();
+    await db.from("profiles").update({ banner_url: verUrl }).eq("id", me.id);
+    myProfile.banner_url = verUrl;
+    openProfile(myProfile.display_name || myProfile.username);
+    toast("بنر ذخیره شد");
+  } catch(e) { toast("خطا: " + (e.message || "")); }
 };
 window.uploadBanner = async function(input) {
   var f = input.files[0]; if (!f) return;
@@ -3747,6 +3857,7 @@ openSettings = async function() {
     <symbol id="pg-shield" viewBox="0 0 24 24"><path d="M12 3 19 6v5c0 5-3 8-7 10-4-2-7-5-7-10V6zM9 12l2 2 4-4"/></symbol>
     <symbol id="pg-pen" viewBox="0 0 24 24"><path d="m4 16-.8 4.8L8 20l11-11a2.8 2.8 0 0 0-4-4z"/><path d="m13.5 6.5 4 4"/></symbol>
     <symbol id="pg-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></symbol>
+    <symbol id="pg-video" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
     <symbol id="pg-star" viewBox="0 0 24 24"><path d="m12 2 3 6.5 7 .8-5 4.8 1.5 7-6.5-3.6-6.5 3.6 1.5-7-5-4.8 7-.8z"/></symbol>
     <symbol id="pg-crown" viewBox="0 0 24 24"><path d="M2 8l3.5 6h13L22 8l-5 3-5-7-5 7-5-3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="7" cy="7" r="1.5"/><circle cx="17" cy="7" r="1.5"/><circle cx="12" cy="5" r="1.5"/></symbol>
     <symbol id="pg-shield" viewBox="0 0 24 24"><path d="M12 2s8 4 8 8v4c0 5-8 8-8 8s-8-3-8-8v-4c0-4 8-8 8-8z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
