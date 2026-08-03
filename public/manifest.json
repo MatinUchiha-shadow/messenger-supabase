@@ -1,0 +1,18 @@
+{
+  "name": "GapChat - چت با تماس صوتی",
+  "short_name": "GapChat",
+  "description": "چت ریل‌تایم با اتاق صوتی، افکت صدا، تماس صوتی و اشتراک صفحه",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d1117",
+  "theme_color": "#8b5cf6",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='128' fill='%238b5cf6'/%3E%3Cpath d='M140 180h232v140H240l-40 40v-40h-60z' fill='%23fff' stroke='%23fff' stroke-width='24'/%3E%3Cpath d='M190 260h132M210 300h90' stroke='%238b5cf6' stroke-width='20' stroke-linecap='round'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

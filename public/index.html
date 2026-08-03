@@ -572,6 +572,13 @@ textarea,input[type="text"],input[type="email"],input[type="password"]{-webkit-u
 .room-item:hover,.dm-item:hover{background:var(--glass);transform:translateX(-4px)}
 .msg-bubble{box-shadow:0 2px 12px rgba(0,0,0,.15)}
 .msg-bubble.mine{box-shadow:0 4px 18px rgba(139,92,246,.2)}
+.typing-indicator{font-size:11px;color:var(--accent);display:none;align-items:center;gap:6px;margin-right:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.typing-indicator.show{display:flex}
+.typing-dots{display:flex;align-items:center;gap:2px;margin-right:4px}
+.typing-dots span{width:4px;height:4px;border-radius:50%;background:var(--accent);animation:typeBounce 1.2s ease-in-out infinite}
+.typing-dots span:nth-child(2){animation-delay:.15s}
+.typing-dots span:nth-child(3){animation-delay:.3s}
+@keyframes typeBounce{0%,60%,100%{transform:translateY(0);opacity:.3}30%{transform:translateY(-4px);opacity:1}}
 .btn-send{box-shadow:0 4px 20px rgba(139,92,246,.35)}
 .btn-send:hover{box-shadow:0 6px 28px rgba(139,92,246,.5);transform:scale(1.06) rotate(-6deg)}
 /* DRAGGABLE */
@@ -664,6 +671,37 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
 #input-bar .irow{position:relative}
 @media(max-width:400px){.attach-btn,.camera-btn,.voice-record-btn{width:36px;height:36px;border-radius:10px;font-size:13px}.btn-send{width:36px;height:36px;padding:0;font-size:14px}#msg-input{padding:9px 12px;font-size:13px}}
 
+/* TYPING INDICATOR */
+.typing-indicator{display:none;align-items:center;gap:6px;padding:4px 10px;margin-left:8px;font-size:11px;color:var(--muted);background:var(--bg2);border-radius:12px;white-space:nowrap}
+.typing-indicator.show{display:inline-flex}
+.typing-dots{display:flex;gap:3px;align-items:center}
+.typing-dots span{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:typingBounce 1.4s infinite ease-in-out}
+.typing-dots span:nth-child(1){animation-delay:0s}
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes typingBounce{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
+
+/* REACTION CHIPS */
+.r-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .15s;font-size:12px;margin:2px 3px 2px 0}
+.r-chip:hover{background:var(--bg3);border-color:var(--accent)}
+.r-chip.mine{background:rgba(124,58,237,.15);border-color:rgba(124,58,237,.4)}
+.msg-reactions{display:flex;flex-wrap:wrap;padding:4px 0 0}
+.reaction-btn{transition:transform .15s}
+.reaction-btn:hover{transform:scale(1.25)}
+
+/* INVITE MODAL */
+#inviteModal .modal-box{max-width:400px;width:90%}
+
+/* CONTEXT MENU DANGER */
+.msg-menu-item.danger{color:#ef4444}
+.msg-menu-item.danger:hover{background:rgba(239,68,68,.15)}
+
+/* MOBILE: TYPING */
+@media(max-width:600px){.typing-indicator{font-size:10px;padding:2px 8px;gap:4px}.typing-dots span{width:4px;height:4px}}
+
+/* MOBILE: REACTIONS */
+@media(max-width:600px){.r-chip{padding:1px 6px;font-size:11px}.msg-menu{max-width:95vw;overflow-x:auto}}
+
 /* STATUS PICKER */
 .status-picker{position:relative;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
 .status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;transition:all .2s}
@@ -710,6 +748,11 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
 .push-subscribe-btn.subscribed{background:rgba(34,197,94,.12);color:var(--green);border-color:rgba(34,197,94,.2)}
 
 </style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#8b5cf6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GapChat">
 </head>
 <body data-theme="default">
 <div id="app">
@@ -769,6 +812,8 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
 <main class="main">
   <div class="chat-header" id="chatHeader" style="display:none">
     <div class="chat-title"><h2 id="roomTitle"></h2><span class="chat-badge" id="roomBadge"></span></div>
+    <div class="typing-indicator" id="typingIndicator"><div class="typing-dots"><span></span><span></span><span></span></div><span id="typingLabel"></span></div>
+    <button class="icon-btn" id="inviteBtn" onclick="showInviteModal()" title="دعوت" style="display:none;width:34px;height:34px;font-size:14px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-plus"></use></svg></button>
     <button class="search-toggle-btn" onclick="toggleSearch()" title="جستجو" id="searchToggleBtn"><svg class="ui-icon" aria-hidden="true"><use href="#pg-search"></use></svg></button>
     <button class="icon-btn" id="meetBtn" onclick="openMeet()" title="مشاهده اعضا" style="display:none;width:34px;height:34px;font-size:14px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-users"></use></svg></button>
     <div class="chat-actions" id="voiceActions" style="display:none">
@@ -1185,11 +1230,11 @@ window.removeFromQueue = function(idx) {
 let replyToData = null, reactions = {}, audioSettings = { deviceId: null, echoCancellation: true, noiseSuppression: true, autoGainControl: true, notifications: true };
 const REACTIONS = [
   { key: 'like', icon: 'check', label: 'پسندیدن' },
-  { key: 'heart', icon: 'chat', label: 'دوست داشتن' },
+  { key: 'heart', icon: 'heart-filled', label: 'دوست داشتن' },
   { key: 'laugh', icon: 'smile', label: 'خنده' },
   { key: 'surprise', icon: 'bolt', label: 'تعجب' },
   { key: 'sad', icon: 'hand', label: 'ناراحتی' },
-  { key: 'fire', icon: 'volume', label: 'عالی' }
+  { key: 'fire', icon: 'fire', label: 'عالی' }
 ];
 const QUICK_REPLIES = [
   { text: 'سلام', icon: 'hand' },
@@ -1421,10 +1466,50 @@ window.signOut = async function() {
   if (pollTimer) clearInterval(pollTimer); clearInterval(voiceTimerInterval);
 };
 
+// Handle incoming reaction broadcast from relay
+function handleReactionRx(payload) {
+  var d = payload.payload; if (!d || !d.msgId || !d.key || !d.userId) return;
+  if (!reactions[d.msgId]) reactions[d.msgId] = {};
+  if (!reactions[d.msgId][d.key]) reactions[d.msgId][d.key] = [];
+  var i = reactions[d.msgId][d.key].indexOf(d.userId);
+  if (i > -1) reactions[d.msgId][d.key].splice(i, 1); else reactions[d.msgId][d.key].push(d.userId);
+  if (!reactions[d.msgId][d.key].length) delete reactions[d.msgId][d.key];
+  renderReactions(d.msgId);
+}
+// Patch startRelay to also listen for reaction + typing events
+var _origStartRelay = startRelay;
+startRelay = async function() {
+  await _origStartRelay();
+  if (realtimeRelay) {
+    realtimeRelay.on('broadcast', { event: 'reaction' }, function(payload) {
+      if (payload.payload.userId === (me && me.id)) return;
+      handleReactionRx(payload);
+    });
+    realtimeRelay.on('broadcast', { event: 'delete_msg' }, function(payload) {
+      var d = payload.payload;
+      if (d.room_id !== curRoom) return;
+      var bubble = document.querySelector('[data-msgid="' + d.msgId + '"] .msg-bubble');
+      if (bubble) {
+        var mc = bubble.querySelector('.msg-content');
+        if (mc) mc.innerHTML = '<span style="color:var(--muted);font-style:italic">این پیام حذف شد</span>';
+        var rxnRow = bubble.querySelector('.msg-reactions');
+        if (rxnRow) rxnRow.style.display = 'none';
+      }
+    });
+    realtimeRelay.on('broadcast', { event: 'typing' }, function(payload) {
+      var d = payload.payload;
+      if (d.userId === (me && me.id)) return;
+      if (d.room_id !== curRoom) return;
+      showTypingIndicator(d.username || 'کاربر');
+    });
+  }
+};
+
 function enterApp() {
   $('auth').style.display = 'none';
   $('app').classList.add('show');
   loadVoiceTotal();
+  if (window._pendingInvite) { var t = window._pendingInvite; window._pendingInvite = null; joinByInvite(t); }
   rAv($('hav'), myProfile);
   const n = myProfile.display_name || myProfile.username;
   $('hname').textContent = n + (myProfile.role === 'owner' ? '  · مالک' : '');
@@ -1604,6 +1689,7 @@ async function openRoom(id, name, type) {
   if (msgSub) { await db.removeChannel(msgSub); msgSub = null; }
   if (dmSub) { await db.removeChannel(dmSub); dmSub = null; }
   curRoom = id; curType = type; curDm = null;
+  reactions = {};
   $('welcome').style.display = 'none';
   $('chatHeader').style.display = 'flex';
   $('roomTitle').textContent = name;
@@ -1621,7 +1707,7 @@ async function openRoom(id, name, type) {
     $('messages').style.display = 'flex';
     const { data } = await db.from('messages').select('*, profiles:user_id (id,username,display_name,role,avatar_url)').eq('room_id', id).order('created_at').limit(100);
     if (data) data.forEach(function(m) { addMsg(m); });
-    scrollBottom();
+    scrollBottom(); loadReactionsForRoom(id);
     lastMsgTime = data && data.length ? data[data.length - 1].created_at : null;
     msgSub = db.channel('room:' + id).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: 'room_id=eq.' + id }, async function(p) {
       const { data: msg } = await db.from('messages').select('*, profiles:user_id (id,username,display_name,role,avatar_url)').eq('id', p.new.id).single();
@@ -1656,13 +1742,15 @@ function addMsg(m) {
   const gapTop = m.user_id !== lastUid;
   lastUid = m.user_id;
   let content = '';
-  if (m.type === 'text') content = esc(m.content);
+  if (m.deleted) { content = '<span style="color:var(--muted);font-style:italic">این پیام حذف شد</span>'; }
+  else if (m.type === 'text') content = esc(m.content);
   else if (m.type === 'image') content = '<img src="' + m.file_url + '" loading="lazy" onclick="window.open(\'' + m.file_url + '\',\'_blank\')">';
   else if (m.type === 'video') content = '<video src="' + m.file_url + '" controls playsinline preload="metadata" style="max-width:260px;min-width:200px;min-height:120px;border-radius:10px;background:#000"></video>';
   else if (m.type === 'voice') content = '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,255,255,.05);border-radius:10px;margin-top:2px"><svg class="ui-icon" aria-hidden="true" style="width:20px;height:20px;color:var(--accent);flex-shrink:0"><use href="#pg-mic"></use></svg><audio controls src="' + m.file_url + '" preload="metadata" style="max-width:220px;height:36px;flex:1"></audio></div>';
   else if (m.type === 'file') content = '<a href="' + m.file_url + '" class="file-link" target="_blank"><svg class="ui-icon" aria-hidden="true"><use href="#pg-file"></use></svg> ' + esc(m.file_name || 'فایل') + '</a>';
   let replyHtml = '';
   if (m.reply_to_text) replyHtml = '<div class="reply-preview"><div class="rp-name">' + esc(m.reply_to_name || '') + '</div><div class="rp-text">' + esc(m.reply_to_text).slice(0, 50) + '</div></div>';
+  d.setAttribute('data-msgid', m.id);
   d.className = 'msg-g ' + (own ? 'mine' : '') + ' ' + (gapTop ? 'gtop' : '');
   var msgId = m.id;
   var avStyle = own ? 'background:var(--accent);color:#fff' : 'background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff';
@@ -1739,7 +1827,7 @@ function showMsgMenu(msgId, pt, row, isMine) {
     { icon: '<svg class="ui-icon" aria-hidden="true"><use href="#pg-reply"></use></svg>', label: 'ریپلای', fn: function() { menu.remove(); setReply(msgId, 'کاربر', pt); } },
     { icon: '<svg class="ui-icon" aria-hidden="true"><use href="#pg-copy"></use></svg>', label: 'کپی', fn: function() { navigator.clipboard.writeText(pt); toast('کپی شد'); menu.remove(); } }
   ];
-  if (isMine) items.push({ icon: '<svg class="ui-icon" aria-hidden="true"><use href="#pg-trash"></use></svg>', label: 'حذف', fn: async function() { menu.remove(); try { await db.from('messages').delete().eq('id', msgId); row.remove(); toast('حذف شد'); } catch(e) { toast('خطا: حذف پیام انجام نشد'); } }, danger: true });
+  if (isMine) items.push({ icon: '<svg class="ui-icon" aria-hidden="true"><use href="#pg-trash"></use></svg>', label: 'حذف برای همه', fn: async function() { menu.remove(); try { await db.from('messages').update({ deleted: true }).eq('id', msgId); var bubble = row.querySelector('.msg-bubble'); if (bubble) { var mc = bubble.querySelector('.msg-content'); if (mc) mc.innerHTML = '<span style="color:var(--muted);font-style:italic">این پیام حذف شد</span>'; var rxnRow = bubble.querySelector('.msg-reactions'); if (rxnRow) rxnRow.style.display = 'none'; } if (realtimeRelay) realtimeRelay.send({ type: 'broadcast', event: 'delete_msg', payload: { msgId: msgId, room_id: curRoom } }); toast('پیام برای همه حذف شد'); } catch(e) { toast('خطا: '+(e.message||'')); } }, danger: true });
   items.forEach(function(i) {
     var b = document.createElement('button');
     b.className = 'msg-menu-item' + (i.danger ? ' danger' : '');
@@ -1773,10 +1861,14 @@ function showReactionPicker(msgId, row) {
       var key = reaction.key;
       if (!reactions[msgId]) reactions[msgId] = {};
       if (!reactions[msgId][key]) reactions[msgId][key] = [];
-      var i = reactions[msgId][key].indexOf(myProfile.display_name);
-      if (i > -1) reactions[msgId][key].splice(i, 1); else reactions[msgId][key].push(myProfile.display_name);
+      var i = reactions[msgId][key].indexOf(me.id);
+      if (i > -1) reactions[msgId][key].splice(i, 1); else reactions[msgId][key].push(me.id);
       if (!reactions[msgId][key].length) delete reactions[msgId][key];
+      // DB sync
+      if (i === -1) { db.from('message_reactions').upsert({ msg_id: msgId, user_id: me.id, reaction_key: key }, { onConflict: 'msg_id,user_id,reaction_key' }).then(function(){}); }
+      else { db.from('message_reactions').delete().eq('msg_id', msgId).eq('user_id', me.id).eq('reaction_key', key).then(function(){}); }
       renderReactions(msgId);
+      if (realtimeRelay) realtimeRelay.send({ type: 'broadcast', event: 'reaction', payload: { msgId: msgId, key: key, userId: me.id } });
     };
     p.appendChild(b);
   });
@@ -1798,17 +1890,38 @@ function renderReactions(msgId) {
     var reaction = REACTIONS.find(function(item) { return item.key === em; }) || { icon: 'fa-face-smile', label: 'واکنش' };
     if (!names.length) return;
     var c = document.createElement('button');
-    c.className = 'r-chip' + (names.indexOf(myProfile.display_name) > -1 ? ' mine' : '');
+    c.className = 'r-chip' + (names.indexOf(me.id) > -1 ? ' mine' : '');
     c.setAttribute('aria-label', reaction.label + ': ' + names.length);
     c.innerHTML = '<span aria-hidden="true">' + svgIcon(reaction.icon) + '</span><span style="font-weight:700;font-size:10px;color:var(--muted)">' + names.length + '</span>';
     c.onclick = function() {
-      var i = names.indexOf(myProfile.display_name);
-      if (i > -1) names.splice(i, 1); else names.push(myProfile.display_name);
+      var i = names.indexOf(me.id);
+      if (i > -1) names.splice(i, 1); else names.push(me.id);
       if (!names.length) delete reactions[msgId][em];
+      // DB sync
+      if (i === -1) { db.from('message_reactions').upsert({ msg_id: msgId, user_id: me.id, reaction_key: em }, { onConflict: 'msg_id,user_id,reaction_key' }).then(function(){}); }
+      else { db.from('message_reactions').delete().eq('msg_id', msgId).eq('user_id', me.id).eq('reaction_key', em).then(function(){}); }
       renderReactions(msgId);
+      if (realtimeRelay) realtimeRelay.send({ type: 'broadcast', event: 'reaction', payload: { msgId: msgId, key: em, userId: me.id } });
     };
     el.appendChild(c);
   });
+}
+
+// LOAD REACTIONS FROM DB
+async function loadReactionsForRoom(roomId) {
+  var msgs = document.querySelectorAll('[data-msgid]');
+  var ids = [];
+  msgs.forEach(function(m) { ids.push(m.getAttribute('data-msgid')); });
+  if (!ids.length) return;
+  // Supabase 'in' filter maxes at ~300 items, batch if needed
+  var res = await db.from('message_reactions').select('msg_id,user_id,reaction_key').in('msg_id', ids);
+  if (res.error || !res.data) return;
+  res.data.forEach(function(r) {
+    if (!reactions[r.msg_id]) reactions[r.msg_id] = {};
+    if (!reactions[r.msg_id][r.reaction_key]) reactions[r.msg_id][r.reaction_key] = [];
+    if (reactions[r.msg_id][r.reaction_key].indexOf(r.user_id) === -1) reactions[r.msg_id][r.reaction_key].push(r.user_id);
+  });
+  Object.keys(reactions).forEach(function(mid) { renderReactions(mid); });
 }
 
 // MEDIA
@@ -2210,7 +2323,79 @@ window.playSfx = function(id) {
     sfxPlayingInfoTimer = setTimeout(function() { if (info) info.style.display = 'none'; }, 3000);
   } catch(e) {}
 };
-var sfxPlayingInfoTimer = null;
+var sfxPlayingInfoTimer = null, lastTypingBroadcast = 0, typingTimers = {};
+window.showTypingIndicator = function(name) {
+  var el = $('typingIndicator'), label = $('typingLabel');
+  if (!el || !label) return;
+  label.textContent = name + ' در حال نوشتن...';
+  el.classList.add('show');
+  if (typingTimers._show) clearTimeout(typingTimers._show);
+  typingTimers._show = setTimeout(function() { el.classList.remove('show'); }, 3000);
+};
+document.addEventListener('input', function(e) {
+  var inp = document.getElementById('msg-input'); if (!inp || e.target !== inp) return;
+  if (!me || !curRoom || !realtimeRelay) return;
+  var now = Date.now();
+  if (now - lastTypingBroadcast < 2000) return;
+  lastTypingBroadcast = now;
+  realtimeRelay.send({ type: 'broadcast', event: 'typing', payload: { room_id: curRoom, userId: me.id, username: (myProfile && (myProfile.display_name || myProfile.username)) || 'کاربر' } });
+});
+// INVITE LINKS
+window.showInviteModal = function() {
+  if (!curRoom) return;
+  $('inviteModal').classList.add('show');
+  $('inviteLink').value = '';
+  $('inviteExpHours').value = '24';
+  $('inviteMaxUses').value = '0';
+};
+window.closeInviteModal = function() { $('inviteModal').classList.remove('show'); };
+window.copyInviteLink = function() {
+  var inp = $('inviteLink');
+  if (!inp.value) return toast('اول لینک بساز');
+  navigator.clipboard.writeText(inp.value).then(function() { toast('لینک کپی شد'); }).catch(function() {
+    inp.select(); document.execCommand('copy'); toast('لینک کپی شد');
+  });
+};
+window.createInviteLink = async function() {
+  if (!curRoom || !me) return;
+  var hours = parseInt($('inviteExpHours').value) || 24;
+  var maxUses = parseInt($('inviteMaxUses').value) || 0;
+  var token = crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) { var r = Math.random()*16|0, v = c==='x'?r:(r&0x3|0x8); return v.toString(16); });
+  var expires = new Date(Date.now() + hours * 3600000).toISOString();
+  var res = await db.from('invite_tokens').insert({ room_id: curRoom, created_by: me.id, token: token, expires_at: expires, max_uses: maxUses });
+  if (res.error) { toast('خطا: ' + (res.error.message || '')); return; }
+  var link = window.location.origin + window.location.pathname + '?invite=' + token;
+  $('inviteLink').value = link;
+  toast('لینک ساخته شد');
+};
+
+// HANDLE INVITE ON PAGE LOAD
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var inviteToken = params.get('invite');
+  if (inviteToken) {
+    window._pendingInvite = inviteToken;
+  }
+})();
+
+window.joinByInvite = async function(token) {
+  var res = await db.from('invite_tokens').select('*, rooms(name,type)').eq('token', token).single();
+  if (res.error || !res.data) { toast('لینک دعوت نامعتبره'); return; }
+  var inv = res.data;
+  if (inv.expires_at && new Date(inv.expires_at) < new Date()) { toast('لینک منقضی شده'); return; }
+  if (inv.max_uses > 0 && inv.uses >= inv.max_uses) { toast('حداکثر استفاده از لینک تموم شده'); return; }
+  // Increment uses
+  await db.from('invite_tokens').update({ uses: (inv.uses || 0) + 1 }).eq('id', inv.id);
+  // Open the room
+  var rname = inv.rooms && inv.rooms.length ? inv.rooms[0].name : 'اتاق';
+  var rtype = inv.rooms && inv.rooms.length ? (inv.rooms[0].type || 'text') : 'text';
+  openRoom(inv.room_id, rname, rtype);
+  // Clean URL
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+};
+
 window.deleteSfx = async function(id) {
   var s = sfxSounds.find(function(x) { return x.id === id; });
   var del = await db.from('sound_effects').delete().eq('id', id);
@@ -3451,6 +3636,7 @@ openSettings = async function() {
     <symbol id="pg-reply" viewBox="0 0 24 24"><path d="M10 7 4 12l6 5v-3c5 0 8 1 10 4-1-6-4-9-10-9z"/></symbol>
     <symbol id="pg-expand" viewBox="0 0 24 24"><path d="M8 4H4v4M16 4h4v4M8 20H4v-4M20 16v4h-4"/></symbol>
     <symbol id="pg-compress" viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M20 15h-5v5"/></symbol>
+    <symbol id="pg-plus" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
     <symbol id="pg-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
     <symbol id="pg-crop" viewBox="0 0 24 24"><path d="M6 3v15a3 3 0 0 0 3 3h12M3 6h15a3 3 0 0 1 3 3v12"/></symbol>
     <symbol id="pg-palette" viewBox="0 0 24 24"><circle cx="7.5" cy="9" r="5.8"/><circle cx="16.5" cy="9" r="5.8"/><circle cx="12" cy="16.5" r="5.8"/></symbol>
@@ -3474,6 +3660,8 @@ openSettings = async function() {
     <symbol id="pg-notification" viewBox="0 0 24 24"><path d="M6 17h12l-1.5-2v-4a4.5 4.5 0 0 0-9 0v4z"/><path d="M10 20h4"/><circle cx="17" cy="7" r="3.5"/></symbol>
     <symbol id="pg-search-nav-up" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol>
     <symbol id="pg-search-nav-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="pg-heart-filled" viewBox="0 0 24 24"><path d="M12 21C8 17 3 14 3 9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 12z" fill="currentColor"/></symbol>
+    <symbol id="pg-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14c1 2 3 3 4 3s3-1 4-3M9 9v1M15 9v1"/></symbol>
 
   </svg>
 </body>
