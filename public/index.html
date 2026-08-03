@@ -1176,7 +1176,7 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
     <div class="drop-zone-sub">عکس، ویدیو یا فایل</div>
   </div>
 </div>
-<audio id="remoteAudio" autoplay playsinline style="display:none"></audio>
+<!-- Remote audio/video handled per-peer (no single element) -->
 <video id="remoteVideo" autoplay playsinline style="display:none"></video>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2167,11 +2167,14 @@ async function joinVoice() {
       if (m) toast(m.username + ' از تماس صوتی خارج شد');
       voiceMembers.delete(payload.payload.userId); updateFloatingVoice(); var fs4 = document.getElementById('float-screen'); if (fs4 && voiceMembers.size <= 1) { fs4.classList.remove('show'); }
       if (peers.has(payload.payload.userId)) { peers.get(payload.payload.userId).close(); peers.delete(payload.payload.userId); }
+      var aEl2 = document.querySelector('audio[data-peer="' + payload.payload.userId + '"]');
+      if (aEl2) { aEl2.srcObject = null; aEl2.remove(); }
       renderCallGrid();
     }).subscribe(async function(status) {
       if (status === 'SUBSCRIBED') {
         voiceMembers.set(me.id, { username: myProfile.display_name || myProfile.username }); updateFloatingVoice();
         showFloatingVoice();
+        toast('میکروفون وصل شد - منتظر بقیه...');
         // Announce join - existing members will respond with 'here'
         await voiceChannel.send({ type: 'broadcast', event: 'join', payload: { userId: me.id, username: myProfile.display_name || myProfile.username, avatar_url: myProfile.avatar_url || null } });
       }
@@ -2183,6 +2186,8 @@ function leaveVoice() {
   if (voiceChannel) { voiceChannel.send({ type: 'broadcast', event: 'leave', payload: { userId: me.id } }); db.removeChannel(voiceChannel); voiceChannel = null; }
   if (myStream) { myStream.getTracks().forEach(function(t) { t.stop(); }); myStream = null; }
   stopScreenShare();
+  // Clean up all per-peer audio elements
+  document.querySelectorAll('audio[data-peer]').forEach(function(el) { el.srcObject = null; el.remove(); });
   peers.forEach(function(pc) { pc.close(); }); peers.clear(); voiceMembers.clear();
   hideFloatingVoice(); curVoiceRoom = null; var fs5 = document.getElementById('float-screen'); if (fs5) { fs5.classList.remove('show'); var fsv5 = document.getElementById('floatScreenVideo'); if (fsv5) fsv5.srcObject = null; }
   clearInterval(voiceTimerInterval);
@@ -2527,7 +2532,17 @@ function renderCallGrid() {
 }
 
 async function createPeer(pid, init) {
-  var pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }, { urls: 'stun:stun2.l.google.com:19302' }] });
+  var pc = new RTCPeerConnection({ iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
+    // Free TURN servers for better NAT traversal
+    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+  ] });
   peers.set(pid, pc);
   // Add audio track
   if (myStream) myStream.getAudioTracks().forEach(function(t) { pc.addTrack(t, myStream); });
@@ -2564,14 +2579,46 @@ async function createPeer(pid, init) {
         vid.srcObject = stream; var fs = document.getElementById('float-screen'); var fsv3 = document.getElementById('floatScreenVideo'); if (fs && fsv3 && !fs.classList.contains('show')) { fsv3.srcObject = stream; fs.classList.add('show'); }
       }
     } else {
-      // Audio track
+      // Audio track - create per-peer audio element
       remoteAudioStream = stream;
-      $('remoteAudio').srcObject = stream;
+      var audioEl = document.createElement('audio');
+      audioEl.autoplay = true;
+      audioEl.playsInline = true;
+      audioEl.srcObject = stream;
+      audioEl.setAttribute('data-peer', pid);
+      // Remove old audio for this peer
+      var oldAudio = document.querySelector('audio[data-peer="' + pid + '"]');
+      if (oldAudio) { oldAudio.srcObject = null; oldAudio.remove(); }
+      document.body.appendChild(audioEl);
+      // Try to play (may need user gesture on some browsers)
+      audioEl.play().catch(function() {
+        // Autoplay blocked - add a one-time click handler
+        var resumePlay = function() {
+          audioEl.play().catch(function(){});
+          document.removeEventListener('click', resumePlay);
+          document.removeEventListener('touchstart', resumePlay);
+        };
+        document.addEventListener('click', resumePlay, { once: true });
+        document.addEventListener('touchstart', resumePlay, { once: true });
+      });
     }
     var micInd = document.getElementById('mic-indicator-' + pid);
     if (micInd) micInd.className = 'tile-mic';
   };
-  pc.onconnectionstatechange = function() { if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') { pc.close(); peers.delete(pid); renderCallGrid(); } };
+  pc.onconnectionstatechange = function() {
+    if (pc.connectionState === 'connected') {
+      var name = (voiceMembers.get(pid) || {}).username || 'کاربر';
+      toast('اتصال به ' + name + ' برقرار شد');
+    }
+    if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+      var name2 = (voiceMembers.get(pid) || {}).username || 'کاربر';
+      toast('قطع اتصال از ' + name2);
+      pc.close(); peers.delete(pid); renderCallGrid();
+      // Clean up audio element
+      var aEl = document.querySelector('audio[data-peer="' + pid + '"]');
+      if (aEl) { aEl.srcObject = null; aEl.remove(); }
+    }
+  };
   if (init) {
     var o = await pc.createOffer(); await pc.setLocalDescription(o);
     voiceChannel.send({ type: 'broadcast', event: 'offer', payload: { from: me.id, to: pid, offer: o } });
