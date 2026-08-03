@@ -3290,6 +3290,7 @@ window.uploadBanner = async function(input) {
       cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
       blob = await new Promise(function(res){ cv.toBlob(res, "image/jpeg", .85); });
     }
+    var bpath = "banner_" + me.id + ext;
     var totalMB = (blob.size/(1024*1024)).toFixed(1);
     showUploadProgress("", 0, "0", totalMB);
     var upResult = await new Promise(async function(resolve, reject) {
