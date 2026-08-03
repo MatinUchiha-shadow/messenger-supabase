@@ -32,13 +32,27 @@ CREATE TABLE IF NOT EXISTS messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   room_id UUID NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES profiles(id),
-  type TEXT DEFAULT 'text' CHECK(type IN ('text', 'image', 'voice', 'file')),
+  type TEXT DEFAULT 'text' CHECK(type IN ('text', 'image', 'voice', 'file', 'video')),
   content TEXT,
   file_url TEXT,
   file_name TEXT,
   file_size BIGINT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- ============================================
+-- 3b. Sound Effects Table (shared soundboard)
+-- ============================================
+CREATE TABLE IF NOT EXISTS sound_effects (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  file_url TEXT NOT NULL,
+  duration INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_sound_effects_created_at ON sound_effects(created_at DESC);
 
 -- ============================================
 -- 4. Indexes
@@ -52,6 +66,7 @@ CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sound_effects ENABLE ROW LEVEL SECURITY;
 
 -- Profiles: anyone can read, authenticated can insert/update own
 CREATE POLICY "profiles_select" ON profiles FOR SELECT USING (true);
@@ -67,6 +82,11 @@ CREATE POLICY "rooms_delete" ON rooms FOR DELETE USING (auth.uid() = created_by 
 CREATE POLICY "messages_select" ON messages FOR SELECT USING (true);
 CREATE POLICY "messages_delete" ON messages FOR DELETE USING (auth.uid() = user_id);
 CREATE POLICY "messages_insert" ON messages FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Sound Effects: everyone can read, owner inserts own, delete own (owner/admin any)
+CREATE POLICY "sound_effects_select" ON sound_effects FOR SELECT USING (auth.uid() IS NOT NULL);
+CREATE POLICY "sound_effects_insert" ON sound_effects FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "sound_effects_delete" ON sound_effects FOR DELETE USING (auth.uid() = user_id OR auth.uid() IN (SELECT id FROM profiles WHERE role IN ('owner', 'admin')));
 
 -- ============================================
 -- 6. Function: Auto-create profile on signup
@@ -110,3 +130,4 @@ ON CONFLICT DO NOTHING;
 -- ============================================
 ALTER PUBLICATION supabase_realtime ADD TABLE messages;
 ALTER PUBLICATION supabase_realtime ADD TABLE profiles;
+ALTER PUBLICATION supabase_realtime ADD TABLE sound_effects;

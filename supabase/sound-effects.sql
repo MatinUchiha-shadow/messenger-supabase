@@ -1,0 +1,33 @@
+-- ============================================
+-- Sound Effects / Soundboard (Shared) - v2
+-- Run this in Supabase SQL Editor.
+-- ============================================
+
+-- 1. Table
+CREATE TABLE IF NOT EXISTS sound_effects (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  file_url TEXT NOT NULL,
+  duration INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. Index
+CREATE INDEX IF NOT EXISTS idx_sound_effects_created_at ON sound_effects(created_at DESC);
+
+-- 3. RLS
+ALTER TABLE sound_effects ENABLE ROW LEVEL SECURITY;
+
+-- Everyone (authenticated) can see all sounds -> shared soundboard
+CREATE POLICY "sound_effects_select" ON sound_effects FOR SELECT USING (auth.uid() IS NOT NULL);
+-- Owner can insert their own sounds
+CREATE POLICY "sound_effects_insert" ON sound_effects FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- Owner can delete their own sounds; owner/admin roles can delete any
+CREATE POLICY "sound_effects_delete" ON sound_effects FOR DELETE USING (
+  auth.uid() = user_id
+  OR auth.uid() IN (SELECT id FROM profiles WHERE role IN ('owner', 'admin'))
+);
+
+-- 4. Realtime: live refresh when someone adds/deletes a sound
+ALTER PUBLICATION supabase_realtime ADD TABLE sound_effects;

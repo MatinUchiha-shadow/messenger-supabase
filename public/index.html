@@ -1332,7 +1332,7 @@ async function loadSession() {
 window.signOut = async function() {
   if (!confirm('خروج؟')) return;
   if (voiceChannel) { await db.removeChannel(voiceChannel); voiceChannel = null; } if (realtimeRelay) { await db.removeChannel(realtimeRelay); realtimeRelay = null; }
-  if (presenceChannel) { await db.removeChannel(presenceChannel); presenceChannel = null; }
+  if (presenceChannel) { await db.removeChannel(presenceChannel); presenceChannel = null; } stopSfxSync();
   leaveVoice();
   await db.auth.signOut();
   me = null; myProfile = null;
@@ -1358,6 +1358,7 @@ function enterApp() {
   loadDmList();
   startPresence();
   startRelay();
+  startSfxSync();
   initQuickReplies();
 }
 
@@ -1939,27 +1940,69 @@ function leaveVoice() {
   clearInterval(voiceTimerInterval);
 }
 
-// === SOUNDBOARD ===
-function getSfxList() { try { return JSON.parse(localStorage.getItem('gapchat_sfx') || '[]'); } catch(e) { return []; } }
-function saveSfxList(list) { localStorage.setItem('gapchat_sfx', JSON.stringify(list)); }
+// === SOUNDBOARD (shared via DB, live sync) ===
+var sfxSounds = [], sfxBoardChannel = null, sfxTableMissing = false;
+async function loadSfxList() {
+  try {
+    var { data, error } = await db.from('sound_effects').select('*, profiles:user_id (id, username, display_name, role, avatar_url)').order('created_at', { ascending: false }).limit(100);
+    if (error) { sfxTableMissing = true; toast('جدول sound_effects موجود نیست — SQL را در Supabase اجرا کن'); return; }
+    sfxTableMissing = false;
+    sfxSounds = data || [];
+    await migrateLocalSfx();
+    if ($('sfxPanel').classList.contains('show')) renderSfxList();
+  } catch(e) { toast('خطا در بارگذاری صداها'); }
+}
+async function migrateLocalSfx() {
+  try {
+    var old = JSON.parse(localStorage.getItem('gapchat_sfx') || '[]');
+    if (!old.length) return;
+    // Insert all old sounds; only clear localStorage once every insert succeeds
+    var knownUrls = {};
+    sfxSounds.forEach(function(s) { knownUrls[s.file_url] = true; });
+    var pending = [];
+    old.forEach(function(s) {
+      if (!knownUrls[s.url]) {
+        pending.push(db.from('sound_effects').insert({ user_id: me.id, name: s.name || 'صدا', file_url: s.url, duration: s.dur || 0 }).select('id').single());
+      }
+    });
+    if (pending.length) {
+      var results = await Promise.all(pending);
+      for (var i = 0; i < results.length; i++) { if (results[i].error) return; }
+    }
+    localStorage.removeItem('gapchat_sfx');
+  } catch(e) {}
+}
+function startSfxSync() {
+  if (sfxBoardChannel) return;
+  try {
+    sfxBoardChannel = db.channel('sfx-board')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sound_effects' }, function() { if (!sfxTableMissing) loadSfxList(); })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'sound_effects' }, function() { if (!sfxTableMissing) loadSfxList(); })
+      .subscribe();
+  } catch(e) {}
+}
+function stopSfxSync() { if (sfxBoardChannel) { db.removeChannel(sfxBoardChannel); sfxBoardChannel = null; } }
 function renderSfxList() {
   var el = $('sfxList'); if (!el) return;
-  var list = getSfxList();
   el.innerHTML = '';
-  if (!list.length) { el.innerHTML = '<div class="sfx-empty">هنوز صدایی نداری — یکی اضافه کن</div>'; return; }
-  list.forEach(function(s) {
+  if (sfxTableMissing) { el.innerHTML = '<div class="sfx-empty">ابتدا جدول sound_effects را بسازید</div>'; return; }
+  if (!sfxSounds.length) { el.innerHTML = '<div class="sfx-empty">هنوز صدایی اضافه نشده — اولین نفر باش</div>'; return; }
+  var isAdmin = myProfile && ['owner', 'admin'].indexOf(myProfile.role) !== -1;
+  sfxSounds.forEach(function(s) {
+    var own = s.user_id === (me && me.id);
+    var who = (s.profiles && (s.profiles.display_name || s.profiles.username)) || 'کاربر';
     var d = document.createElement('div');
     d.className = 'sfx-item';
     d.innerHTML = '<button class="sfx-play" onclick="playSfx(\'' + s.id + '\')" title="پخش"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg></button>' +
-      '<div class="sfx-info"><div class="sfx-name">' + esc(s.name) + '</div><div class="sfx-dur">' + (s.dur ? s.dur + ' ثانیه' : '') + '</div></div>' +
-      '<button class="sfx-del" onclick="deleteSfx(\'' + s.id + '\')" title="حذف"><svg class="ui-icon" aria-hidden="true"><use href="#pg-trash"></use></svg></button>';
+      '<div class="sfx-info"><div class="sfx-name">' + esc(s.name) + '</div><div class="sfx-dur">' + (s.duration ? s.duration + ' ثانیه' : '') + (own ? '' : ' · ' + esc(who)) + '</div></div>' +
+      ((own || isAdmin) ? '<button class="sfx-del" onclick="deleteSfx(\'' + s.id + '\')" title="حذف"><svg class="ui-icon" aria-hidden="true"><use href="#pg-trash"></use></svg></button>' : '');
     el.appendChild(d);
   });
 }
 window.toggleSfxPanel = function() {
   var p = $('sfxPanel'); if (!p) return;
   p.classList.toggle('show');
-  if (p.classList.contains('show')) renderSfxList();
+  if (p.classList.contains('show')) { renderSfxList(); loadSfxList(); }
 };
 function validateSfxFile(file) {
   return new Promise(function(resolve, reject) {
@@ -1994,10 +2037,10 @@ async function uploadSfxFile(file, dur) {
       });
     });
     var ud = db.storage.from('chat-images').getPublicUrl(path);
-    var list = getSfxList();
-    list.unshift({ id: Date.now().toString() + Math.random().toString(36).slice(2, 6), name: (file.name || 'صدا').replace(/\.[^.]+$/, '') || 'صدا', url: ud.data.publicUrl, dur: dur, ts: Date.now() });
-    saveSfxList(list);
-    renderSfxList();
+    var nm = (file.name || 'صدا').replace(/\.[^.]+$/, '') || 'صدا';
+    var ins = await db.from('sound_effects').insert({ user_id: me.id, name: nm, file_url: ud.data.publicUrl, duration: dur }).select('id').single();
+    if (ins.error) { toast('خطا در ثبت صدا'); return; }
+    await loadSfxList();
     toast('افکت صوتی اضافه شد');
   } catch(e) { toast('خطا: ' + (e.message || 'نامشخص')); }
 }
@@ -2013,26 +2056,24 @@ window.handleSfxUpload = async function(input) {
   } catch(e) { toast(e.message || 'خطا'); }
 };
 window.playSfx = function(id) {
-  var list = getSfxList();
-  var s = list.find(function(x) { return x.id === id; });
+  var s = sfxSounds.find(function(x) { return x.id === id; });
   if (!s) return;
-  var a = new Audio(s.url); a.volume = 1; a.play().catch(function() {});
+  var a = new Audio(s.file_url); a.volume = 1; a.play().catch(function() {});
   if (voiceChannel) {
-    voiceChannel.send({ type: 'broadcast', event: 'sfx', payload: { url: s.url, name: s.name, userId: me.id } });
+    voiceChannel.send({ type: 'broadcast', event: 'sfx', payload: { url: s.file_url, name: s.name, userId: me.id } });
   } else {
     toast('برای پخش برای بقیه، وارد تماس صوتی شو');
   }
 };
-window.deleteSfx = function(id) {
-  var list = getSfxList();
-  var s = list.find(function(x) { return x.id === id; });
-  list = list.filter(function(x) { return x.id !== id; });
-  saveSfxList(list);
-  renderSfxList();
-  if (s && s.url) {
-    var m = s.url.match(/\/sfx\/([^?]+)/);
+window.deleteSfx = async function(id) {
+  var s = sfxSounds.find(function(x) { return x.id === id; });
+  var del = await db.from('sound_effects').delete().eq('id', id);
+  if (del.error) { toast('خطا در حذف'); return; }
+  if (s && s.file_url) {
+    var m = s.file_url.match(/\/sfx\/([^?]+)/);
     if (m) db.storage.from('chat-images').remove(['sfx/' + m[1]]);
   }
+  await loadSfxList();
   toast('حذف شد');
 };
 
