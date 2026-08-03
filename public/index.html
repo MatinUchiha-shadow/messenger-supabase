@@ -1642,6 +1642,12 @@ async function startRelay() {
     if (payload.payload.user_id === (me && me.id)) return;
     addMsg(payload.payload);
     scrollBottom();
+  }).on('broadcast', { event: 'sfx' }, function(payload) {
+    var d = payload.payload;
+    if (!d || d.userId === (me && me.id)) return;
+    if (d.room_id && d.room_id !== curRoom) return;
+    if (d.url) { var a = new Audio(d.url); a.volume = 1; a.play().catch(function(){}); }
+    if (d.userId) showSfxPlayingOnMember(d.userId);
   }).subscribe();
 }
 
