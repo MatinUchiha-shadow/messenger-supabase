@@ -1770,12 +1770,15 @@ async function openRoom(id, name, type) {
       sfxRoomChannel = db.channel('sfx-room:' + id);
       sfxRoomChannel.on('broadcast', { event: 'sfx' }, function(payload) {
         var d = payload.payload;
-        if (d && d.userId === me.id) return;
+        if (!d || d.userId === (me && me.id)) return;
+        if (d.room_id && d.room_id !== curRoom) return;
         if (d && d.url) { var a = new Audio(d.url); a.volume = 1; a.play().catch(function(){}); }
         if (d && d.userId) showSfxPlayingOnMember(d.userId);
       });
-      await sfxRoomChannel.subscribe();
-    } catch(e) {}
+      await sfxRoomChannel.subscribe(function(status) {
+        if (status !== 'SUBSCRIBED') console.log('sfxRoomChannel status:', status);
+      });
+    } catch(e) { console.log('sfxRoomChannel error:', e); }
   }
 }
 
@@ -2165,11 +2168,6 @@ async function joinVoice() {
         if (lbl) lbl.remove();
         tile.classList.remove('screen-sharing');
       }
-    }).on('broadcast', { event: 'sfx' }, function(payload) {
-      var d = payload.payload;
-      if (d && d.userId === me.id) return;
-      if (d && d.url) { var a = new Audio(d.url); a.volume = 1; a.play().catch(function(){}); }
-      if (d && d.userId) showSfxPlayingOnMember(d.userId);
     }).on('broadcast', { event: 'leave' }, function(payload) {
       var m = voiceMembers.get(payload.payload.userId);
       if (m) toast(m.username + ' از تماس صوتی خارج شد');
@@ -2365,13 +2363,19 @@ window.playSfx = function(id) {
   a.onerror = function() { if (sfxPlayingId === id) sfxPlayingId = null; if (item) item.classList.remove('playing'); };
   // Show play icon on my own chip in voice-bar
   if (me && me.id) showSfxPlayingOnMember(me.id);
-  // Broadcast via room-scoped channel (works regardless of voice call state)
+  // Broadcast via realtimeRelay (always-on, all rooms) + sfxRoomChannel + voiceChannel
+  var sfxPayload = { url: s.file_url, name: s.name, userId: me.id, room_id: curRoom };
+  if (realtimeRelay) {
+    realtimeRelay.send({ type: 'broadcast', event: 'sfx', payload: sfxPayload }).catch(function(e) { console.log('sfx relay err:', e); });
+  }
   if (sfxRoomChannel) {
-    sfxRoomChannel.send({ type: 'broadcast', event: 'sfx', payload: { url: s.file_url, name: s.name, userId: me.id } });
-  } else if (voiceChannel) {
-    voiceChannel.send({ type: 'broadcast', event: 'sfx', payload: { url: s.file_url, name: s.name, userId: me.id } });
-  } else {
-    toast('برای پخش برای بقیه، وارد اتاق صوتی شو');
+    sfxRoomChannel.send({ type: 'broadcast', event: 'sfx', payload: sfxPayload });
+  }
+  if (voiceChannel) {
+    voiceChannel.send({ type: 'broadcast', event: 'sfx', payload: sfxPayload });
+  }
+  if (!realtimeRelay && !sfxRoomChannel && !voiceChannel) {
+    toast('اتصال قطع شده — صفحه رو رفرش کن');
   }
   // Show who played what in voice bar
   try {
