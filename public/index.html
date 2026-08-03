@@ -1646,9 +1646,29 @@ async function startRelay() {
     var d = payload.payload;
     if (!d || d.userId === (me && me.id)) return;
     if (d.room_id && d.room_id !== curRoom) return;
-    if (d.url) { var a = new Audio(d.url); a.volume = 1; a.play().catch(function(){}); }
+    if (d.url) {
+      var a = new Audio(d.url); a.volume = 1;
+      var playPromise = a.play();
+      if (playPromise) playPromise.catch(function() {
+        // Android autoplay blocked - add click-to-play fallback
+        toast('صدای ' + (d.name || 'افکت') + ' دریافت شد — برای شنیدن کلیک کن');
+        var resumePlay = function() {
+          a.play().catch(function(){});
+          document.removeEventListener('click', resumePlay, true);
+          document.removeEventListener('touchstart', resumePlay, true);
+        };
+        document.addEventListener('click', resumePlay, true);
+        document.addEventListener('touchstart', resumePlay, true);
+        setTimeout(function() {
+          document.removeEventListener('click', resumePlay, true);
+          document.removeEventListener('touchstart', resumePlay, true);
+        }, 10000);
+      });
+    }
     if (d.userId) showSfxPlayingOnMember(d.userId);
-  }).subscribe();
+  });
+  await realtimeRelay.subscribe();
+  console.log('realtimeRelay subscribed OK');
 }
 
 // PRESENCE
@@ -2213,6 +2233,16 @@ async function joinVoice() {
         if (lbl) lbl.remove();
         tile.classList.remove('screen-sharing');
       }
+    }).on('broadcast', { event: 'sfx' }, function(payload) {
+      var d = payload.payload;
+      if (!d || d.userId === (me && me.id)) return;
+      if (d.url) {
+        var a = new Audio(d.url); a.volume = 1;
+        a.play().catch(function() {
+          toast('صدای ' + (d.name || 'افکت') + ' دریافت شد - برای شنیدن کلیک کن');
+        });
+      }
+      if (d.userId) showSfxPlayingOnMember(d.userId);
     }).on('broadcast', { event: 'leave' }, function(payload) {
       var m = voiceMembers.get(payload.payload.userId);
       if (m) toast(m.username + ' از تماس صوتی خارج شد');
@@ -2408,10 +2438,15 @@ window.playSfx = function(id) {
   a.onerror = function() { if (sfxPlayingId === id) sfxPlayingId = null; if (item) item.classList.remove('playing'); };
   // Show play icon on my own chip in voice-bar
   if (me && me.id) showSfxPlayingOnMember(me.id);
-  // Broadcast via realtimeRelay (always-on, all rooms) + sfxRoomChannel + voiceChannel
+  // Broadcast to all users via realtimeRelay + sfxRoomChannel + voiceChannel
   var sfxPayload = { url: s.file_url, name: s.name, userId: me.id, room_id: curRoom };
   if (realtimeRelay) {
-    realtimeRelay.send({ type: 'broadcast', event: 'sfx', payload: sfxPayload }).catch(function(e) { console.log('sfx relay err:', e); });
+    realtimeRelay.send({ type: 'broadcast', event: 'sfx', payload: sfxPayload }).then(function() {
+      console.log('sfx broadcast sent OK via realtimeRelay');
+    }).catch(function(e) {
+      console.log('sfx relay err:', e);
+      toast('خطا در ارسال صدا - دوباره تلاش کن');
+    });
   }
   if (sfxRoomChannel) {
     sfxRoomChannel.send({ type: 'broadcast', event: 'sfx', payload: sfxPayload });
