@@ -164,7 +164,11 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .msg-bubble:not(.mine){background:rgba(255,255,255,.05);color:var(--bubble-other-text);border:1px solid rgba(255,255,255,.06);border-bottom-left-radius:6px;backdrop-filter:blur(4px)}
 .msg-bubble img{max-width:260px;max-height:260px;border-radius:10px;display:block;cursor:pointer;margin-top:4px}
 .msg-bubble video{max-width:260px;max-height:260px;min-width:200px;min-height:120px;border-radius:10px;display:block;margin-top:4px;background:#000;object-fit:contain}
-.msg-bubble audio{max-width:220px;width:100%;margin-top:4px;border-radius:8px}
+
+.msg-bubble audio{max-width:220px;height:36px;width:100%;margin:0}
+.msg-bubble audio::-webkit-media-controls-panel{background:rgba(255,255,255,.08);border-radius:6px}
+.voice-msg-wrapper{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(255,255,255,.04);border-radius:12px;border:1px solid rgba(255,255,255,.06)}
+
 .msg-bubble .file-link{display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(255,255,255,.06);border-radius:8px;margin-top:4px;text-decoration:none;color:var(--text);font-size:12px}
 .msg-bubble .file-link:hover{background:rgba(255,255,255,.12)}
 .reply-preview{border-right:3px solid var(--accent);padding:4px 8px;margin-bottom:4px;border-radius:0 8px 8px 0;background:rgba(124,109,250,.06);font-size:11px}
@@ -1527,7 +1531,7 @@ function addMsg(m) {
   if (m.type === 'text') content = esc(m.content);
   else if (m.type === 'image') content = '<img src="' + m.file_url + '" loading="lazy" onclick="window.open(\'' + m.file_url + '\',\'_blank\')">';
   else if (m.type === 'video') content = '<video src="' + m.file_url + '" controls playsinline preload="metadata" style="max-width:260px;min-width:200px;min-height:120px;border-radius:10px;background:#000"></video>';
-  else if (m.type === 'voice') content = '<audio controls src="' + m.file_url + '" style="max-width:220px"></audio>';
+  else if (m.type === 'voice') content = '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,255,255,.05);border-radius:10px;margin-top:2px"><svg class="ui-icon" aria-hidden="true" style="width:20px;height:20px;color:var(--accent);flex-shrink:0"><use href="#pg-mic"></use></svg><audio controls src="' + m.file_url + '" preload="metadata" style="max-width:220px;height:36px;flex:1"></audio></div>';
   else if (m.type === 'file') content = '<a href="' + m.file_url + '" class="file-link" target="_blank"><svg class="ui-icon" aria-hidden="true"><use href="#pg-file"></use></svg> ' + esc(m.file_name || 'فایل') + '</a>';
   let replyHtml = '';
   if (m.reply_to_text) replyHtml = '<div class="reply-preview"><div class="rp-name">' + esc(m.reply_to_name || '') + '</div><div class="rp-text">' + esc(m.reply_to_text).slice(0, 50) + '</div></div>';
@@ -1586,7 +1590,7 @@ window.sendMsg = async function() {
   }
   addMsg(msgObj);
   scrollBottom();
-  if (realtimeRelay) { var relayMd = { id: Date.now().toString(), room_id: curRoom, user_id: me.id, type: 'text', content: text, created_at: new Date().toISOString(), profiles: myProfile }; if (_reply) { relayMd.reply_to_id = _reply.id; relayMd.reply_to_name = _reply.name; relayMd.reply_to_text = _reply.text; } realtimeRelay.send({ type: 'broadcast', event: 'new_msg', payload: relayMd }); }
+  if (realtimeRelay) { var relayMd = { id: msgObj.id, room_id: curRoom, user_id: me.id, type: 'text', content: text, created_at: new Date().toISOString(), profiles: myProfile }; if (_reply) { relayMd.reply_to_id = _reply.id; relayMd.reply_to_name = _reply.name; relayMd.reply_to_text = _reply.text; } realtimeRelay.send({ type: 'broadcast', event: 'new_msg', payload: relayMd }); }
 };
 
 window.setReply = function(id, name, text) {
@@ -1758,10 +1762,10 @@ async function sendOneFile(file, isV, cap, total, idx) {
     var md = {room_id:curRoom,user_id:me.id,type:type,content:cap||file.name,file_url:ud.data.publicUrl,file_name:file.name,file_size:file.size};
     if(replyToData&&idx===total){md.reply_to_id=replyToData.id;md.reply_to_name=replyToData.name;md.reply_to_text=replyToData.text;}
     if(idx===total)cancelReply();
-    if(realtimeRelay){realtimeRelay.send({type:'broadcast',event:'new_msg',payload:{id:Date.now().toString(),room_id:md.room_id,user_id:md.user_id,type:md.type,content:md.content,file_url:md.file_url,file_name:md.file_name,file_size:md.file_size,created_at:new Date().toISOString(),profiles:myProfile}});}
     var ins = await db.from('messages').insert(md).select('*').single();
     var msgObj = ins.data || {id:(crypto.randomUUID?crypto.randomUUID():Date.now().toString()),room_id:curRoom,user_id:me.id,type:type,content:cap||file.name,file_url:ud.data.publicUrl,file_name:file.name,file_size:file.size,created_at:new Date().toISOString(),profiles:myProfile};
     if(ins.data)msgObj.profiles=myProfile;
+    if(realtimeRelay){realtimeRelay.send({type:'broadcast',event:'new_msg',payload:{id:msgObj.id,room_id:md.room_id,user_id:md.user_id,type:md.type,content:md.content,file_url:md.file_url,file_name:md.file_name,file_size:md.file_size,created_at:new Date().toISOString(),profiles:myProfile}});}
     addMsg(msgObj);scrollBottom();
   } catch(e) {
     toast('خطا در آپلود ' + idx + ': ' + (e.message||'نامشخص'));
@@ -2577,12 +2581,19 @@ $('voiceRecordBtn').addEventListener('pointerdown', async function(e) {
   if (myStream) { toast('اول از تماس صوتی خارج شو'); return; }
   try {
     var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    voiceRecorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm' });
+    // Detect best audio format: mp4 for Safari/iOS, webm for Chrome/Android
+    var mimeType = 'audio/webm';
+    if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
+    else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mimeType = 'audio/webm;codecs=opus';
+    else if (MediaRecorder.isTypeSupported('audio/webm')) mimeType = 'audio/webm';
+    else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) mimeType = 'audio/ogg;codecs=opus';
+    voiceRecorder = new MediaRecorder(stream, { mimeType: mimeType });
     voiceRecChunks = [];
     voiceRecorder.ondataavailable = function(e) { if (e.data.size > 0) voiceRecChunks.push(e.data); };
     voiceRecorder.onstop = async function() {
       stream.getTracks().forEach(function(t) { t.stop(); });
-      var blob = new Blob(voiceRecChunks, { type: 'audio/webm' });
+      var blobType = voiceRecorder._capturedMime || voiceRecorder.mimeType || 'audio/webm';
+      var blob = new Blob(voiceRecChunks, { type: blobType });
       voiceRecChunks = [];
       if (blob.size < 100) { toast('ضبط خیلی کوتاه بود'); return; }
       await uploadVoiceMessage(blob);
@@ -2608,6 +2619,8 @@ $('voiceRecordBtn').addEventListener('pointerleave', function(e) {
 });
 function stopVoiceRecord() {
   if (!voiceRecorder || voiceRecorder.state !== 'recording') return;
+  // Capture mimeType before stop() to avoid race condition
+  voiceRecorder._capturedMime = voiceRecorder.mimeType;
   voiceRecorder.stop();
   voiceRecorder = null;
   $('voiceRecordBtn').classList.remove('recording');
@@ -2616,7 +2629,9 @@ function stopVoiceRecord() {
   if (voiceRecTimer) { clearInterval(voiceRecTimer); voiceRecTimer = null; }
 }
 async function uploadVoiceMessage(blob) {
-  var path = 'voice_' + Date.now() + '_' + Math.random().toString(36).slice(2,6) + '.webm';
+  var extMap = { 'audio/mp4': '.m4a', 'audio/mpeg': '.mp3', 'audio/aac': '.aac', 'audio/ogg': '.ogg', 'audio/webm': '.webm' };
+  var ext = extMap[blob.type] || ('.' + (blob.type.split('/')[1] || 'webm'));
+  var path = 'voice_' + Date.now() + '_' + Math.random().toString(36).slice(2,6) + ext;
   var overlay = $('uploadOverlay'), barFill = $('uploadBarFill'), pctEl = $('uploadPct'), textEl = $('uploadText'), subEl = $('uploadSub');
   overlay.classList.add('show'); barFill.style.width = '0%';
   textEl.textContent = 'آپلود پیام صوتی';
@@ -2628,7 +2643,7 @@ async function uploadVoiceMessage(blob) {
       var xhr = new XMLHttpRequest();
       xhr.open('POST', SB_URL + '/storage/v1/object/chat-images/' + path);
       xhr.setRequestHeader('apikey', SB_KEY); xhr.setRequestHeader('x-upsert', 'true');
-      xhr.setRequestHeader('Content-Type', 'audio/webm');
+      xhr.setRequestHeader('Content-Type', blob.type || 'audio/webm');
       var session = (await db.auth.getSession()).data.session;
       xhr.setRequestHeader('Authorization', 'Bearer ' + (session ? session.access_token : SB_KEY));
       xhr.upload.onprogress = function(e) {
@@ -2644,10 +2659,10 @@ async function uploadVoiceMessage(blob) {
     var ud = db.storage.from('chat-images').getPublicUrl(path);
     var md = {room_id:curRoom,user_id:me.id,type:'voice',content:'',file_url:ud.data.publicUrl,file_name:'پیام صوتی',file_size:blob.size};
     if(replyToData){md.reply_to_id=replyToData.id;md.reply_to_name=replyToData.name;md.reply_to_text=replyToData.text;cancelReply();}
-    if(realtimeRelay){realtimeRelay.send({type:'broadcast',event:'new_msg',payload:{id:Date.now().toString(),room_id:md.room_id,user_id:md.user_id,type:md.type,content:md.content,file_url:md.file_url,file_name:md.file_name,file_size:md.file_size,created_at:new Date().toISOString(),profiles:myProfile}});}
     var ins = await db.from('messages').insert(md).select('*').single();
     var msgObj = ins.data || {id:(crypto.randomUUID?crypto.randomUUID():Date.now().toString()),room_id:curRoom,user_id:me.id,type:'voice',content:'',file_url:ud.data.publicUrl,file_name:'پیام صوتی',file_size:blob.size,created_at:new Date().toISOString(),profiles:myProfile};
     if(ins.data)msgObj.profiles=myProfile;
+    if(realtimeRelay){realtimeRelay.send({type:'broadcast',event:'new_msg',payload:{id:msgObj.id,room_id:md.room_id,user_id:md.user_id,type:md.type,content:md.content,file_url:md.file_url,file_name:md.file_name,file_size:md.file_size,created_at:new Date().toISOString(),profiles:myProfile}});}
     addMsg(msgObj);scrollBottom();
   } catch(e) {
     toast('خطا در آپلود صدا: ' + (e.message||'نامشخص'));
