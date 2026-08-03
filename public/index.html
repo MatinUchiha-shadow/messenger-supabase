@@ -1543,6 +1543,7 @@ window.signOut = async function() {
   if (voiceChannel) { await db.removeChannel(voiceChannel); voiceChannel = null; } if (realtimeRelay) { await db.removeChannel(realtimeRelay); realtimeRelay = null; }
   if (presenceChannel) { await db.removeChannel(presenceChannel); presenceChannel = null; }
   if (sfxRoomChannel) { await db.removeChannel(sfxRoomChannel); sfxRoomChannel = null; }
+  if (sfxSub) { await db.removeChannel(sfxSub); sfxSub = null; }
   sfxMemberTimers = {}; sfxPlayingId = null;
   stopSfxSync();
   leaveVoice();
@@ -1770,6 +1771,7 @@ let dmSub = null;
 async function openDm(userId, userName) {
   if (sfxRoomChannel) { await db.removeChannel(sfxRoomChannel); sfxRoomChannel = null; }
   if (msgSub) { await db.removeChannel(msgSub); msgSub = null; }
+  if (sfxSub) { await db.removeChannel(sfxSub); sfxSub = null; }
   if (dmSub) { await db.removeChannel(dmSub); dmSub = null; }
   curDm = userId; curRoom = null;
   $('welcome').style.display = 'none'; $('messages').style.display = 'flex'; $('chatHeader').style.display = 'flex';
@@ -1796,7 +1798,7 @@ async function openDm(userId, userName) {
   }).subscribe();
 }
 
-let msgSub = null;
+let msgSub = null, sfxSub = null;
 async function openRoom(id, name, type) {
   if (sfxRoomChannel) { await db.removeChannel(sfxRoomChannel); sfxRoomChannel = null; }
   if (msgSub) { await db.removeChannel(msgSub); msgSub = null; }
@@ -1826,6 +1828,23 @@ async function openRoom(id, name, type) {
     msgSub = db.channel('room:' + id).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: 'room_id=eq.' + id }, async function(p) {
       const { data: msg } = await db.from('messages').select('*, profiles:user_id (id,username,display_name,role,avatar_url)').eq('id', p.new.id).single();
       if (msg) addMsg(msg);
+    }).subscribe();
+    // SFX events subscription (DB-based, works for ALL room types)
+    sfxSub = db.channel('sfx-events:' + id).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sfx_events', filter: 'room_id=eq.' + id }, function(p) {
+      var d = p.new;
+      if (!d || d.user_id === (me && me.id)) return;
+      if (d.sound_url) {
+        var a = new Audio(d.sound_url); a.volume = 1;
+        var playPromise = a.play();
+        if (playPromise) playPromise.catch(function() {
+          toast('صدای ' + (d.sound_name || 'افکت') + ' دریافت شد — برای شنیدن کلیک کن');
+          var resume = function() { a.play().catch(function(){}); };
+          document.addEventListener('click', resume, { once: true });
+          document.addEventListener('touchstart', resume, { once: true });
+          setTimeout(function() { document.removeEventListener('click', resume); document.removeEventListener('touchstart', resume); }, 10000);
+        });
+      }
+      if (d.user_id) showSfxPlayingOnMember(d.user_id);
     }).subscribe();
   } else {
     // Voice room - show welcome message + start sfx channel (works without joining voice call)
@@ -2269,6 +2288,7 @@ function leaveVoice() {
   stopScreenShare();
   // Clean up all per-peer audio elements
   document.querySelectorAll('audio[data-peer]').forEach(function(el) { el.srcObject = null; el.remove(); });
+  sfxMemberTimers = {}; sfxPlayingId = null; sfxSub = null;
   peers.forEach(function(pc) { pc.close(); }); peers.clear(); voiceMembers.clear();
   hideFloatingVoice(); curVoiceRoom = null; var fs5 = document.getElementById('float-screen'); if (fs5) { fs5.classList.remove('show'); var fsv5 = document.getElementById('floatScreenVideo'); if (fsv5) fsv5.srcObject = null; }
   clearInterval(voiceTimerInterval);
@@ -2438,24 +2458,25 @@ window.playSfx = function(id) {
   a.onerror = function() { if (sfxPlayingId === id) sfxPlayingId = null; if (item) item.classList.remove('playing'); };
   // Show play icon on my own chip in voice-bar
   if (me && me.id) showSfxPlayingOnMember(me.id);
-  // Broadcast to all users via realtimeRelay + sfxRoomChannel + voiceChannel
-  var sfxPayload = { url: s.file_url, name: s.name, userId: me.id, room_id: curRoom };
-  if (realtimeRelay) {
-    realtimeRelay.send({ type: 'broadcast', event: 'sfx', payload: sfxPayload }).then(function() {
-      console.log('sfx broadcast sent OK via realtimeRelay');
+  // Insert into sfx_events - triggers postgres_changes for all users in room (DB transport)
+  if (curRoom && me && me.id) {
+    db.from('sfx_events').insert({
+      room_id: curRoom,
+      user_id: me.id,
+      sound_url: s.file_url,
+      sound_name: s.name
+    }).then(function(r) {
+      if (r.error) {
+        console.log('sfx db insert err:', r.error);
+        if (r.error.message && r.error.message.includes('does not exist')) {
+          toast('جدول sfx_events وجود نداره — SQL رو اجرا کن');
+        }
+      }
     }).catch(function(e) {
-      console.log('sfx relay err:', e);
-      toast('خطا در ارسال صدا - دوباره تلاش کن');
+      console.log('sfx db err:', e);
     });
-  }
-  if (sfxRoomChannel) {
-    sfxRoomChannel.send({ type: 'broadcast', event: 'sfx', payload: sfxPayload });
-  }
-  if (voiceChannel) {
-    voiceChannel.send({ type: 'broadcast', event: 'sfx', payload: sfxPayload });
-  }
-  if (!realtimeRelay && !sfxRoomChannel && !voiceChannel) {
-    toast('اتصال قطع شده — صفحه رو رفرش کن');
+  } else {
+    toast('وارد اتاق نشدی');
   }
   // Show who played what in voice bar
   try {
