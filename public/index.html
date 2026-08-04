@@ -427,9 +427,9 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .upload-progress.show{display:flex}
 .upload-progress-bar{flex:1;height:6px;background:var(--panel);border-radius:3px;overflow:hidden}
 .upload-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;width:0%;transition:width .3s ease}
-.upload-progress-fill.indeterminate{animation:uploadPulse 1.5s ease-in-out infinite}
+.upload-progress-fill.indeterminate{animation:uploadBarPulse 1.5s ease-in-out infinite;transition:none}
 .upload-progress-fill.done{width:100%;animation:none;background:#22c55e}
-@keyframes uploadPulse{0%{width:5%}50%{width:90%}100%{width:5%}}
+@keyframes uploadBarPulse{0%{width:5%}50%{width:90%}100%{width:5%}}
 .upload-progress-text{font-size:12px;color:var(--muted);white-space:nowrap}
 .upload-progress-cancel{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.1);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;border:none}
 .pf-close{position:absolute;top:8px;left:8px;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.3);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px}
@@ -1613,12 +1613,14 @@ function getRoleBadge(r) { var ri = RANKS[r]; if (!ri || !ri.icon) return ri ? r
 var uploadAbortController = null;
 function showUploadProgress(text, pct, loadedMB, totalMB) {
   var el = $("uploadProgress"), fill = $("uploadProgressFill"), txt = $("uploadProgressText");
-  if (!el) return;
+  if (!el || !fill) return;
   el.classList.add("show");
+  // Force reflow to ensure animation starts
+  void el.offsetWidth;
   if (typeof pct === "number") {
     fill.className = "upload-progress-fill";
-    fill.style.width = pct + "%";
-    if (txt) txt.textContent = (loadedMB||"0") + " / " + (totalMB||"?") + " MB (" + pct + "%)";
+    fill.style.width = Math.min(100, Math.max(0, pct)) + "%";
+    if (txt) txt.textContent = (loadedMB||"0") + " / " + (totalMB||"?") + " MB (" + Math.round(pct) + "%)";
   } else {
     fill.className = "upload-progress-fill indeterminate";
     if (txt) txt.textContent = text || "در حال آپلود...";
@@ -1629,7 +1631,7 @@ function hideUploadProgress() {
   if (!el) return;
   var fill = $("uploadProgressFill");
   if (fill) { fill.className = "upload-progress-fill done"; fill.style.width = "100%"; }
-  setTimeout(function() { el.classList.remove("show"); }, 600);
+  setTimeout(function() { el.classList.remove("show"); }, 700);
 }
 window.cancelUpload = function() {
   if (uploadAbortController) { uploadAbortController.abort(); uploadAbortController = null; }
@@ -3166,8 +3168,14 @@ window.closeCrop = function() {
 var bannerCropState = null;
 window.handleBannerFile = function(input) {
   var f = input.files[0]; if (!f) return;
-  console.log("handleBannerFile:", f.name, f.type, f.size);
-  if (f.type.startsWith("video/") || f.name.match(/\.(mp4|webm|mov|avi|mkv|3gp|m4v|ts)/i) || f.name.indexOf("content://")===0 || (f.size>1048576&&!f.type.startsWith("image/"))) {
+  var fname = (f.name || "").toLowerCase();
+  console.log("handleBannerFile:", f.name, "type:", f.type, "size:", f.size);
+  var isVideo = f.type.startsWith("video/") 
+    || /.(mp4|webm|mov|avi|mkv|3gp|m4v|ts|ogv|wmv|flv)$/i.test(fname)
+    || fname.indexOf("content://") >= 0
+    || (f.size > 500000 && !f.type.startsWith("image/") && !/.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(fname));
+  console.log("handleBannerFile isVideo:", isVideo);
+  if (isVideo) {
     console.log("handleBannerFile: routing to uploadBanner");
     uploadBanner(input);
   } else {
@@ -3242,81 +3250,146 @@ window.confirmBannerCrop = function() {
   document.addEventListener("touchend", function() { dragging = false; });
 })();
 window.uploadBannerBlob = async function(blob) {
+  var startTime = Date.now();
+  showUploadProgress("پردازش بنر...");
   try {
-    var totalMB2 = (blob.size/(1024*1024)).toFixed(1);
-    showUploadProgress("آپلود بنر...", 0, "0", totalMB2);
     var bpath = "banner_" + me.id + ".jpg";
-    var upResult2 = await new Promise(async function(resolve, reject) {
-      var xhr2 = new XMLHttpRequest();
-      xhr2.open("POST", SB_URL + "/storage/v1/object/avatars/" + bpath);
-      xhr2.setRequestHeader("apikey", SB_KEY); xhr2.setRequestHeader("x-upsert", "true");
-      xhr2.setRequestHeader("Content-Type", "image/jpeg");
-      var session2 = (await db.auth.getSession()).data.session;
-      xhr2.setRequestHeader("Authorization", "Bearer " + (session2 ? session2.access_token : SB_KEY));
-      xhr2.upload.onprogress = function(e) {
-        if (e.lengthComputable) { var lm2 = (e.loaded/(1024*1024)).toFixed(1); var p2 = Math.round((e.loaded/e.total)*100); requestAnimationFrame(function() { showUploadProgress("", p2, lm2, totalMB2); }); }
-        else if (e.loaded > 0) { var lm3 = (e.loaded/(1024*1024)).toFixed(1); showUploadProgress("آپلود...", 0, lm3, totalMB2); }
-      };
-      xhr2.onload = function() { if (xhr2.status >= 200 && xhr2.status < 300) resolve(xhr2); else reject(new Error("HTTP " + xhr2.status)); };
-      xhr2.onerror = function() { reject(new Error("Upload failed")); };
-      xhr2.send(blob);
-    });
-    var ud2 = db.storage.from("avatars").getPublicUrl(bpath);
-    var verUrl2 = ud2.data.publicUrl + (ud2.data.publicUrl.indexOf("?") > -1 ? "&" : "?") + "v=" + Date.now();
-    var patchRes = await db.from("profiles").update({ banner_url: verUrl2 }).eq("id", me.id);
-    if (patchRes.error) { console.error("banner PATCH 400:", patchRes.error); toast("ستون banner_url در دیتابیس نیست! SQL اجرا کن"); return; }
-    myProfile.banner_url = verUrl2;
-    hideUploadProgress();
-    openProfile(myProfile.display_name || myProfile.username);
-    console.log("uploadBanner success, refreshing profile");
-    toast("بنر ذخیره شد");
-  } catch(e) { hideUploadProgress(); console.error("uploadBanner error:", e); toast("خطا: " + (e.message || "")); }
-};
-window.uploadBanner = async function(input) {
-  console.log("uploadBanner called");
-  var f = input.files[0]; if (!f) { console.log("uploadBanner: no file"); return; }
-  console.log("uploadBanner file:", f.name, f.type, f.size);
-  var isVideo = f.type.startsWith("video/") || f.name.match(/\.(mp4|webm|mov|avi|mkv|3gp|m4v|ts)/i) || f.name.indexOf("content://")===0 || (f.size>1048576&&!f.type.startsWith("image/"));
-  console.log("uploadBanner isVideo:", isVideo, "type:", f.type, "name:", f.name);
-  var maxSize = isVideo ? 30 * 1024 * 1024 : 10 * 1024 * 1024;
-  if (f.size > maxSize) { toast("حجم بنر باید کمتر از " + (isVideo ? "۳۰" : "۱۰") + " مگابایت باشه"); input.value = ""; return; }
-  try {
-    var blob = f, ext = ".jpg";
-    if (isVideo) { var m = f.name.match(/\.(mp4|webm|mov|avi|mkv|3gp|m4v|ts)/i); ext = m ? m[0].toLowerCase() : ".mp4"; blob = f; }
-    else if (f.size > 2 * 1024 * 1024) {
-      var img = await new Promise(function(res,rej){ var u=URL.createObjectURL(f); var i=new Image(); i.onload=function(){URL.revokeObjectURL(u);res(i)}; i.onerror=rej; i.src=u; });
-      var maxW = 1200, scale = Math.min(1, maxW / img.naturalWidth);
-      var cv = document.createElement("canvas"); cv.width = img.naturalWidth * scale; cv.height = img.naturalHeight * scale;
-      cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
-      blob = await new Promise(function(res){ cv.toBlob(res, "image/jpeg", .85); });
-    }
-    var bpath = "banner_" + me.id + ext;
-    var totalMB = (blob.size/(1024*1024)).toFixed(1);
-    showUploadProgress("", 0, "0", totalMB);
-    var upResult = await new Promise(async function(resolve, reject) {
-      var xhr = new XMLHttpRequest();
-      xhr.open("POST", SB_URL + "/storage/v1/object/avatars/" + bpath);
-      xhr.setRequestHeader("apikey", SB_KEY); xhr.setRequestHeader("x-upsert", "true");
-      xhr.setRequestHeader("Content-Type", isVideo ? "video/mp4" : "image/jpeg");
-      var session = (await db.auth.getSession()).data.session;
-      xhr.setRequestHeader("Authorization", "Bearer " + (session ? session.access_token : SB_KEY));
+    var xhr = new XMLHttpRequest();
+    var uploadUrl = SB_URL + "/storage/v1/object/avatars/" + bpath;
+    
+    await new Promise(function(resolve, reject) {
+      xhr.open("POST", uploadUrl);
+      xhr.setRequestHeader("Authorization", "Bearer " + SB_KEY);
+      xhr.setRequestHeader("x-upsert", "true");
+      
       xhr.upload.onprogress = function(e) {
-        if (e.lengthComputable) { var lm = (e.loaded/(1024*1024)).toFixed(1); var p = Math.round((e.loaded/e.total)*100); requestAnimationFrame(function() { showUploadProgress("", p, lm, totalMB); }); }
-        else if (e.loaded > 0) { var lm2 = (e.loaded/(1024*1024)).toFixed(1); showUploadProgress("آپلود...", 0, lm2, totalMB); }
+        if (e.lengthComputable) {
+          var pct = Math.round(e.loaded / e.total * 100);
+          var loaded = (e.loaded / (1024*1024)).toFixed(1);
+          var total = (e.total / (1024*1024)).toFixed(1);
+          showUploadProgress("آپلود بنر...", pct, loaded, total);
+        } else {
+          var loaded = (e.loaded / (1024*1024)).toFixed(1);
+          showUploadProgress("آپلود: " + loaded + " MB...", null, loaded, null);
+        }
       };
-      xhr.onload = function() { if (xhr.status >= 200 && xhr.status < 300) resolve(xhr); else reject(new Error("HTTP " + xhr.status)); };
-      xhr.onerror = function() { reject(new Error("Upload failed")); };
+      
+      xhr.onload = function() {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error("HTTP " + xhr.status + ": " + (xhr.responseText||"").substring(0,100)));
+      };
+      xhr.onerror = function() { reject(new Error("شبکه قطع شد")); };
       xhr.send(blob);
     });
+    
+    var minElapsed = 500 - (Date.now() - startTime);
+    if (minElapsed > 0) await new Promise(function(r) { setTimeout(r, minElapsed); });
+    
     var ud = db.storage.from("avatars").getPublicUrl(bpath);
     var verUrl = ud.data.publicUrl + (ud.data.publicUrl.indexOf("?") > -1 ? "&" : "?") + "v=" + Date.now();
-    var patchRes2 = await db.from("profiles").update({ banner_url: verUrl }).eq("id", me.id);
-    if (patchRes2.error) { console.error("banner PATCH 400:", patchRes2.error); toast("ستون banner_url در دیتابیس نیست! SQL اجرا کن"); return; }
+    var patchRes = await db.from("profiles").update({ banner_url: verUrl }).eq("id", me.id);
+    if (patchRes.error) { hideUploadProgress(); console.error("banner PATCH:", patchRes.error); toast("ستون banner_url نیست! SQL اجرا کن"); return; }
     myProfile.banner_url = verUrl;
     hideUploadProgress();
     openProfile(myProfile.display_name || myProfile.username);
     toast("بنر ذخیره شد");
-  } catch(e) { hideUploadProgress(); toast("خطا: " + (e.message || "")); }
+  } catch(e) { hideUploadProgress(); console.error("banner error:", e); toast("خطا: " + (e.message || "")); }
+};
+window.uploadBanner = async function(input) {
+  var f = input.files[0]; if (!f) return;
+  var startTime = Date.now();
+  console.log("uploadBanner file:", f.name, "type:", f.type, "size:", f.size);
+  
+  // Aggressive video detection
+  var fname = (f.name || "").toLowerCase();
+  var isVideo = f.type.startsWith("video/") 
+    || /.(mp4|webm|mov|avi|mkv|3gp|m4v|ts|ogv|wmv|flv)$/i.test(fname)
+    || fname.indexOf("content://") >= 0
+    || fname.indexOf(".mp4") >= 0
+    || fname.indexOf(".webm") >= 0
+    || (f.size > 500000 && !f.type.startsWith("image/") && !/.(jpg|jpeg|png|gif|bmp|webp|svg)$/i.test(fname));
+  
+  console.log("uploadBanner isVideo:", isVideo);
+  
+  var maxSize = isVideo ? 50 * 1024 * 1024 : 15 * 1024 * 1024;
+  if (f.size > maxSize) { toast("حجم باید کمتر از " + (isVideo ? "۵۰" : "۱۵") + " مگابایت باشه"); input.value = ""; return; }
+  
+  showUploadProgress(isVideo ? "آپلود ویدیو..." : "آپلود بنر...");
+  
+  try {
+    var blob = f, ext = ".jpg";
+    if (isVideo) {
+      var m = fname.match(/.(mp4|webm|mov|avi|mkv|3gp|m4v|ts|ogv|wmv|flv)/i);
+      ext = m ? m[0].toLowerCase() : ".mp4";
+      blob = f;
+    } else if (f.size > 2 * 1024 * 1024) {
+      var img = await new Promise(function(res,rej){ 
+        var u=URL.createObjectURL(f); 
+        var i=new Image(); 
+        i.onload=function(){URL.revokeObjectURL(u);res(i)}; 
+        i.onerror=function(e){URL.revokeObjectURL(u);rej(e)}; 
+        i.src=u; 
+      });
+      var maxW = 1200, scale = Math.min(1, maxW / img.naturalWidth);
+      var cv = document.createElement("canvas"); 
+      cv.width = img.naturalWidth * scale; 
+      cv.height = img.naturalHeight * scale;
+      cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+      blob = await new Promise(function(res){ cv.toBlob(res, "image/jpeg", .85); });
+    }
+    
+    var bpath = "banner_" + me.id + ext;
+    console.log("uploadBanner path:", bpath, "blob size:", blob.size);
+    
+    var xhr = new XMLHttpRequest();
+    var uploadUrl = SB_URL + "/storage/v1/object/avatars/" + bpath;
+    
+    await new Promise(function(resolve, reject) {
+      xhr.open("POST", uploadUrl);
+      xhr.setRequestHeader("Authorization", "Bearer " + SB_KEY);
+      xhr.setRequestHeader("x-upsert", "true");
+      
+      xhr.upload.onprogress = function(e) {
+        if (e.lengthComputable) {
+          var pct = Math.round(e.loaded / e.total * 100);
+          var loaded = (e.loaded / (1024*1024)).toFixed(1);
+          var total = (e.total / (1024*1024)).toFixed(1);
+          showUploadProgress("آپلود بنر...", pct, loaded, total);
+        } else {
+          var loaded = (e.loaded / (1024*1024)).toFixed(1);
+          showUploadProgress("آپلود: " + loaded + " MB...", null, loaded, null);
+        }
+      };
+      
+      xhr.onload = function() {
+        console.log("uploadBanner XHR status:", xhr.status);
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error("HTTP " + xhr.status));
+      };
+      xhr.onerror = function() { reject(new Error("شبکه قطع شد")); };
+      xhr.send(blob);
+    });
+    
+    console.log("uploadBanner upload success");
+    
+    var minElapsed = 500 - (Date.now() - startTime);
+    if (minElapsed > 0) await new Promise(function(r) { setTimeout(r, minElapsed); });
+    
+    var ud = db.storage.from("avatars").getPublicUrl(bpath);
+    var verUrl = ud.data.publicUrl + (ud.data.publicUrl.indexOf("?") > -1 ? "&" : "?") + "v=" + Date.now();
+    console.log("uploadBanner verUrl:", verUrl);
+    
+    var patchRes = await db.from("profiles").update({ banner_url: verUrl }).eq("id", me.id);
+    if (patchRes.error) { hideUploadProgress(); console.error("banner PATCH:", patchRes.error); toast("ستون banner_url نیست! SQL اجرا کن"); input.value = ""; return; }
+    myProfile.banner_url = verUrl;
+    hideUploadProgress();
+    openProfile(myProfile.display_name || myProfile.username);
+    toast("بنر ذخیره شد");
+  } catch(e) { 
+    hideUploadProgress(); 
+    console.error("banner error:", e); 
+    toast("خطا: " + (e.message || "خطای ناشناخته")); 
+  }
   input.value = "";
 };
 window.uploadAvatarBlob = async function(blob, originalName) {
