@@ -23,6 +23,7 @@ input,textarea{font-family:inherit;outline:none;border:none;background:none;colo
 @keyframes blackholePulse{0%,100%{text-shadow:0 0 4px rgba(255,106,0,.4)}50%{text-shadow:0 0 12px rgba(255,106,0,.9)}}
 @keyframes bhAmbientPulse{0%,100%{opacity:.7}50%{opacity:1}}
 @keyframes bhOrbit{from{offset-distance:0%}to{offset-distance:100%}}
+@keyframes speakPulse{0%{box-shadow:0 8px 25px rgba(0,0,0,.3),0 0 0 0 rgba(34,197,94,.6)}70%{box-shadow:0 8px 25px rgba(0,0,0,.3),0 0 0 12px rgba(34,197,94,0)}100%{box-shadow:0 8px 25px rgba(0,0,0,.3),0 0 0 0 rgba(34,197,94,0)}}@keyframes speakBorder{0%{border-color:rgba(34,197,94,.4)}50%{border-color:rgba(34,197,94,.8)}100%{border-color:rgba(34,197,94,.4)}}
 
 /* BLACK HOLE */
 #bh-vis{position:absolute;top:50%;left:50%;width:min(110vmin,800px);height:min(110vmin,800px);transform:translate(-50%,-50%);z-index:0;pointer-events:none;display:none}
@@ -353,6 +354,7 @@ body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0
 .meet-card:hover::before{opacity:1}
 .meet-card.me{background:rgba(139,92,246,.08);border-color:rgba(139,92,246,.2)}
 .meet-card-av{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:#fff;box-shadow:0 8px 25px rgba(0,0,0,.3);flex-shrink:0;position:relative}
+.meet-card-av.speaking{animation:speakPulse .6s ease-out infinite}.meet-card.speaking{border-color:rgba(34,197,94,.6)!important;animation:speakBorder .6s ease-in-out infinite}
 .meet-card-av img{width:100%;height:100%;border-radius:50%;object-fit:cover}
 .meet-card-badge{position:absolute;bottom:2px;right:2px;width:18px;height:18px;border-radius:50%;border:3px solid rgba(8,6,18,.94)}
 .meet-card-badge.online{background:var(--green)}
@@ -2788,11 +2790,89 @@ function openMeet() {
   mv.classList.add('show');
   $('meetBtn').style.display = 'none';
   renderMeetProfiles();
+  if (myStream || voiceMembers.size > 0) startSpeechDetection();
 }
 function closeMeet() {
   var mv = $('meetView');
-  if (mv) mv.classList.remove('show');
+  if (mv) { mv.classList.remove('show'); stopSpeechDetection(); }
   if (curRoom) $('meetBtn').style.display = '';
+}
+
+// === SPEAKING DETECTION ===
+let speechAnalyserCtx = null, speechAnalyser = null, speechRafId = null;
+let peerSpeechLevels = {};
+
+function startSpeechDetection() {
+  if (speechAnalyserCtx) return;
+  try {
+    speechAnalyserCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Local audio analyser (reliable, per-frame)
+    if (myStream) {
+      speechAnalyser = speechAnalyserCtx.createAnalyser();
+      speechAnalyser.fftSize = 256;
+      speechAnalyser.smoothingTimeConstant = 0.8;
+      var src = speechAnalyserCtx.createMediaStreamSource(myStream);
+      src.connect(speechAnalyser);
+      
+      var localData = new Uint8Array(speechAnalyser.frequencyBinCount);
+      function checkLocalLevel() {
+        if (!speechAnalyserCtx || !speechAnalyser) return;
+        speechAnalyser.getByteFrequencyData(localData);
+        var sum = 0;
+        for (var i = 0; i < localData.length; i++) sum += localData[i];
+        var level = sum / localData.length;
+        var isSpeaking = level > 25;
+        
+        var card = document.querySelector('.meet-card[data-uid="' + me.id + '"]');
+        if (card) {
+          card.classList.toggle('speaking', isSpeaking);
+          var av = card.querySelector('.meet-card-av');
+          if (av) av.classList.toggle('speaking', isSpeaking);
+        }
+        speechRafId = requestAnimationFrame(checkLocalLevel);
+      }
+      checkLocalLevel();
+    }
+    
+    // Remote peer detection: poll stats every 500ms (lightweight, detects new peers)
+    window._peerSpeechTimer = setInterval(function() {
+      if (!speechAnalyserCtx) { clearInterval(window._peerSpeechTimer); return; }
+      peers.forEach(function(pc, pid) {
+        pc.getStats(null).then(function(stats) {
+          var samples = 0;
+          stats.forEach(function(r) {
+            if (r.type === 'inbound-rtp' && r.kind === 'audio') samples = r.totalSamplesReceived || 0;
+          });
+          var prev = peerSpeechLevels[pid] || { samples: 0 };
+          var delta = samples - prev.samples;
+          peerSpeechLevels[pid] = { samples: samples };
+          var isSpeaking = delta > 200;
+          
+          var card = document.querySelector('.meet-card[data-uid="' + pid + '"]');
+          if (card) {
+            card.classList.toggle('speaking', isSpeaking);
+            var av = card.querySelector('.meet-card-av');
+            if (av) av.classList.toggle('speaking', isSpeaking);
+          }
+        }).catch(function(){});
+      });
+    }, 500);
+    
+  } catch(e) { console.warn('Speech detection failed:', e); stopSpeechDetection(); }
+}
+
+function stopSpeechDetection() {
+  if (speechRafId) { cancelAnimationFrame(speechRafId); speechRafId = null; }
+  if (window._peerSpeechTimer) { clearInterval(window._peerSpeechTimer); window._peerSpeechTimer = null; }
+  peerSpeechLevels = {};
+  if (speechAnalyserCtx) { 
+    try { speechAnalyserCtx.close(); } catch(e) {}
+    speechAnalyserCtx = null; speechAnalyser = null;
+  }
+  document.querySelectorAll('.meet-card.speaking, .meet-card-av.speaking').forEach(function(el) {
+    el.classList.remove('speaking');
+  });
 }
 function renderMeetProfiles() {
   var grid = $('meetGrid');
@@ -2841,7 +2921,7 @@ function renderMeetProfiles() {
 
   cards.forEach(function(m) {
     var card = document.createElement('div');
-    card.className = 'meet-card' + (m.isMe ? ' me' : '');
+    card.className = 'meet-card' + (m.isMe ? ' me' : ''); card.setAttribute('data-uid', m.id);
 
     var av = document.createElement('div');
     av.className = 'meet-card-av';
