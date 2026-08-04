@@ -2775,10 +2775,7 @@ function updateFloatingVoice() {
   var i = 0;
   voiceMembers.forEach(function(m, uid) {
     if (i++ >= 4) return;
-    var av = document.createElement('div');
-    av.className = 'fv-av';
-    av.textContent = (m.username || '?').charAt(0).toUpperCase();
-    avatars.appendChild(av);
+    if (m.avatar_url && /\.(mp4|webm|gif)(\?|$)/i.test(m.avatar_url)) { var fvv = document.createElement('video'); fvv.className = 'fv-av'; fvv.src = m.avatar_url; fvv.autoplay = true; fvv.loop = true; fvv.muted = true; fvv.playsInline = true; fvv.preload = 'auto'; fvv.style.objectFit = 'cover'; fvv.ontimeupdate = function(){if(this.currentTime>=this.duration-0.3){this.currentTime=0;this.play().catch(function(){})}}; avatars.appendChild(fvv); } else if (m.avatar_url) { var fvi = document.createElement('img'); fvi.className = 'fv-av'; fvi.src = m.avatar_url; fvi.style.objectFit = 'cover'; avatars.appendChild(fvi); } else { var fvd = document.createElement('div'); fvd.className = 'fv-av'; fvd.textContent = (m.username || '?').charAt(0).toUpperCase(); avatars.appendChild(fvd); }
   });
   count.textContent = voiceMembers.size + ' نفر';
   renderVoiceMembers();
@@ -2848,7 +2845,21 @@ function renderMeetProfiles() {
 
     var av = document.createElement('div');
     av.className = 'meet-card-av';
-    if (m.avatar_url) {
+    if (m.avatar_url && /\.(mp4|webm|gif)(\?|$)/i.test(m.avatar_url)) {
+      var mcv = document.createElement('video');
+      mcv.src = m.avatar_url;
+      mcv.autoplay = true;
+      mcv.loop = true;
+      mcv.muted = true;
+      mcv.playsInline = true;
+      mcv.preload = 'auto';
+      mcv.style.width = '100%';
+      mcv.style.height = '100%';
+      mcv.style.objectFit = 'cover';
+      mcv.style.borderRadius = '50%';
+      mcv.ontimeupdate = function(){if(this.currentTime>=this.duration-0.3){this.currentTime=0;this.play().catch(function(){})}};
+      av.appendChild(mcv);
+    } else if (m.avatar_url) {
       var img = document.createElement('img');
       img.src = m.avatar_url;
       img.alt = m.username;
@@ -2939,7 +2950,7 @@ function renderVoiceMembers() {
     d.className = 'vm-chip';
     d.setAttribute('data-uid', uid);
     var isMe = uid === me.id;
-    d.innerHTML = '<span class="vm-sfx-icon"><svg class="ui-icon" aria-hidden="true" style="width:13px;height:13px"><use href="#pg-music"></use></svg></span><div class="vm-av" style="background:' + (isMe ? 'var(--accent)' : 'var(--panel)') + ';color:#fff">' + (m.username || '?').charAt(0).toUpperCase() + '</div><span class="vm-name">' + esc(m.username || '') + (isMe ? ' (شما)' : '') + '</span>';
+    var vmAvHtml; if (m.avatar_url && /\.(mp4|webm|gif)(\?|$)/i.test(m.avatar_url)) { vmAvHtml = '<video class="vm-av" src="'+esc(m.avatar_url)+'" autoplay loop muted playsinline preload="auto" ontimeupdate="if(this.currentTime>=this.duration-0.3){this.currentTime=0;this.play().catch(function(){})}" style="object-fit:cover"></video>'; } else if (m.avatar_url) { vmAvHtml = '<img class="vm-av" src="'+esc(m.avatar_url)+'" style="object-fit:cover">'; } else { vmAvHtml = '<div class="vm-av" style="background:' + (isMe ? 'var(--accent)' : 'var(--panel)') + ';color:#fff">' + (m.username || '?').charAt(0).toUpperCase() + '</div>'; } d.innerHTML = '<span class="vm-sfx-icon"><svg class="ui-icon" aria-hidden="true" style="width:13px;height:13px"><use href="#pg-music"></use></svg></span>'+vmAvHtml+'<span class="vm-name">' + esc(m.username || '') + (isMe ? ' (شما)' : '') + '</span>';
     $('vbMembers').appendChild(d);
   });
   if (!voiceMembers.size) $('vbMembers').innerHTML = '<span style="font-size:11px;color:var(--muted)">خالی</span>';
