@@ -3522,12 +3522,8 @@ window.uploadBanner = async function(input) {
 };
 window.uploadAvatarBlob = async function(blob, originalName) {
   try {
-    var originalAvatarBlob = blob;
-    if (blob && (blob.type || '').startsWith('video/')) blob = await optimizeMobileVideo(blob, 320);
-    if (isMobileVideoDevice() && originalAvatarBlob && originalAvatarBlob.type && blob === originalAvatarBlob && !isMobileSafeSource(originalAvatarBlob)) { toast('این فرمت ویدیو روی Android سازگار نیست؛ MP4 یا WebM انتخاب کن'); return; }
     toast('در حال انجام...');
-    if (blob && blob.type && blob.type.startsWith('video/') && blob === originalAvatarBlob && !isMobileSafeSource(originalAvatarBlob)) { toast('برای پخش پایدار، فقط MP4 یا WebM انتخاب کن'); return; }
-    var ext = (blob && blob.type === 'video/webm') ? '.webm' : (blob && blob.type === 'video/mp4' ? '.mp4' : ((originalName && originalName.match(/\.(gif)$/i)) ? '.gif' : '.png'));
+    var ext = (blob && blob.type === 'video/webm') ? '.webm' : (blob && blob.type === 'video/mp4' ? '.mp4' : ((blob && blob.type && blob.type.startsWith('video/')) ? '.mp4' : ((originalName && originalName.match(/\.(gif)$/i)) ? '.gif' : '.png')));
   var path = 'avatar_' + me.id + ext;
     var result = await db.storage.from('avatars').upload(path, blob, { upsert: true });
     if (result.error) {
@@ -3540,6 +3536,16 @@ window.uploadAvatarBlob = async function(blob, originalName) {
     var verUrl = ud.data.publicUrl + (ud.data.publicUrl.indexOf('?') > -1 ? '&' : '?') + 'v=' + Date.now();
     await db.from('profiles').update({ avatar_url: verUrl }).eq('id', me.id);
     myProfile.avatar_url = verUrl;
+    // Force reload all avatars with cache-bust
+    var allAvEls = document.querySelectorAll('img[src*="avatars/"],video[src*="avatars/"]');
+    allAvEls.forEach(function(el) {
+      var oldSrc = el.src || el.getAttribute('src');
+      if (oldSrc) {
+        var sep = oldSrc.indexOf('?') > -1 ? '&' : '?';
+        el.src = '';
+        setTimeout(function() { el.src = oldSrc + sep + '_t=' + Date.now(); }, 50);
+      }
+    });
     rAv($('hav'), myProfile);
     openProfile(myProfile.display_name || myProfile.username);
     toast('تصویر پروفایل ذخیره شد');
