@@ -1257,6 +1257,8 @@ async function optimizeMobileVideo(file, maxWidth) {
   finally { URL.revokeObjectURL(srcUrl); }
 }
 
+function svgIcon(name, cls) { return '<svg class="' + (cls || 'ui-icon') + '" aria-hidden="true"><use href="#pg-' + name + '"></use></svg>'; }
+
 let me = null, myProfile = null, curRoom = null, curType = null, curDm = null;
 let myStream = null, voiceChannel = null, presenceChannel = null, curVoiceRoom = null, voiceCallSeconds = 0, voiceTimerInterval = null, realtimeRelay = null;
 var totalVoiceSeconds = 0, voiceDbOk = null, lastVoiceDbSave = 0;
