@@ -837,7 +837,8 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
     <button class="icon-btn" onclick="openThemePanel()" title="تم" style="width:30px;height:30px;font-size:13px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-palette"></use></svg></button>
   </div>
   <div class="sb-body">
-    <div class="sb-section"><div class="sb-sec-head"><span class="sb-sec-title">خصوصی</span></div><div id="dmList"></div></div>
+    <div id="dmList" style="display:none"></div>
+    <div class="sb-section"><div class="sb-sec-head"><span class="sb-sec-title">دوستان</span><button class="btn-add show" onclick="openAddFriend()" title="افزودن دوست" style="display:flex"><svg class="ui-icon" aria-hidden="true"><use href="#pg-plus"></use></svg></button></div><div id="friendList"></div><div id="friendRequests" style="margin-top:8px"></div></div>
     <div class="sb-section"><div class="sb-sec-head"><span class="sb-sec-title">گروه‌ها</span><button class="btn-add" id="addTextBtn" onclick="openCreateRoom('text')"><svg class="ui-icon" aria-hidden="true"><use href="#pg-plus"></use></svg></button></div><div id="textRooms"></div></div>
     <div class="sb-section"><div class="sb-sec-head"><span class="sb-sec-title">صوتی</span><button class="btn-add" id="addVoiceBtn" onclick="openCreateRoom('voice')"><svg class="ui-icon" aria-hidden="true"><use href="#pg-plus"></use></svg></button></div><div id="voiceRooms"></div></div>
     <div class="sb-section"><div class="sb-sec-head"><span class="sb-sec-title">آنلاین</span></div><div id="onlineList"></div></div>
@@ -866,7 +867,7 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
   <button class="search-nav-btn" id="searchNextBtn" onclick="searchNext()" disabled title="بعدی"><svg class="ui-icon" aria-hidden="true"><use href="#pg-search-nav-down"></use></svg></button>
   <button class="search-nav-btn" onclick="closeSearch()" title="بستن"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button>
 </div>
-  <div id="voice-bar"><div style="flex:1"><div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:3px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg> صوتی</div><div class="vb-members" id="vbMembers"><span style="font-size:11px;color:var(--muted)">خالی</span></div></div><button class="sfx-btn" onclick="toggleSfxPanel()" title="افکت صوتی"><svg class="ui-icon" aria-hidden="true"><use href="#pg-music"></use></svg> افکت</button></div>
+  <div id="voice-bar"><div style="flex:1"><div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:3px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg> صوتی</div><div class="vb-members" id="vbMembers"><span style="font-size:11px;color:var(--muted)">خالی</span></div></div></div>
   <div id="welcome" class="welcome"><div class="welcome-icon"><svg class="ui-icon" aria-hidden="true"><use href="#pg-chat"></use></svg></div><h2 style="font-size:18px;font-weight:600">GapChat</h2><p style="font-size:12px">یه اتاق یا پیام خصوصی انتخاب کن</p></div>
   <div id="messages" style="display:none"></div>
   <div id="replyBar" class="reply-bar" style="display:none"><div class="reply-bar-content"><div class="reply-bar-name" id="replyBarName"></div><div class="reply-bar-text" id="replyBarText"></div></div><button class="icon-btn" onclick="cancelReply()" style="width:26px;height:26px;font-size:10px"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button></div>
@@ -894,7 +895,6 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
   <div class="fv-timer" id="fvTimer">00:00</div>
   <button class="fv-btn mute" id="fvMuteBtn" onclick="event.stopPropagation();toggleMute()" title="میکروفون"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg></button>
   <button class="fv-btn screen" id="fvScreenBtn" onclick="event.stopPropagation();shareScreen()" title="اشتراک صفحه"><svg class="ui-icon" aria-hidden="true"><use href="#pg-screen"></use></svg></button>
-  <button class="fv-btn" onclick="event.stopPropagation();toggleSfxPanel()" title="افکت صوتی"><svg class="ui-icon" aria-hidden="true"><use href="#pg-music"></use></svg></button>
   <button class="fv-btn hangup" onclick="event.stopPropagation();leaveVoice()" title="قطع تماس"><svg class="ui-icon" aria-hidden="true"><use href="#pg-phone"></use></svg></button>
 </div>
 
@@ -1177,8 +1177,7 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
   <div class="call-controls">
     <button class="call-ctrl mic" id="callMuteBtn" onclick="event.stopPropagation();toggleMute()" title="میکروفون"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg></button>
     <button class="call-ctrl screen" id="callScreenBtn" onclick="event.stopPropagation();shareScreen()" title="اشتراک صفحه"><svg class="ui-icon" aria-hidden="true"><use href="#pg-screen"></use></svg></button>
-    <button class="call-ctrl" onclick="event.stopPropagation();toggleSfxPanel()" title="افکت صوتی" style="background:var(--bg3,#1e2c3a);color:#fff"><svg class="ui-icon" aria-hidden="true"><use href="#pg-music"></use></svg></button>
-    <button class="call-ctrl" id="fullscreenBtn" onclick="event.stopPropagation();toggleFullscreen()" title="تمام‌صفحه" style="background:var(--bg3,#1e2c3a);color:#fff"><svg class="ui-icon" aria-hidden="true"><use href="#pg-expand"></use></svg></button>
+     <button class="call-ctrl" id="fullscreenBtn" onclick="event.stopPropagation();toggleFullscreen()" title="تمام‌صفحه" style="background:var(--bg3,#1e2c3a);color:#fff"><svg class="ui-icon" aria-hidden="true"><use href="#pg-expand"></use></svg></button>
     <button class="call-ctrl leave" onclick="leaveVoice()" title="پایان"><svg class="ui-icon" aria-hidden="true"><use href="#pg-phone"></use></svg></button>
   </div>
 </div>
@@ -1748,59 +1747,142 @@ async function loadRooms() {
   $('textRooms').innerHTML = '';
   $('voiceRooms').innerHTML = '';
   if (!data) return;
+  const canManage = myProfile && ['owner','admin'].includes(myProfile.role);
   data.forEach(function(r) {
     if (isDmRoomName(r.name)) return;
     const d = document.createElement('div');
     d.className = 'room-item';
     d.dataset.id = r.id;
-    d.innerHTML = '<svg class="ui-icon" aria-hidden="true"><use href="#pg-' + (r.type === 'voice' ? 'volume' : 'chat') + '"></use></svg><span>' + esc(r.name) + '</span>';
+    var actions = canManage ? '<span class="room-actions" style="display:flex;gap:4px;margin-left:auto"><button class="room-edit-btn" onclick="event.stopPropagation();editRoom(\''+r.id+'\',\''+esc(r.name).replace(/\'/g, "\\'")+'\',\''+r.type+'\')" title="ویرایش" style="width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:10px"><svg class="ui-icon" aria-hidden="true" style="width:10px;height:10px"><use href="#pg-pencil"></use></svg></button><button class="room-del-btn" onclick="event.stopPropagation();deleteRoom(\''+r.id+'\')" title="حذف" style="width:22px;height:22px;border-radius:6px;background:rgba(239,68,68,.15);color:#ef4444;display:flex;align-items:center;justify-content:center;font-size:10px"><svg class="ui-icon" aria-hidden="true" style="width:10px;height:10px"><use href="#pg-trash"></use></svg></button></span>' : '';
+    d.innerHTML = '<svg class="ui-icon" aria-hidden="true"><use href="#pg-' + (r.type === 'voice' ? 'volume' : 'chat') + '"></use></svg><span style="flex:1">' + esc(r.name) + '</span>' + actions;
     d.onclick = function() { openRoom(r.id, r.name, r.type); };
     (r.type === 'voice' ? $('voiceRooms') : $('textRooms')).appendChild(d);
   });
+  // realtime for rooms
+  if (window._roomsChannel) { try{ await db.removeChannel(window._roomsChannel);}catch(e){} }
+  window._roomsChannel = db.channel('rooms-live').on('postgres_changes', {event:'*', schema:'public', table:'rooms'}, function(){ loadRooms(); }).subscribe();
 }
 
-window.openCreateRoom = function(type) { $('newRoomType').value = type; $('createRoomModal').classList.add('show'); };
-window.closeModal = function(id) { $(id).classList.remove('show'); };
+window.openCreateRoom = function(type) { window._editingRoomId=null; $('newRoomName').value=''; $('newRoomType').value = type; document.querySelector('#createRoomModal h2').textContent='اتاق جدید'; $('createRoomModal').classList.add('show'); };
+window.closeModal = function(id) { $(id).classList.remove('show'); if(id==='createRoomModal'){ window._editingRoomId=null; $('newRoomName').value=''; document.querySelector('#createRoomModal h2').textContent='اتاق جدید'; } };
 window.createRoom = async function() {
   const name = $('newRoomName').value.trim(), type = $('newRoomType').value;
   if (!name) return;
+  // edit mode?
+  if (window._editingRoomId) {
+    const upd = await db.from('rooms').update({ name, type }).eq('id', window._editingRoomId);
+    if (upd.error) { toast('خطا: '+upd.error.message); return; }
+    window._editingRoomId=null;
+    $('createRoomModal').classList.remove('show');
+    $('newRoomName').value = '';
+    loadRooms();
+    toast('ویرایش شد');
+    return;
+  }
   await db.from('rooms').insert({ name, type, created_by: me.id });
   $('createRoomModal').classList.remove('show');
   $('newRoomName').value = '';
   loadRooms();
   toast('ساخته شد');
 };
+window.editRoom = function(id, name, type){
+  if (!['owner','admin'].includes(myProfile.role)) { toast('فقط owner/admin'); return; }
+  window._editingRoomId=id;
+  $('newRoomName').value=name;
+  $('newRoomType').value=type;
+  document.querySelector('#createRoomModal h2').textContent='ویرایش اتاق';
+  $('createRoomModal').classList.add('show');
+  // reset title on close
+  const origClose = window.closeModal;
+  window._origCloseModal = origClose;
+};
+window.deleteRoom = async function(id){
+  if (!['owner','admin'].includes(myProfile.role)) { toast('فقط owner/admin'); return; }
+  if (!confirm('حذف گروه؟ همه پیام‌ها هم حذف میشن')) return;
+  const del = await db.from('rooms').delete().eq('id', id);
+  if (del.error) { toast('خطا: '+del.error.message); return; }
+  // also delete messages
+  await db.from('messages').delete().eq('room_id', id);
+  loadRooms();
+  if (curRoom===id) { $('welcome').style.display='flex'; $('messages').style.display='none'; $('chatHeader').style.display='none'; curRoom=null; }
+  toast('حذف شد');
+};
 
-// DM LIST
-async function loadDmList() {
-  const { data } = await db.from('profiles').select('*').neq('id', me.id).order('display_name');
-  $('dmList').innerHTML = '';
-  if (!data || !data.length) { $('dmList').innerHTML = '<div style="padding:4px 8px;font-size:11px;color:var(--muted)">هیچ کاربری نیست</div>'; return; }
-  data.forEach(function(u) {
-    const d = document.createElement('div');
-    d.className = 'dm-item';
-    d.innerHTML = '<div class="dm-av" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff">' + (function(avurl,fallback){ if(avurl){var isV=/\.(mp4|webm|gif)(\?|$)/i.test(avurl); if(isV)return'<video src="'+esc(avurl)+'" muted playsinline autoplay loop preload="metadata" data-decorative-video="true" data-video-role="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></video>'; return'<img src="'+esc(avurl)+'" alt=""/>'} return fallback; })(u.avatar_url, (u.display_name||'?').charAt(0).toUpperCase()) + '</div><span style="flex:1;font:500 13px inherit">' + esc(u.display_name || u.username) + '</span>';
-    d.onclick = function() { openDm(u.id, u.display_name || u.username); };
-    $('dmList').appendChild(d);
-  });
+// FRIEND SYSTEM (replaces DM LIST)
+async function loadDmList(){ return loadFriends(); }
+async function loadFriends(){
+  const list=$('friendList'); if(!list) return;
+  list.innerHTML='<div style="padding:8px;text-align:center;color:var(--muted);font-size:11px">در حال بارگذاری...</div>';
+  try{
+    const {data:ships} = await db.from('friendships').select('friend_id').eq('user_id', me.id);
+    if(!ships || !ships.length){ list.innerHTML='<div style="padding:8px;font-size:11px;color:var(--muted)">هنوز دوستی نداری — + بزن</div>'; loadFriendRequests(); return; }
+    const ids=ships.map(s=>s.friend_id);
+    const {data:users} = await db.from('profiles').select('*').in('id', ids);
+    list.innerHTML='';
+    (users||[]).forEach(function(u){
+      const d=document.createElement('div'); d.className='dm-item';
+      d.innerHTML='<div class="dm-av" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff">'+(function(avurl,fb){ if(avurl){var isV=/\.(mp4|webm|gif)(\?|$)/i.test(avurl); if(isV)return'<video src="'+esc(avurl)+'" muted playsinline autoplay loop preload="metadata" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></video>'; return'<img src="'+esc(avurl)+'" alt=""/>'} return fb;})(u.avatar_url,(u.display_name||'?').charAt(0).toUpperCase())+'</div><span style="flex:1;font:500 13px inherit">'+esc(u.display_name||u.username)+'</span><button onclick="event.stopPropagation();removeFriend(\''+u.id+'\')" title="حذف دوست" style="width:20px;height:20px;border-radius:6px;background:rgba(239,68,68,.12);color:#ef4444;display:flex;align-items:center;justify-content:center;font-size:10px">×</button>';
+      d.onclick=function(){ openDm(u.id, u.display_name||u.username); };
+      list.appendChild(d);
+    });
+  }catch(e){ list.innerHTML='<div style="padding:8px;color:var(--muted);font-size:11px">خطا در بارگذاری دوستان</div>'; }
+  loadFriendRequests();
 }
-
-window.openDmPanel = function() { $('dmPanel').classList.add('show'); searchDmUsers(); };
+async function loadFriendRequests(){
+  const box=$('friendRequests'); if(!box) return; box.innerHTML='';
+  try{
+    const {data:reqs} = await db.from('friend_requests').select('*, sender:sender_id(id, username, display_name, avatar_url)').eq('receiver_id', me.id).eq('status','pending');
+    if(!reqs || !reqs.length) return;
+    const head=document.createElement('div'); head.style.cssText='font:700 10px inherit;color:var(--muted);padding:6px 8px'; head.textContent='درخواست‌ها ('+reqs.length+')'; box.appendChild(head);
+    reqs.forEach(function(r){
+      const s=r.sender||{}; const d=document.createElement('div'); d.className='dm-item'; d.style.background='rgba(251,191,36,.08)'; d.style.border='1px solid rgba(251,191,36,.2)';
+      d.innerHTML='<div class="dm-av" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#fff">'+esc((s.display_name||s.username||'?').charAt(0).toUpperCase())+'</div><span style="flex:1;font:500 12px inherit">'+esc(s.display_name||s.username||'کاربر')+'</span><button onclick="acceptFriend(\''+r.id+'\',\''+r.sender_id+'\')" style="padding:4px 8px;border-radius:6px;background:var(--green);color:#fff;font-size:11px;margin-left:4px">قبول</button><button onclick="rejectFriend(\''+r.id+'\')" style="padding:4px 8px;border-radius:6px;background:rgba(239,68,68,.15);color:#ef4444;font-size:11px">رد</button>';
+      box.appendChild(d);
+    });
+  }catch(e){}
+}
+window.openAddFriend=function(){ $('dmPanel').classList.add('show'); $('dmPanel').querySelector('h3').innerHTML='<svg class="ui-icon" aria-hidden="true"><use href="#pg-plus"></use></svg> افزودن دوست'; searchDmUsers(); };
+window.openDmPanel = function() { openAddFriend(); };
 window.closeDmPanel = function() { $('dmPanel').classList.remove('show'); };
 window.searchDmUsers = async function() {
   const q = ($('dmSearch').value || '').trim();
   let query = db.from('profiles').select('*').neq('id', me.id);
   if (q) query = query.ilike('display_name', '%' + q + '%');
-  const { data } = await query.order('display_name');
+  const { data } = await query.order('display_name').limit(30);
   $('dmBody').innerHTML = '';
   if (!data || !data.length) { $('dmBody').innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">پیدا نشد</div>'; return; }
+  // Filter out already friends / pending
+  let friendIds=new Set(), pending=new Set();
+  try{ const {data:f}=await db.from('friendships').select('friend_id').eq('user_id',me.id); (f||[]).forEach(x=>friendIds.add(x.friend_id)); }catch(e){}
+  try{ const {data:pr}=await db.from('friend_requests').select('receiver_id').eq('sender_id',me.id).eq('status','pending'); (pr||[]).forEach(x=>pending.add(x.receiver_id)); }catch(e){}
   data.forEach(function(u) {
-    const d = document.createElement('div');
-    d.className = 'dm-user';
-    d.innerHTML = '<div class="dm-user-av" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff">' + (function(avurl,fb){if(avurl){var isV=/.(mp4|webm|gif)(\?|$)/i.test(avurl);if(isV)return'<video src='+esc(avurl)+' muted playsinline autoplay loop preload="metadata" data-decorative-video="true" data-video-role="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></video>';return'<img src='+esc(avurl)+' alt/>'}return fb})(u.avatar_url,(u.display_name||'?').charAt(0).toUpperCase()) + '</div><div class="dm-user-info"><div class="dm-user-name">' + esc(u.display_name || u.username) + '</div><div class="dm-user-role">' + getRoleName(u.role) + '</div></div>';
-    d.onclick = function() { closeDmPanel(); openDm(u.id, u.display_name || u.username); };
+    const isFriend=friendIds.has(u.id); const isPending=pending.has(u.id);
+    const d = document.createElement('div'); d.className = 'dm-user';
+    d.innerHTML = '<div class="dm-user-av" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff">' + (function(avurl,fb){if(avurl){var isV=/\.(mp4|webm|gif)(\?|$)/i.test(avurl);if(isV)return'<video src='+esc(avurl)+' muted playsinline autoplay loop preload="metadata" data-decorative-video="true" data-video-role="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></video>';return'<img src='+esc(avurl)+' alt/>'}return fb})(u.avatar_url,(u.display_name||'?').charAt(0).toUpperCase()) + '</div><div class="dm-user-info"><div class="dm-user-name">' + esc(u.display_name || u.username) + '</div><div class="dm-user-role">' + getRoleName(u.role) + '</div></div><div style="margin-left:auto">'+(isFriend?'<span style="font-size:11px;color:var(--green)">دوست</span>':isPending?'<span style="font-size:11px;color:var(--muted)">در انتظار</span>':'<button onclick="event.stopPropagation();sendFriendRequest(\''+u.id+'\')" style="padding:6px 10px;border-radius:8px;background:var(--accent);color:#fff;font-size:11px">+ دوست</button>')+'</div>';
+    if(!isFriend) d.onclick = function() { if(!isPending) sendFriendRequest(u.id); };
+    else d.onclick = function(){ closeDmPanel(); openDm(u.id, u.display_name||u.username); };
     $('dmBody').appendChild(d);
   });
+};
+window.sendFriendRequest=async function(userId){
+  const {error}=await db.from('friend_requests').insert({sender_id:me.id, receiver_id:userId, status:'pending'});
+  if(error){ if(error.code==='23505') toast('قبلا درخواست دادی'); else toast('خطا: '+error.message); return; }
+  toast('درخواست دوستی ارسال شد'); searchDmUsers(); loadFriendRequests();
+};
+window.acceptFriend=async function(reqId, senderId){
+  await db.from('friend_requests').update({status:'accepted'}).eq('id',reqId);
+  await db.from('friendships').insert([{user_id:me.id, friend_id:senderId},{user_id:senderId, friend_id:me.id}]);
+  toast('دوست اضافه شد'); loadFriends();
+};
+window.rejectFriend=async function(reqId){
+  await db.from('friend_requests').update({status:'rejected'}).eq('id',reqId);
+  toast('رد شد'); loadFriendRequests();
+};
+window.removeFriend=async function(friendId){
+  if(!confirm('حذف دوست؟')) return;
+  await db.from('friendships').delete().eq('user_id',me.id).eq('friend_id',friendId);
+  await db.from('friendships').delete().eq('user_id',friendId).eq('friend_id',me.id);
+  loadFriends(); toast('حذف شد');
 };
 
 let dmSub = null;
