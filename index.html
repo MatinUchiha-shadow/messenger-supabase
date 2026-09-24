@@ -791,23 +791,21 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
 
 <div id="bh-vis" aria-hidden="true">
   <div class="bh-amb"></div>
-  <svg viewBox="0 0 400 400">
+  <div class="bh-disk"></div>
+  <svg viewBox="0 0 400 400" style="position:absolute;inset:0;width:100%;height:100%;opacity:.25">
     <defs>
-      <radialGradient id="bdg" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fff7e8"/><stop offset="22%" stop-color="#ffd9a0" stop-opacity=".95"/><stop offset="45%" stop-color="#ff8a3d" stop-opacity=".75"/><stop offset="70%" stop-color="#b3441a" stop-opacity=".35"/><stop offset="100%" stop-color="#1a0800" stop-opacity="0"/></radialGradient>
-      <radialGradient id="brg" cx="50%" cy="50%" r="50%"><stop offset="78%" stop-color="#000" stop-opacity="0"/><stop offset="92%" stop-color="#ff7a26" stop-opacity=".55"/><stop offset="100%" stop-color="#ffd9a0" stop-opacity="0"/></radialGradient>
-      <radialGradient id="bcg" cx="46%" cy="44%" r="55%"><stop offset="0%" stop-color="#0a0a0a"/><stop offset="80%" stop-color="#000"/></radialGradient>
-      <linearGradient id="blg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#ff7a26" stop-opacity="0"/><stop offset="20%" stop-color="#ffb877" stop-opacity=".7"/><stop offset="50%" stop-color="#fff4e0"/><stop offset="80%" stop-color="#ffb877" stop-opacity=".7"/><stop offset="100%" stop-color="#ff7a26" stop-opacity="0"/></linearGradient>
+      <radialGradient id="bdg" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#e9e0ff"/><stop offset="22%" stop-color="#c4b5fd" stop-opacity=".9"/><stop offset="45%" stop-color="#a78bfa" stop-opacity=".6"/><stop offset="70%" stop-color="#6d28d9" stop-opacity=".25"/><stop offset="100%" stop-color="#1e1b2e" stop-opacity="0"/></radialGradient>
+      <radialGradient id="brg" cx="50%" cy="50%" r="50%"><stop offset="78%" stop-color="#000" stop-opacity="0"/><stop offset="92%" stop-color="#a78bfa" stop-opacity=".4"/><stop offset="100%" stop-color="#e9e0ff" stop-opacity="0"/></radialGradient>
+      <radialGradient id="bcg" cx="46%" cy="44%" r="55%"><stop offset="0%" stop-color="#0a0a0f"/><stop offset="80%" stop-color="#000"/></radialGradient>
+      <linearGradient id="blg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#a78bfa" stop-opacity="0"/><stop offset="20%" stop-color="#c4b5fd" stop-opacity=".6"/><stop offset="50%" stop-color="#f5f3ff"/><stop offset="80%" stop-color="#c4b5fd" stop-opacity=".6"/><stop offset="100%" stop-color="#a78bfa" stop-opacity="0"/></linearGradient>
       <filter id="bs"><feGaussianBlur stdDeviation="3"/></filter>
       <filter id="bs2"><feGaussianBlur stdDeviation="7"/></filter>
     </defs>
     <g class="bh-disk"><ellipse cx="200" cy="200" rx="195" ry="46" fill="url(#bdg)" filter="url(#bs)"/></g>
-    <g class="bh-hot"><ellipse cx="0" cy="0" rx="12" ry="4" fill="#fff7e8" opacity=".6" filter="url(#bs)"/><ellipse cx="0" cy="0" rx="9" ry="3" fill="#ffd9a0" opacity=".55" filter="url(#bs)"/></g>
     <circle cx="200" cy="200" r="92" fill="url(#brg)" filter="url(#bs)"/>
     <circle cx="200" cy="200" r="84" fill="url(#bcg)"/>
     <path d="M122 140A90 38 0 0 1 278 140" fill="none" stroke="url(#blg)" stroke-width="7" stroke-linecap="round" filter="url(#bs)"/>
     <path d="M130 152A80 30 0 0 1 270 152" fill="none" stroke="url(#blg)" stroke-width="3" stroke-linecap="round" opacity=".8"/>
-    <g class="bh-disk"><path d="M18 200A182 46 0 0 0 382 200" fill="none" stroke="#fff4e0" stroke-width="9" stroke-linecap="round" opacity=".9" filter="url(#bs)"/><path d="M30 200A170 40 0 0 0 370 200" fill="none" stroke="#ffb877" stroke-width="4" stroke-linecap="round" opacity=".95"/></g>
-    <circle cx="200" cy="200" r="190" fill="none" stroke="#ff7a26" stroke-opacity=".06" stroke-width="40" filter="url(#bs2)"/>
   </svg>
 </div>
 
@@ -976,29 +974,6 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
 </div>
 
 
-  <!-- INVITE MODAL -->
-  <div class="modal-overlay" id="inviteModal" style="display:none">
-    <div class="modal-box" style="max-width:400px;text-align:center">
-      <h3 style="margin:0 0 12px;font-size:16px">دعوت به اتاق</h3>
-      <p style="font-size:12px;color:var(--muted);margin:0 0 16px">لینک زیر رو بفرست برای دوستات تا مستقیم وارد اتاق بشن</p>
-      <div style="display:flex;gap:8px;margin-bottom:12px">
-        <input id="inviteLink" readonly style="flex:1;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text);direction:ltr;text-align:left" value="">
-        <button class="btn btn-primary" onclick="copyInviteLink()" style="white-space:nowrap;font-size:12px;padding:8px 14px">کپی</button>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:4px;flex-wrap:wrap">
-        <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px">
-          <input type="number" id="inviteExpHours" value="24" min="1" max="720" inputmode="numeric" style="width:50px;padding:8px 6px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text);min-height:40px">ساعت اعتبار
-        </label>
-        <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px">
-          <input type="number" id="inviteMaxUses" value="0" min="0" max="100" inputmode="numeric" style="width:50px;padding:8px 6px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text);min-height:40px">حداکثر استفاده (0=نامحدود)
-        </label>
-      </div>
-      <button class="btn btn-primary" onclick="createInviteLink()" style="width:100%;margin-bottom:8px">ساخت لینک جدید</button>
-      <button class="btn btn-ghost" onclick="closeInviteModal()" style="width:100%;font-size:12px">بستن</button>
-    </div>
-  </div>
-
-  
   <!-- INVITE MODAL -->
   <div class="modal-overlay" id="inviteModal" style="display:none">
     <div class="modal-box" style="max-width:400px;text-align:center">
