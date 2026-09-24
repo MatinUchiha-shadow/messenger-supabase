@@ -45,6 +45,12 @@ create policy "friend_requests_all" on public.friend_requests for all using (tru
 create policy "friendships_all" on public.friendships for all using (true) with check (true);
 create policy "voice_bans_all" on public.voice_bans for all using (true) with check (true);
 
--- Realtime
-alter publication supabase_realtime add table public.friend_requests;
-alter publication supabase_realtime add table public.friendships;
+-- Realtime (idempotent)
+do $$ begin
+  alter publication supabase_realtime add table public.friend_requests;
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  alter publication supabase_realtime add table public.friendships;
+exception when duplicate_object then null;
+end $$;

@@ -121,8 +121,16 @@ drop policy if exists "chat_images_all" on storage.objects;
 create policy "avatars_all" on storage.objects for all using (true) with check (true);
 -- Note: if above fails due to existing policies, run separately in dashboard
 
--- 10. Realtime: enable replica identity for realtime
--- (Supabase realtime needs publication)
-alter publication supabase_realtime add table public.messages;
-alter publication supabase_realtime add table public.rooms;
-alter publication supabase_realtime add table public.message_reactions;
+-- 10. Realtime: enable replica identity for realtime (idempotent)
+do $$ begin
+  alter publication supabase_realtime add table public.messages;
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  alter publication supabase_realtime add table public.rooms;
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  alter publication supabase_realtime add table public.message_reactions;
+exception when duplicate_object then null;
+end $$;
