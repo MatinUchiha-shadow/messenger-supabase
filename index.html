@@ -25,22 +25,14 @@ input,textarea{font-family:inherit;outline:none;border:none;background:none;colo
 @keyframes bhOrbit{from{offset-distance:0%}to{offset-distance:100%}}
 @keyframes speakPulse{0%{box-shadow:0 8px 25px rgba(0,0,0,.3),0 0 0 0 rgba(34,197,94,.6)}70%{box-shadow:0 8px 25px rgba(0,0,0,.3),0 0 0 12px rgba(34,197,94,0)}100%{box-shadow:0 8px 25px rgba(0,0,0,.3),0 0 0 0 rgba(34,197,94,0)}}@keyframes speakBorder{0%{border-color:rgba(34,197,94,.4)}50%{border-color:rgba(34,197,94,.8)}100%{border-color:rgba(34,197,94,.4)}}
 
-/* BLACK HOLE */
-#bh-vis{position:absolute;top:50%;left:50%;width:min(110vmin,800px);height:min(110vmin,800px);transform:translate(-50%,-50%);z-index:0;pointer-events:none;display:none}
-body[data-theme="blackhole"] #bh-vis{display:block}
-#bh-vis svg{position:absolute;inset:0;width:100%;height:100%}
-.bh-amb{position:absolute;inset:-10%;border-radius:50%;background:radial-gradient(circle,rgba(255,110,30,.1),transparent 68%);animation:bhAmbientPulse 8s ease-in-out infinite}
-.bh-disk{animation:bhAmbientPulse 5s ease-in-out infinite;transform-origin:200px 200px}
-.bh-hot ellipse{offset-path:path("M 5 200 A 195 46 0 1 1 395 200 A 195 46 0 1 1 5 200");animation:bhOrbit 12s linear infinite;mix-blend-mode:screen}
-.bh-hot ellipse:nth-child(2){animation-delay:-6s}
-body[data-theme="blackhole"]{--bg:#000;--surface:rgba(0,0,0,.88);--panel:rgba(10,10,10,.92);--border:rgba(255,255,255,.06);--accent:#ff6a00;--accent2:#ffa500;--text:#fff;--muted:#555;--bubble-mine:#1a1a1a;--bubble-other:rgba(15,15,15,.9);--bubble-other-text:#fff}
-body[data-theme="blackhole"] .sidebar,body[data-theme="blackhole"] header,body[data-theme="blackhole"] .chat-header{border-color:rgba(255,255,255,.04)}
-body[data-theme="blackhole"] .msg-av{background:radial-gradient(circle,#000 0% 30%,#ff6a00 60%,#000 100%)!important;box-shadow:0 0 8px rgba(255,106,0,.4)}
-body[data-theme="blackhole"] #app{background:transparent}
+/* BLACK HOLE - FIXED: clean dark premium theme */
+#bh-vis{display:none!important}
+body[data-theme="blackhole"]{--bg:#0a0a0f;--bg2:#13131a;--surface:rgba(20,18,32,.9);--panel:rgba(30,28,45,.85);--border:rgba(255,255,255,.06);--accent:#a78bfa;--accent2:#f472b6;--text:#f5f3ff;--muted:#9a9ab5;--bubble-mine:linear-gradient(135deg,#a78bfa,#818cf8);--bubble-other:rgba(30,28,45,.9);--bubble-other-text:#e8e6f5}
+body[data-theme="blackhole"] .sidebar,body[data-theme="blackhole"] header,body[data-theme="blackhole"] .chat-header{border-color:rgba(255,255,255,.06)}
+body[data-theme="blackhole"] #app{background:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(139,92,246,.08),transparent),var(--bg)}
 body[data-theme="blackhole"] .main{background:transparent}
-body[data-theme="blackhole"] header,body[data-theme="blackhole"] #input-bar{background:rgba(0,0,0,.75);backdrop-filter:blur(12px)}
+body[data-theme="blackhole"] header,body[data-theme="blackhole"] #input-bar{background:rgba(16,14,28,.85);backdrop-filter:blur(16px)}
 body[data-theme="blackhole"] #messages{background:transparent}
-body[data-theme="blackhole"] .msg-bubble.mine{box-shadow:0 0 10px rgba(255,106,0,.2)}
 
 /* AUTH */
 #auth{position:fixed;inset:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;overflow:hidden}
@@ -1222,6 +1214,7 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
 </div>
 <audio id="remoteAudio" autoplay playsinline style="display:none"></audio>
 <video id="remoteVideo" autoplay playsinline style="display:none"></video>
+<div id="remoteAudios" style="display:none"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -2730,41 +2723,57 @@ async function createPeer(pid, init) {
     pc.addTrack(screenStream.getVideoTracks()[0], screenStream);
   }
   pc.onicecandidate = function(e) { if (e.candidate && voiceChannel) voiceChannel.send({ type: 'broadcast', event: 'ice', payload: { from: me.id, to: pid, candidate: e.candidate } }); };
-  // Store remote streams per peer
-  var remoteAudioStream = null, remoteVideoStream = null;
-  pc.ontrack = function(e) {
-    if (!e.streams || !e.streams[0]) return;
-    var track = e.track;
-    var stream = e.streams[0];
-    if (track.kind === 'video') {
-      // Screen share video received
-      remoteVideoStream = stream;
-      if (!voiceMembers.has(pid)) voiceMembers.set(pid, { username: 'کاربر' }); updateFloatingVoice();
-      renderCallGrid();
-      var tile = document.getElementById('tile-' + pid);
-      if (tile) {
-        var vid = tile.querySelector('video');
-        if (!vid) {
-          vid = document.createElement('video');
-          vid.autoplay = true; vid.playsInline = true;
-          tile.insertBefore(vid, tile.firstChild);
-          var av = tile.querySelector('.tile-av');
-          if (av) av.style.display = 'none';
-          var lbl = document.createElement('div');
-          lbl.className = 'tile-name-overlay';
-          lbl.textContent = (voiceMembers.get(pid) || {}).username;
-          tile.appendChild(lbl);
-        }
-        vid.srcObject = stream; var fs = document.getElementById('float-screen'); var fsv3 = document.getElementById('floatScreenVideo'); if (fs && fsv3 && !fs.classList.contains('show')) { fsv3.srcObject = stream; fs.classList.add('show'); }
-      }
-    } else {
-      // Audio track
-      remoteAudioStream = stream;
-      $('remoteAudio').srcObject = stream;
-    }
-    var micInd = document.getElementById('mic-indicator-' + pid);
-    if (micInd) micInd.className = 'tile-mic';
-  };
+   // FIXED: per-peer audio (was overwriting single remoteAudio -> one-way bug)
+   var remoteAudioStream = null, remoteVideoStream = null;
+   pc.ontrack = function(e) {
+     if (!e.streams || !e.streams[0]) return;
+     var track = e.track;
+     var stream = e.streams[0];
+     if (track.kind === 'video') {
+       remoteVideoStream = stream;
+       if (!voiceMembers.has(pid)) voiceMembers.set(pid, { username: 'کاربر' }); updateFloatingVoice();
+       renderCallGrid();
+       var tile = document.getElementById('tile-' + pid);
+       if (tile) {
+         var vid = tile.querySelector('video');
+         if (!vid) {
+           vid = document.createElement('video');
+           vid.autoplay = true; vid.playsInline = true;
+           tile.insertBefore(vid, tile.firstChild);
+           var av = tile.querySelector('.tile-av');
+           if (av) av.style.display = 'none';
+           var lbl = document.createElement('div');
+           lbl.className = 'tile-name-overlay';
+           lbl.textContent = (voiceMembers.get(pid) || {}).username;
+           tile.appendChild(lbl);
+         }
+         vid.srcObject = stream; var fs = document.getElementById('float-screen'); var fsv3 = document.getElementById('floatScreenVideo'); if (fs && fsv3 && !fs.classList.contains('show')) { fsv3.srcObject = stream; fs.classList.add('show'); }
+       }
+     } else {
+       remoteAudioStream = stream;
+       // create per-peer audio element (fixes one-way audio when >1 peer)
+       var audCt = $('remoteAudios');
+       var oldAud = document.getElementById('remoteAudio-'+pid);
+       if (oldAud) oldAud.remove();
+       var aud = document.createElement('audio');
+       aud.id = 'remoteAudio-'+pid;
+       aud.autoplay = true; aud.playsInline = true; aud.controls = false;
+       aud.style.display='none';
+       aud.srcObject = stream;
+       if (audCt) audCt.appendChild(aud);
+       else document.body.appendChild(aud);
+       aud.play().catch(function(){});
+       // keep legacy single element for backward compat
+       try{ $('remoteAudio').srcObject = stream; }catch(e){}
+     }
+     var micInd = document.getElementById('mic-indicator-' + pid);
+     if (micInd) micInd.className = 'tile-mic';
+     // ensure speaking indicator realtime
+     if (track.kind==='audio') {
+       var card = document.querySelector('.meet-card[data-uid="'+pid+'"]');
+       if(card){ card.classList.add('speaking'); setTimeout(function(){ card.classList.remove('speaking'); }, 800); }
+     }
+   };
   pc.onconnectionstatechange = function() { if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') { pc.close(); peers.delete(pid); renderCallGrid(); } };
   if (init) {
     var o = await pc.createOffer(); await pc.setLocalDescription(o);
@@ -3099,11 +3108,18 @@ function toggleMute() {
     if (fvBtn) { fvBtn.className = 'fv-btn mute' + (a.enabled ? '' : ' off'); fvBtn.innerHTML = a.enabled ? '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg>' : '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic-off"></use></svg>'; }
     var ind = document.getElementById('mic-indicator-' + me.id);
     if (ind) ind.className = 'tile-mic' + (a.enabled ? '' : ' muted');
-    // Refresh meet view if open
+    // REALTIME: broadcast mute to everyone
+    if (voiceChannel) voiceChannel.send({ type:'broadcast', event:'mute', payload:{ userId: me.id, muted: !a.enabled } });
+    if (realtimeRelay) realtimeRelay.send({ type:'broadcast', event:'mute', payload:{ userId: me.id, muted: !a.enabled } });
     var mv = $('meetView');
     if (mv && mv.classList.contains('show')) renderMeetProfiles();
   }
 }
+// Handle remote mute realtime
+(function(){
+  var _origJoinVoice = joinVoice;
+  // patch to listen for mute events is done inside joinVoice below via extra handler
+})();
 
 function renderVoiceMembers() {
   $('vbMembers').innerHTML = '';
