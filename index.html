@@ -320,6 +320,20 @@ body[data-theme="blackhole"] .room-item.active{background:rgba(139,92,246,.08)}
 .call-ctrl.screen.active{background:var(--accent);color:#fff}
 .call-ctrl.leave{background:var(--red);color:#fff;width:56px;border-radius:16px}
 .call-ctrl.leave:hover{background:#dc2626}
+/* MIC VOLUME - outgoing gain so others hear you softer/louder */
+.mic-vol{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:99px;background:rgba(255,255,255,.05);border:1px solid var(--border)}
+.mic-vol .ui-icon{width:14px;height:14px;color:var(--muted);flex-shrink:0}
+.mic-vol input[type=range]{width:110px;accent-color:var(--accent);cursor:pointer}
+.mic-vol .mic-vol-val{font-size:11px;font-weight:700;color:var(--text);min-width:38px;text-align:left}
+.call-controls .mic-vol{background:rgba(255,255,255,.06)}
+.fv-btn.vol{background:rgba(255,255,255,.08);color:var(--text)}
+.fv-vol-pop{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(4px);display:none;align-items:center;gap:8px;padding:10px 14px;border-radius:14px;background:rgba(20,16,36,.95);border:1px solid rgba(255,255,255,.1);box-shadow:0 12px 40px rgba(0,0,0,.5);z-index:301;opacity:0;transition:opacity .2s,transform .2s}
+.fv-vol-pop.show{display:flex;opacity:1;transform:translateX(-50%) translateY(0)}
+.fv-vol-pop input[type=range]{width:130px;accent-color:var(--accent)}
+.fv-vol-pop .mic-vol-val{font-size:11px;font-weight:700;color:#fff;min-width:38px}
+.fv-vol-pop .ui-icon{width:14px;height:14px;color:var(--muted)}
+.meet-vol{margin-inline-start:auto}
+@media(max-width:768px){.mic-vol input[type=range]{width:80px}.call-controls .mic-vol{padding:6px 8px}.fv-vol-pop input[type=range]{width:110px}}
 @media(max-width:768px){.call-controls{padding:12px 8px;gap:8px}.call-ctrl{width:42px;height:42px;font-size:15px;-webkit-tap-highlight-color:transparent}.call-ctrl.leave{width:50px;border-radius:14px}}
 @media(max-width:768px){
   .call-tile{width:calc(50% - 12px);height:120px;min-width:120px}
@@ -880,6 +894,8 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
   </div>
   <div class="fv-timer" id="fvTimer">00:00</div>
   <button class="fv-btn mute" id="fvMuteBtn" onclick="event.stopPropagation();toggleMute()" title="میکروفون"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg></button>
+  <button class="fv-btn vol" id="fvVolBtn" onclick="event.stopPropagation();toggleFvVol()" title="حجم میکروفون"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg></button>
+  <div class="fv-vol-pop" id="fvVolPop"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg><input type="range" id="micVolSliderFv" min="0" max="150" step="5" value="100" oninput="setMicVolume(this.value)"><span class="mic-vol-val" id="micVolValFv">100%</span></div>
   <button class="fv-btn screen" id="fvScreenBtn" onclick="event.stopPropagation();shareScreen()" title="اشتراک صفحه"><svg class="ui-icon" aria-hidden="true"><use href="#pg-screen"></use></svg></button>
   <button class="fv-btn hangup" onclick="event.stopPropagation();leaveVoice()" title="قطع تماس"><svg class="ui-icon" aria-hidden="true"><use href="#pg-phone"></use></svg></button>
 </div>
@@ -1139,6 +1155,7 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
   <div class="call-grid" id="callGrid"></div>
   <div class="call-controls">
     <button class="call-ctrl mic" id="callMuteBtn" onclick="event.stopPropagation();toggleMute()" title="میکروفون"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg></button>
+    <div class="mic-vol" title="حجم میکروفون (صدایی که بقیه می‌شنوند)"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg><input type="range" id="micVolSlider" min="0" max="150" step="5" value="100" oninput="setMicVolume(this.value)"><span class="mic-vol-val" id="micVolVal">100%</span></div>
     <button class="call-ctrl screen" id="callScreenBtn" onclick="event.stopPropagation();shareScreen()" title="اشتراک صفحه"><svg class="ui-icon" aria-hidden="true"><use href="#pg-screen"></use></svg></button>
      <button class="call-ctrl" id="fullscreenBtn" onclick="event.stopPropagation();toggleFullscreen()" title="تمام‌صفحه" style="background:var(--bg3,#1e2c3a);color:#fff"><svg class="ui-icon" aria-hidden="true"><use href="#pg-expand"></use></svg></button>
     <button class="call-ctrl leave" onclick="leaveVoice()" title="پایان"><svg class="ui-icon" aria-hidden="true"><use href="#pg-phone"></use></svg></button>
@@ -1156,6 +1173,7 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
         <div class="meet-sub" id="meetMemberCount">0 نفر</div>
       </div>
     </div>
+    <div class="mic-vol meet-vol" title="حجم میکروفون (صدایی که بقیه می‌شنوند)"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg><input type="range" id="micVolSliderMeet" min="0" max="150" step="5" value="100" oninput="setMicVolume(this.value)"><span class="mic-vol-val" id="micVolValMeet">100%</span></div>
     <button class="meet-close" onclick="closeMeet()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button>
   </div>
   <div class="meet-grid" id="meetGrid"></div>
@@ -2246,6 +2264,7 @@ async function joinVoice() {
   curVoiceRoom = curRoom;
   try {
     myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    setupMicGain(); syncMicVolUI();
     voiceChannel = db.channel('voice:' + curRoom);
     voiceChannel.on('broadcast', { event: 'join' }, async function(payload) {
       if (payload.payload.userId === me.id) return;
@@ -2340,6 +2359,7 @@ async function joinVoice() {
 function leaveVoice() {
   if (voiceChannel) { voiceChannel.send({ type: 'broadcast', event: 'leave', payload: { userId: me.id } }); db.removeChannel(voiceChannel); voiceChannel = null; }
   if (myStream) { myStream.getTracks().forEach(function(t) { t.stop(); }); myStream = null; }
+  teardownMicGain();
   stopScreenShare();
   peers.forEach(function(pc) { pc.close(); }); peers.clear(); voiceMembers.clear();
   hideFloatingVoice(); curVoiceRoom = null; var fs5 = document.getElementById('float-screen'); if (fs5) { fs5.classList.remove('show'); var fsv5 = document.getElementById('floatScreenVideo'); if (fsv5) fsv5.srcObject = null; }
@@ -2687,8 +2707,11 @@ function renderCallGrid() {
 async function createPeer(pid, init) {
   var pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }, { urls: 'stun:stun2.l.google.com:19302' }] });
   peers.set(pid, pc);
-  // Add audio track
-  if (myStream) myStream.getAudioTracks().forEach(function(t) { pc.addTrack(t, myStream); });
+  // Add audio track through mic gain (mic-volume slider affects what others hear)
+  var _outTrack = (typeof micOutTrack !== 'undefined' && micOutTrack && micOutTrack.readyState === 'live') ? micOutTrack : null;
+  var _outStream = (_outTrack && typeof micOutStream !== 'undefined' && micOutStream) ? micOutStream : myStream;
+  if (_outTrack) { try { pc.addTrack(_outTrack, _outStream); } catch(e) { if (myStream) myStream.getAudioTracks().forEach(function(t) { pc.addTrack(t, myStream); }); } }
+  else if (myStream) myStream.getAudioTracks().forEach(function(t) { pc.addTrack(t, myStream); });
   // Add screen share video track if active
   if (screenStream && screenStream.getVideoTracks().length > 0) {
     pc.addTrack(screenStream.getVideoTracks()[0], screenStream);
@@ -3074,6 +3097,7 @@ function toggleMute() {
   var a = myStream.getAudioTracks()[0];
   if (a) {
     a.enabled = !a.enabled;
+    if (typeof micOutTrack !== 'undefined' && micOutTrack) { try { micOutTrack.enabled = a.enabled; } catch(e) {} }
     var btn = $('callMuteBtn'), fvBtn = $('fvMuteBtn');
     if (btn) { btn.className = 'call-ctrl mic' + (a.enabled ? '' : ' off'); btn.innerHTML = a.enabled ? '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg>' : '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic-off"></use></svg>'; }
     if (fvBtn) { fvBtn.className = 'fv-btn mute' + (a.enabled ? '' : ' off'); fvBtn.innerHTML = a.enabled ? '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg>' : '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic-off"></use></svg>'; }
@@ -3091,6 +3115,61 @@ function toggleMute() {
   var _origJoinVoice = joinVoice;
   // patch to listen for mute events is done inside joinVoice below via extra handler
 })();
+
+// === MIC VOLUME (outgoing gain: what others hear from you, 0-150%) ===
+var micVolume = 100;
+try { micVolume = parseInt(localStorage.getItem('gapchat_mic_vol') || '100', 10) || 100; } catch(e) { micVolume = 100; }
+micVolume = Math.max(0, Math.min(150, micVolume));
+var micCtx = null, micGainNode = null, micDest = null, micOutStream = null, micOutTrack = null;
+function setupMicGain() {
+  teardownMicGain();
+  if (!myStream) return;
+  try {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    micCtx = new AC();
+    var src = micCtx.createMediaStreamSource(myStream);
+    micGainNode = micCtx.createGain();
+    micGainNode.gain.value = micVolume / 100;
+    micDest = micCtx.createMediaStreamDestination();
+    src.connect(micGainNode);
+    micGainNode.connect(micDest);
+    micOutStream = micDest.stream;
+    micOutTrack = (micOutStream.getAudioTracks()[0]) || null;
+    if (micCtx.state === 'suspended') micCtx.resume().catch(function(){});
+  } catch(e) { teardownMicGain(); }
+}
+function teardownMicGain() {
+  micOutTrack = null; micOutStream = null; micDest = null; micGainNode = null;
+  if (micCtx) { try { micCtx.close(); } catch(e) {} micCtx = null; }
+}
+function setMicVolume(v) {
+  micVolume = Math.max(0, Math.min(150, parseInt(v, 10) || 0));
+  try { localStorage.setItem('gapchat_mic_vol', String(micVolume)); } catch(e) {}
+  if (micGainNode) { try { micGainNode.gain.value = micVolume / 100; } catch(e) {} }
+  syncMicVolUI();
+  if (micVolume === 0) toast('حجم میکروفون صفر شد (بقیه صدات رو نمی‌شنون)');
+}
+function syncMicVolUI() {
+  var pairs = [['micVolSlider','micVolVal'],['micVolSliderFv','micVolValFv'],['micVolSliderMeet','micVolValMeet']];
+  pairs.forEach(function(p) {
+    var s = document.getElementById(p[0]), l = document.getElementById(p[1]);
+    if (s && document.activeElement !== s) s.value = micVolume;
+    if (l) l.textContent = micVolume + '%';
+  });
+}
+function toggleFvVol() {
+  var p = $('fvVolPop');
+  if (p) { syncMicVolUI(); p.classList.toggle('show'); }
+}
+document.addEventListener('click', function(e) {
+  var p = $('fvVolPop');
+  if (p && p.classList.contains('show')) {
+    var btn = $('fvVolBtn');
+    if (!p.contains(e.target) && e.target !== btn && !(btn && btn.contains(e.target))) p.classList.remove('show');
+  }
+});
+syncMicVolUI();
 
 function renderVoiceMembers() {
   $('vbMembers').innerHTML = '';
