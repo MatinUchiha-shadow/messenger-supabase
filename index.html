@@ -644,6 +644,17 @@ textarea,input[type="text"],input[type="email"],input[type="password"]{-webkit-u
 #float-screen .fs-label{position:absolute;bottom:4px;left:4px;font-size:10px;color:#fff;background:rgba(0,0,0,.5);padding:2px 6px;border-radius:4px}
 #float-screen .fs-switch{position:absolute;bottom:4px;right:4px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:12px;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center}
 #float-screen .fs-switch:hover{background:var(--accent)}
+/* VOICE MODERATION (owner/admin mute + ban buttons on tiles/cards) */
+.tile-mod{width:24px;height:24px;border-radius:8px;background:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.15);font-size:11px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;margin:0 2px}
+.tile-mod:hover{background:var(--accent)}
+.tile-mod.danger:hover{background:var(--red)}
+.tile-mods{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:2px;z-index:3;background:rgba(0,0,0,.45);border-radius:8px;padding:2px 4px}
+.meet-mods{display:flex;gap:6px;margin-top:4px}
+.meet-mod{padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--panel);color:var(--text)}
+.meet-mod:hover{background:var(--border)}
+.meet-mod.danger{background:rgba(239,68,68,.12);color:var(--red);border-color:rgba(239,68,68,.3)}
+.ban-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);margin-bottom:6px;font-size:12px}
+.ban-row button{margin-inline-start:auto;padding:4px 10px;border-radius:8px;background:var(--green);color:#fff;font-size:11px;font-weight:700;border:none;cursor:pointer}
 @media(max-width:768px){#float-screen{max-width:200px;max-height:130px;bottom:90px}}
 /* FLOATING VOICE BAR */
 #float-voice{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120px);z-index:300;display:none;align-items:center;gap:12px;padding:10px 20px;border-radius:50px;background:rgba(20,16,36,.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.08);box-shadow:0 12px 40px rgba(0,0,0,.5),0 0 0 1px rgba(139,92,246,.15);transition:transform .4s cubic-bezier(.16,1,.3,1);max-width:95vw;flex-wrap:wrap;justify-content:center}
@@ -905,7 +916,7 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
 <!-- FLOATING SCREEN SHARE PREVIEW -->
 <div id="float-screen">
   <button class="fs-full" onclick="toggleFsPreview()" title="تمام‌صفحه"><svg class="ui-icon" aria-hidden="true"><use href="#pg-expand"></use></svg></button>
-  <button class="fs-close" onclick="stopScreenShare()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button>
+  <button class="fs-close" onclick="closeShareView()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button>
   <button class="fs-switch" id="fsSwitchCam" onclick="switchShareCamera()" title="تعویض دوربین" style="display:none"><svg class="ui-icon" aria-hidden="true"><use href="#pg-camera"></use></svg></button>
   <div class="fs-label" id="fsLabel"><svg class="ui-icon" aria-hidden="true"><use href="#pg-screen"></use></svg> اشتراک صفحه</div>
   <video id="floatScreenVideo" autoplay muted playsinline></video>
@@ -1180,6 +1191,7 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
     <button class="meet-close" onclick="closeMeet()"><svg class="ui-icon" aria-hidden="true"><use href="#pg-close"></use></svg></button>
   </div>
   <div class="meet-grid" id="meetGrid"></div>
+  <div id="voiceBans" style="padding:0 30px 20px"></div>
 </div>
 
 
@@ -2266,6 +2278,11 @@ let callTimerInterval = null, callSeconds = 0;
 async function joinVoice() {
   curVoiceRoom = curRoom;
   try {
+    // Banned users cannot join this voice room
+    try {
+      var banChk = await db.from('voice_bans').select('id').eq('room_id', curRoom).eq('user_id', me.id).limit(1);
+      if (banChk.data && banChk.data.length) { toast('از این ویس بن هستی'); curVoiceRoom = null; return; }
+    } catch(e) {}
     myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     setupMicGain(); syncMicVolUI();
     voiceChannel = db.channel('voice:' + curRoom);
@@ -2323,10 +2340,13 @@ async function joinVoice() {
         var lbl = document.createElement('div');
         lbl.className = 'tile-name-overlay';
         lbl.textContent = (voiceMembers.get(payload.payload.userId) || {}).username + (payload.payload.kind === 'camera' ? ' - دوربین' : ' - اشتراک صفحه');
+        remoteShareKinds[payload.payload.userId] = payload.payload.kind || 'screen';
         tile.appendChild(lbl);
       }
     }).on('broadcast', { event: 'screen-stop' }, function(payload) {
       // Screen share stopped - remove video from peer's tile
+      delete remoteShares[payload.payload.userId]; delete remoteShareKinds[payload.payload.userId];
+      if (remoteShareUid === payload.payload.userId) { remoteShareUid = null; var _sfs = document.getElementById('float-screen'); if (_sfs) _sfs.classList.remove('show'); var _sfsv = document.getElementById('floatScreenVideo'); if (_sfsv) _sfsv.srcObject = null; }
       var tile = document.getElementById('tile-' + payload.payload.userId);
       if (tile) {
         var vid = tile.querySelector('video');
@@ -2337,6 +2357,19 @@ async function joinVoice() {
         if (lbl) lbl.remove();
         tile.classList.remove('screen-sharing');
       }
+    }).on('broadcast', { event: 'mute' }, function(payload) {
+      var d = payload.payload; if (!d || !d.userId || d.userId === me.id) return;
+      mutedPeers[d.userId] = !!d.muted;
+      var ind = document.getElementById('mic-indicator-' + d.userId);
+      if (ind) ind.className = 'tile-mic' + (d.muted ? ' muted' : '');
+      var mv = $('meetView');
+      if (mv && mv.classList.contains('show')) renderMeetProfiles();
+    }).on('broadcast', { event: 'force-mute' }, function(payload) {
+      var d = payload.payload; if (!d || d.to !== me.id) return;
+      applyLocalMute(!!d.muted, (d.byName || 'مدیر') + (d.muted ? ' میکروفون تو رو قطع کرد' : ' میکروفون تو رو وصل کرد'));
+    }).on('broadcast', { event: 'voice-kick' }, function(payload) {
+      var d = payload.payload; if (!d || d.to !== me.id) return;
+      toast('از ویس اخراج شدی'); leaveVoice();
     }).on('broadcast', { event: 'sfx' }, function(payload) {
       var d = payload.payload;
       if (d && d.userId === me.id) return;
@@ -2345,6 +2378,8 @@ async function joinVoice() {
     }).on('broadcast', { event: 'leave' }, function(payload) {
       var m = voiceMembers.get(payload.payload.userId);
       if (m) toast(m.username + ' از تماس صوتی خارج شد');
+      delete remoteShares[payload.payload.userId]; delete remoteShareKinds[payload.payload.userId]; delete mutedPeers[payload.payload.userId];
+      if (remoteShareUid === payload.payload.userId) remoteShareUid = null;
       voiceMembers.delete(payload.payload.userId); updateFloatingVoice(); var fs4 = document.getElementById('float-screen'); if (fs4 && voiceMembers.size <= 1) { fs4.classList.remove('show'); }
       if (peers.has(payload.payload.userId)) { peers.get(payload.payload.userId).close(); peers.delete(payload.payload.userId); }
       renderCallGrid();
@@ -2700,9 +2735,12 @@ function renderCallGrid() {
     tile.className = 'call-tile';
     tile.id = 'tile-' + uid;
     tile.style.cursor = 'pointer';
-    tile.onclick = (function(username) { return function() { openProfile(username); }; })(m.username);
+    tile.onclick = (function(id, username) { return function() { var t = document.getElementById('tile-' + id); if (t && t.querySelector('video')) openShareView(id); else openProfile(username); }; })(uid, m.username);
     var peerAvatar = m.avatar_url ? '<img src="' + esc(m.avatar_url) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : (m.username || '?').charAt(0).toUpperCase();
-    tile.innerHTML = '<div class="tile-mic" id="mic-indicator-' + uid + '"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg></div><div class="tile-av" style="background:linear-gradient(135deg,var(--accent2),var(--accent))">' + peerAvatar + '</div><div class="tile-name">' + esc(m.username || '') + '</div><div class="tile-status">در تماس</div>';
+    var peerMuted = (typeof mutedPeers !== 'undefined' && mutedPeers[uid]) ? ' muted' : '';
+    var modBtns = '';
+    if (isMod()) modBtns = '<div class="tile-mods"><button class="tile-mod" onclick="event.stopPropagation();forceMuteUser(\'' + uid + '\')" title="میوت/آنمیوت">🔇</button><button class="tile-mod danger" onclick="event.stopPropagation();banVoiceUser(\'' + uid + '\')" title="بن از ویس">⛔</button></div>';
+    tile.innerHTML = '<div class="tile-mic' + peerMuted + '" id="mic-indicator-' + uid + '"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg></div><div class="tile-av" style="background:linear-gradient(135deg,var(--accent2),var(--accent))">' + peerAvatar + '</div><div class="tile-name">' + esc(m.username || '') + '</div><div class="tile-status">در تماس</div>' + modBtns;
     grid.appendChild(tile);
   });
 }
@@ -2744,7 +2782,7 @@ async function createPeer(pid, init) {
            lbl.textContent = (voiceMembers.get(pid) || {}).username;
            tile.appendChild(lbl);
          }
-         vid.srcObject = stream; var fs = document.getElementById('float-screen'); var fsv3 = document.getElementById('floatScreenVideo'); if (fs && fsv3 && !fs.classList.contains('show')) { fsv3.srcObject = stream; fs.classList.add('show'); }
+          vid.srcObject = stream; remoteShares[pid] = stream; var fs = document.getElementById('float-screen'); var fsv3 = document.getElementById('floatScreenVideo'); if (fs && fsv3 && !fs.classList.contains('show')) { remoteShareUid = pid; fsv3.srcObject = stream; fs.classList.add('show'); }
        }
      } else {
        remoteAudioStream = stream;
@@ -3061,14 +3099,30 @@ function renderMeetProfiles() {
       status.innerHTML = '<span class="dot"></span> ' + (micOn ? 'میکروفون فعال' : 'میکروفون قطع');
       card.appendChild(status);
     } else if (m.inVoice && !m.isMe) {
+      var isMuted = (typeof mutedPeers !== 'undefined' && mutedPeers[m.id]);
       var status = document.createElement('div');
-      status.className = 'meet-card-status mic-on';
-      status.innerHTML = '<span class="dot"></span> در تماس صوتی';
+      status.className = 'meet-card-status ' + (isMuted ? 'mic-off' : 'mic-on');
+      status.innerHTML = '<span class="dot"></span> ' + (isMuted ? 'میوت شده' : 'در تماس صوتی');
       card.appendChild(status);
+      if (isMod()) {
+        var mods = document.createElement('div');
+        mods.className = 'meet-mods';
+        var mb = document.createElement('button');
+        mb.className = 'meet-mod';
+        mb.textContent = isMuted ? 'آنمیوت' : 'میوت';
+        mb.onclick = (function(id){ return function(){ forceMuteUser(id); }; })(m.id);
+        var bb = document.createElement('button');
+        bb.className = 'meet-mod danger';
+        bb.textContent = 'بن';
+        bb.onclick = (function(id){ return function(){ banVoiceUser(id); }; })(m.id);
+        mods.appendChild(mb); mods.appendChild(bb);
+        card.appendChild(mods);
+      }
     }
 
     grid.appendChild(card);
   });
+  loadVoiceBans();
 }
 
 // Show meet button when room is opened
@@ -3098,26 +3152,104 @@ updateFloatingVoice = function() {
 function toggleMute() {
   if (!myStream) return;
   var a = myStream.getAudioTracks()[0];
-  if (a) {
-    a.enabled = !a.enabled;
-    if (typeof micOutTrack !== 'undefined' && micOutTrack) { try { micOutTrack.enabled = a.enabled; } catch(e) {} }
-    var btn = $('callMuteBtn'), fvBtn = $('fvMuteBtn');
-    if (btn) { btn.className = 'call-ctrl mic' + (a.enabled ? '' : ' off'); btn.innerHTML = a.enabled ? '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg>' : '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic-off"></use></svg>'; }
-    if (fvBtn) { fvBtn.className = 'fv-btn mute' + (a.enabled ? '' : ' off'); fvBtn.innerHTML = a.enabled ? '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg>' : '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic-off"></use></svg>'; }
-    var ind = document.getElementById('mic-indicator-' + me.id);
-    if (ind) ind.className = 'tile-mic' + (a.enabled ? '' : ' muted');
-    // REALTIME: broadcast mute to everyone
-    if (voiceChannel) voiceChannel.send({ type:'broadcast', event:'mute', payload:{ userId: me.id, muted: !a.enabled } });
-    if (realtimeRelay) realtimeRelay.send({ type:'broadcast', event:'mute', payload:{ userId: me.id, muted: !a.enabled } });
-    var mv = $('meetView');
-    if (mv && mv.classList.contains('show')) renderMeetProfiles();
-  }
+  if (a) applyLocalMute(a.enabled, null);
 }
-// Handle remote mute realtime
-(function(){
-  var _origJoinVoice = joinVoice;
-  // patch to listen for mute events is done inside joinVoice below via extra handler
-})();
+// === SHARE VIEW (reopen someone's share after closing the preview) ===
+var remoteShares = {}, remoteShareKinds = {}, remoteShareUid = null;
+function closeShareView() {
+  if (screenStream) { stopScreenShare(); return; } // my own share: really stop it
+  var fs = document.getElementById('float-screen');
+  if (fs) fs.classList.remove('show'); // just hide my view, stream stays stored
+}
+function openShareView(uid) {
+  uid = uid || remoteShareUid;
+  var s = null;
+  if (screenStream) s = screenStream;
+  else if (uid && remoteShares[uid]) { s = remoteShares[uid]; remoteShareUid = uid; }
+  else { var keys = Object.keys(remoteShares); if (keys.length) { remoteShareUid = keys[0]; s = remoteShares[keys[0]]; } }
+  if (!s) { toast('شیر فعالی نیست'); return; }
+  var fsv = document.getElementById('floatScreenVideo');
+  if (fsv) fsv.srcObject = s;
+  var fs = document.getElementById('float-screen');
+  if (fs) fs.classList.add('show');
+  var kind = screenStream ? shareKind : (remoteShareKinds[remoteShareUid] || 'screen');
+  var fsl = $('fsLabel'); if (fsl) fsl.innerHTML = '<svg class="ui-icon" aria-hidden="true"><use href="#pg-' + (kind === 'camera' ? 'camera' : 'screen') + '"></use></svg> ' + (kind === 'camera' ? 'اشتراک دوربین' : 'اشتراک صفحه');
+}
+
+// === VOICE MODERATION (owner/admin mute + ban) ===
+var mutedPeers = {};
+function isMod() { return myProfile && ['owner','admin'].indexOf(myProfile.role) !== -1; }
+function applyLocalMute(muted, reason) {
+  if (!myStream) return;
+  var a = myStream.getAudioTracks()[0];
+  if (a) a.enabled = !muted;
+  if (typeof micOutTrack !== 'undefined' && micOutTrack) { try { micOutTrack.enabled = !muted; } catch(e) {} }
+  var btn = $('callMuteBtn'), fvBtn = $('fvMuteBtn');
+  if (btn) { btn.className = 'call-ctrl mic' + (muted ? ' off' : ''); btn.innerHTML = muted ? '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic-off"></use></svg>' : '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg>'; }
+  if (fvBtn) { fvBtn.className = 'fv-btn mute' + (muted ? ' off' : ''); fvBtn.innerHTML = muted ? '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic-off"></use></svg>' : '<svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg>'; }
+  var ind = document.getElementById('mic-indicator-' + me.id);
+  if (ind) ind.className = 'tile-mic' + (muted ? ' muted' : '');
+  if (voiceChannel) voiceChannel.send({ type:'broadcast', event:'mute', payload:{ userId: me.id, muted: muted } });
+  if (realtimeRelay) realtimeRelay.send({ type:'broadcast', event:'mute', payload:{ userId: me.id, muted: muted } });
+  var mv = $('meetView');
+  if (mv && mv.classList.contains('show')) renderMeetProfiles();
+  if (reason) toast(reason);
+}
+function forceMuteUser(uid) {
+  if (!isMod()) { toast('فقط owner/admin'); return; }
+  if (!voiceChannel) { toast('اول وارد ویس شو'); return; }
+  var target = !mutedPeers[uid];
+  var nm = (myProfile && (myProfile.display_name || myProfile.username)) || 'مدیر';
+  voiceChannel.send({ type:'broadcast', event:'force-mute', payload:{ to: uid, muted: target, byName: nm } });
+  toast(target ? 'میوت شد' : 'آنمیوت شد');
+}
+async function banVoiceUser(uid) {
+  if (!isMod()) { toast('فقط owner/admin'); return; }
+  var u = voiceMembers.get(uid);
+  if (!confirm('بن از ویس؟ ' + ((u && u.username) || ''))) return;
+  var roomId = curVoiceRoom || curRoom;
+  var ins = await db.from('voice_bans').insert({ room_id: roomId, user_id: uid, banned_by: me.id });
+  if (ins.error) { toast('خطا: ' + (ins.error.message || '')); return; }
+  if (voiceChannel) voiceChannel.send({ type:'broadcast', event:'voice-kick', payload:{ to: uid } });
+  toast('بن شد');
+  loadVoiceBans();
+}
+async function unbanVoiceUser(uid) {
+  if (!isMod()) { toast('فقط owner/admin'); return; }
+  var roomId = curVoiceRoom || curRoom;
+  var del = await db.from('voice_bans').delete().eq('room_id', roomId).eq('user_id', uid);
+  if (del.error) { toast('خطا: ' + (del.error.message || '')); return; }
+  toast('رفع بن شد');
+  loadVoiceBans();
+}
+async function loadVoiceBans() {
+  var box = $('voiceBans');
+  if (!box) return;
+  box.innerHTML = '';
+  if (!isMod()) return;
+  try {
+    var roomId = curVoiceRoom || curRoom;
+    if (!roomId) return;
+    var res = await db.from('voice_bans').select('user_id').eq('room_id', roomId);
+    if (res.error || !res.data || !res.data.length) return;
+    var ids = res.data.map(function(r){ return r.user_id; });
+    var users = await db.from('profiles').select('id,username,display_name').in('id', ids);
+    var head = document.createElement('div');
+    head.style.cssText = 'font:700 10px inherit;color:var(--red);padding:6px 8px';
+    head.textContent = 'بن‌شدگان (' + ids.length + ')';
+    box.appendChild(head);
+    (users.data || ids.map(function(id){ return { id: id }; })).forEach(function(u) {
+      var d = document.createElement('div');
+      d.className = 'ban-row';
+      d.innerHTML = '<span style="flex:1">' + esc(u.display_name || u.username || 'کاربر') + '</span>';
+      var b = document.createElement('button');
+      b.textContent = 'رفع بن';
+      b.onclick = (function(id){ return function(){ unbanVoiceUser(id); }; })(u.id);
+      d.appendChild(b);
+      box.appendChild(d);
+    });
+  } catch(e) {}
+}
 
 // === MIC VOLUME (outgoing gain: what others hear from you, 0-150%) ===
 var micVolume = 100;
