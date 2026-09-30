@@ -291,7 +291,8 @@ body[data-theme="blackhole"] .room-item.active{background:rgba(139,92,246,.08)}
 #meetView{position:fixed;inset:0;z-index:160;display:none;flex-direction:column;background:rgba(8,6,18,.94);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px)}
 #meetView.show{display:flex;animation:meetIn .4s cubic-bezier(.16,1,.3,1)}
 @keyframes meetIn{from{opacity:0;transform:scale(1.03)}to{opacity:1;transform:scale(1)}}
-.meet-header{padding:16px 24px;display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.meet-header{padding:16px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
+@media(max-width:768px){.meet-header{flex-wrap:wrap}.meet-header-left{flex:1;min-width:0}.meet-vol{order:5;flex:1 1 100%;justify-content:center}}
 .meet-header-left{display:flex;align-items:center;gap:16px}
 .meet-title{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.5px}
 .meet-sub{font-size:12px;color:var(--muted);margin-top:2px}
@@ -529,11 +530,16 @@ video.pf-banner-img,video.pf-avatar-wrap video{max-width:100vw;max-height:100vh}
 .modal-card input:focus{border-color:var(--accent)}
 .modal-btns{display:flex;gap:6px;margin-top:12px}
 .modal-btns .btn{flex:1;padding:9px;border-radius:8px;font:600 12px inherit;text-align:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 14px;border-radius:10px;font:600 12px inherit;cursor:pointer;border:1px solid transparent;transition:all .15s;text-align:center}
+.btn:active{transform:scale(.97)}
 .btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{filter:brightness(1.12)}
 .btn-ghost{background:var(--panel);color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--border)}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:20px;animation:scaleIn .25s var(--ease);box-shadow:0 24px 64px rgba(0,0,0,.5);max-height:85vh;overflow-y:auto}
 
 /* TOAST */
-#toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(16px) scale(.95);background:var(--panel);border:1px solid var(--border);padding:8px 16px;border-radius:99px;font-size:12px;opacity:0;transition:all .25s var(--ease);pointer-events:none;z-index:99;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.3)}
+#toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(16px) scale(.95);background:var(--panel);border:1px solid var(--border);padding:8px 16px;border-radius:14px;font-size:12px;opacity:0;transition:all .25s var(--ease);pointer-events:none;z-index:9999;max-width:92vw;white-space:normal;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.3)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
 
 /* MOBILE */
@@ -942,7 +948,7 @@ button>.ui-icon,.vb-join>.ui-icon,.call-ctrl>.ui-icon,.fv-btn>.ui-icon{width:16p
 
 
   <!-- INVITE MODAL -->
-  <div class="modal-overlay" id="inviteModal" style="display:none">
+  <div class="modal-overlay" id="inviteModal">
     <div class="modal-box" style="max-width:400px;text-align:center">
       <h3 style="margin:0 0 12px;font-size:16px">دعوت به اتاق</h3>
       <p style="font-size:12px;color:var(--muted);margin:0 0 16px">لینک زیر رو بفرست برای دوستات تا مستقیم وارد اتاق بشن</p>
@@ -1896,6 +1902,7 @@ async function openRoom(id, name, type) {
   reactions = {};
   $('welcome').style.display = 'none';
   $('chatHeader').style.display = 'flex';
+  if ($('inviteBtn')) $('inviteBtn').style.display = '';
   $('roomTitle').textContent = name;
   const b = $('roomBadge'); b.textContent = type === 'voice' ? 'صوتی' : 'گروه'; b.className = 'chat-badge' + (type === 'voice' ? ' voice' : '');
   $('input-bar').classList.add('show'); // always show input
@@ -2365,6 +2372,62 @@ function leaveVoice() {
 }
 
 // === SOUNDBOARD removed: effects section deleted by owner request ===
+// INVITE LINKS
+window.showInviteModal = function() {
+  if (!curRoom) return;
+  $('inviteModal').style.display = '';
+  $('inviteModal').classList.add('show');
+  $('inviteLink').value = '';
+  $('inviteExpHours').value = '24';
+  $('inviteMaxUses').value = '0';
+};
+window.closeInviteModal = function() { $('inviteModal').style.display = 'none'; $('inviteModal').classList.remove('show'); };
+window.copyInviteLink = function() {
+  var inp = $('inviteLink');
+  if (!inp.value) return toast('اول لینک بساز');
+  navigator.clipboard.writeText(inp.value).then(function() { toast('لینک کپی شد'); }).catch(function() {
+    inp.select(); document.execCommand('copy'); toast('لینک کپی شد');
+  });
+};
+window.createInviteLink = async function() {
+  if (!curRoom || !me) return;
+  var hours = parseInt($('inviteExpHours').value) || 24;
+  var maxUses = parseInt($('inviteMaxUses').value) || 0;
+  var token = crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) { var r = Math.random()*16|0, v = c==='x'?r:(r&0x3|0x8); return v.toString(16); });
+  var expires = new Date(Date.now() + hours * 3600000).toISOString();
+  var res = await db.from('invite_tokens').insert({ room_id: curRoom, created_by: me.id, token: token, expires_at: expires, max_uses: maxUses });
+  if (res.error) { toast('خطا: ' + (res.error.message || '')); return; }
+  var link = window.location.origin + window.location.pathname + '?invite=' + token;
+  $('inviteLink').value = link;
+  toast('لینک ساخته شد');
+};
+
+// HANDLE INVITE ON PAGE LOAD
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var inviteToken = params.get('invite');
+  if (inviteToken) {
+    window._pendingInvite = inviteToken;
+  }
+})();
+
+window.joinByInvite = async function(token) {
+  var res = await db.from('invite_tokens').select('*, rooms(name,type)').eq('token', token).single();
+  if (res.error || !res.data) { toast('لینک دعوت نامعتبره'); return; }
+  var inv = res.data;
+  if (inv.expires_at && new Date(inv.expires_at) < new Date()) { toast('لینک منقضی شده'); return; }
+  if (inv.max_uses > 0 && inv.uses >= inv.max_uses) { toast('حداکثر استفاده از لینک تموم شده'); return; }
+  // Increment uses
+  await db.from('invite_tokens').update({ uses: (inv.uses || 0) + 1 }).eq('id', inv.id);
+  // Open the room
+  var rname = inv.rooms && inv.rooms.length ? inv.rooms[0].name : 'اتاق';
+  var rtype = inv.rooms && inv.rooms.length ? (inv.rooms[0].type || 'text') : 'text';
+  openRoom(inv.room_id, rname, rtype);
+  // Clean URL
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+};
 function showCallPanel() { showFloatingVoice(); return;
   $('callPanel').classList.add('show');
   $('callRoomName').textContent = $('roomTitle').textContent;
@@ -4174,7 +4237,6 @@ openSettings = async function() {
     <symbol id="pg-reply" viewBox="0 0 24 24"><path d="M10 7 4 12l6 5v-3c5 0 8 1 10 4-1-6-4-9-10-9z"/></symbol>
     <symbol id="pg-expand" viewBox="0 0 24 24"><path d="M8 4H4v4M16 4h4v4M8 20H4v-4M20 16v4h-4"/></symbol>
     <symbol id="pg-compress" viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M20 15h-5v5"/></symbol>
-    <symbol id="pg-plus" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
     <symbol id="pg-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
     <symbol id="pg-crop" viewBox="0 0 24 24"><path d="M6 3v15a3 3 0 0 0 3 3h12M3 6h15a3 3 0 0 1 3 3v12"/></symbol>
     <symbol id="pg-palette" viewBox="0 0 24 24"><circle cx="7.5" cy="9" r="5.8"/><circle cx="16.5" cy="9" r="5.8"/><circle cx="12" cy="16.5" r="5.8"/></symbol>
@@ -4190,8 +4252,6 @@ openSettings = async function() {
     <symbol id="pg-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></symbol>
     <symbol id="pg-video" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
     <symbol id="pg-star" viewBox="0 0 24 24"><path d="m12 2 3 6.5 7 .8-5 4.8 1.5 7-6.5-3.6-6.5 3.6 1.5-7-5-4.8 7-.8z"/></symbol>
-    <symbol id="pg-crown" viewBox="0 0 24 24"><path d="M2 8l3.5 6h13L22 8l-5 3-5-7-5 7-5-3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="7" cy="7" r="1.5"/><circle cx="17" cy="7" r="1.5"/><circle cx="12" cy="5" r="1.5"/></symbol>
-    <symbol id="pg-shield" viewBox="0 0 24 24"><path d="M12 2s8 4 8 8v4c0 5-8 8-8 8s-8-3-8-8v-4c0-4 8-8 8-8z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
     <symbol id="pg-gavel" viewBox="0 0 24 24"><path d="M6 2v4m12-4v4M4 6l4 4m8 0l4-4M6 12h12v6a4 4 0 01-4 4h-4a4 4 0 01-4-4v-6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><rect x="10" y="10" width="4" height="4" rx="1"/></symbol>
     <symbol id="pg-fire" viewBox="0 0 24 24"><path d="M12 22c4-2 6-6 6-10a6 6 0 00-12 0c0 4 2 8 6 10z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 22V12" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M15 8a3 3 0 00-6 0" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
     <symbol id="pg-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 10.5v6M12 7.4v.1"/></symbol>
@@ -4205,7 +4265,6 @@ openSettings = async function() {
     <symbol id="pg-search-nav-up" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol>
     <symbol id="pg-search-nav-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
     <symbol id="pg-heart-filled" viewBox="0 0 24 24"><path d="M12 21C8 17 3 14 3 9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 5-5 8-9 12z" fill="currentColor"/></symbol>
-    <symbol id="pg-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14c1 2 3 3 4 3s3-1 4-3M9 9v1M15 9v1"/></symbol>
 
   </svg>
 </body>
