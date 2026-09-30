@@ -61,6 +61,14 @@ body[data-theme="blackhole"] #bh-vis{display:block}
 #bh-vis .bh-spin i{position:absolute;top:-3px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#ffe9c4;box-shadow:0 0 10px 3px rgba(255,190,120,.75)}
 #bh-vis .bh-spin i:nth-child(2){top:auto;bottom:-2px;width:3px;height:3px;margin-left:-1.5px;background:#c4b5fd;box-shadow:0 0 8px 2px rgba(167,139,250,.7)}
 #bh-vis .bh-orbit.o2 .bh-spin i{width:4px;height:4px;background:#ede9fe;box-shadow:0 0 9px 2px rgba(196,181,253,.8)}
+/* volumetric warm halo hugging the disk plane (depth) */
+#bh-vis .bh-disk-glow{top:50%;left:50%;width:96%;aspect-ratio:3.4;transform:translate(-50%,-50%) rotateX(73deg);border-radius:50%;background:radial-gradient(ellipse at center,rgba(255,150,60,.22) 0%,rgba(167,80,40,.12) 30%,transparent 62%);filter:blur(24px);z-index:0;animation:bhDiskShimmer 13s ease-in-out -5s infinite}
+/* scorching inner edge of the disk right at the shadow */
+#bh-vis .bh-inner{top:50%;left:50%;width:38.5%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:conic-gradient(from 30deg,rgba(255,240,210,.9),rgba(255,180,90,.5) 20%,rgba(150,60,25,.18) 40%,transparent 55%,rgba(120,45,80,.15) 70%,rgba(255,170,80,.55) 86%,rgba(255,240,210,.9));-webkit-mask:radial-gradient(closest-side,transparent 90%,#000 92%,#000 96.5%,transparent 98%);mask:radial-gradient(closest-side,transparent 90%,#000 92%,#000 96.5%,transparent 98%);filter:blur(2px);z-index:3;animation:bhInnerPulse 6s ease-in-out infinite}
+@keyframes bhInnerPulse{0%,100%{opacity:.6}50%{opacity:1}}
+/* bright blob slowly travelling along the disk (flowing matter) */
+#bh-vis .bh-sweep{top:50%;left:50%;width:84%;aspect-ratio:3.1;transform:translate(-50%,-50%) rotateX(73deg);border-radius:50%;background-image:radial-gradient(ellipse 9% 32% at 50% 50%,rgba(255,238,205,.6),transparent 70%);background-size:220% 100%;background-repeat:no-repeat;-webkit-mask:radial-gradient(ellipse at center,#000 22%,transparent 68%);mask:radial-gradient(ellipse at center,#000 22%,transparent 68%);clip-path:inset(18% -2% 18% -2%);z-index:4;animation:bhSweep 16s ease-in-out infinite alternate}
+@keyframes bhSweep{from{background-position:12% 50%}to{background-position:88% 50%}}
 @keyframes bhStars{from{transform:rotate(0deg)} to{transform:rotate(360deg)}}
 body[data-theme="blackhole"]{--bg:#08080c;--bg2:#0f0f14;--surface:rgba(18,16,28,.88);--panel:rgba(28,26,40,.82);--border:rgba(255,255,255,.05);--accent:#a78bfa;--accent2:#f472b6;--text:#f5f3ff;--muted:#9a9ab5;--bubble-mine:linear-gradient(135deg,#a78bfa,#818cf8);--bubble-other:rgba(28,26,40,.9);--bubble-other-text:#e8e6f5}
 body[data-theme="blackhole"] .sidebar,body[data-theme="blackhole"] header,body[data-theme="blackhole"] .chat-header{border-color:rgba(255,255,255,.04);background:rgba(12,10,20,.92)!important;backdrop-filter:blur(24px)}
@@ -831,10 +839,13 @@ body{transition:background-color .35s ease}
   <div class="bh-stars"></div>
   <div class="bh-stars2"></div>
   <div class="bh-lens"></div>
+  <div class="bh-disk-glow"></div>
   <div class="bh-disk-back"></div>
   <div class="bh-core"></div>
   <div class="bh-rim"></div>
+  <div class="bh-inner"></div>
   <div class="bh-disk-front"></div>
+  <div class="bh-sweep"></div>
   <div class="bh-arc"></div>
   <div class="bh-orbit o1"><div class="bh-spin"><i></i><i></i></div></div>
   <div class="bh-orbit o2"><div class="bh-spin"><i></i></div></div>
@@ -3772,6 +3783,30 @@ function toast(t) { var el = $('toast'); el.textContent = t; el.classList.add('s
 applyTheme(curTheme);
 initDrag(document.getElementById("float-voice"));
 initDrag(document.getElementById("float-screen"));
+
+// === BLACK HOLE parallax depth: layers drift with mouse (transform-only, desktop) ===
+(function(){
+  var layers = null, tx = 0, ty = 0, cx = 0, cy = 0, raf = null;
+  var DEPTH = [['.bh-nebula',1.5],['.bh-stars',1],['.bh-stars2',1.25],['.bh-lens',.7],['.bh-disk-glow',.6],['.bh-disk-back',.55],['.bh-core',.25],['.bh-rim',.25],['.bh-inner',.3],['.bh-disk-front',.55],['.bh-sweep',.55],['.bh-arc',.4],['.bh-orbit',.5]];
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function active() { return !reduceMotion && document.body.getAttribute('data-theme') === 'blackhole'; }
+  function tick(){
+    raf = null;
+    cx += (tx - cx) * .06; cy += (ty - cy) * .06;
+    if (layers) layers.forEach(function(L){
+      L[0].style.translate = (cx * 14 * L[1]).toFixed(2) + 'px ' + (cy * 10 * L[1]).toFixed(2) + 'px';
+    });
+    if (Math.abs(tx - cx) > .002 || Math.abs(ty - cy) > .002) raf = requestAnimationFrame(tick);
+    else if (layers) layers.forEach(function(L){ L[0].style.translate = '0px 0px'; });
+  }
+  document.addEventListener('mousemove', function(e){
+    if (!active()) return;
+    if (!layers) { var vis = document.getElementById('bh-vis'); if (!vis) return; layers = []; DEPTH.forEach(function(D){ vis.querySelectorAll(D[0]).forEach(function(el){ layers.push([el, D[1]]); }); }); }
+    if (!layers.length) return;
+    tx = (e.clientX / window.innerWidth - .5) * 2; ty = (e.clientY / window.innerHeight - .5) * 2;
+    if (!raf) raf = requestAnimationFrame(tick);
+  }, {passive:true});
+})();
 loadSession();
 
 // Fix Android keyboard - keep input visible
