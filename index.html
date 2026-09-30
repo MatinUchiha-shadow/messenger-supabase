@@ -210,9 +210,6 @@ body[data-theme="blackhole"] .room-item.active{background:rgba(139,92,246,.08)}
 #voice-bar.show{display:flex}
 .vb-members{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
 .vm-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;background:var(--panel);border:1px solid var(--border);font-size:12px}
-.vm-chip .vm-sfx-icon{width:13px;height:13px;color:var(--accent);display:none;flex-shrink:0;animation:sfxIconIn .3s ease-out}
-.vm-chip .vm-sfx-icon.show{display:block}
-@keyframes sfxIconIn{from{transform:scale(0);opacity:.3}to{transform:scale(1);opacity:1}}
 .vm-av{width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .vm-av.rippling{position:relative;overflow:visible}
 .vm-av.rippling::before{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--accent);animation:vuRipple .8s ease-out infinite}
@@ -224,68 +221,6 @@ body[data-theme="blackhole"] .room-item.active{background:rgba(139,92,246,.08)}
 .vb-join{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.2);transition:all .15s;white-space:nowrap}
 .vb-join:hover{background:rgba(34,197,94,.22)}
 .vb-join.leave{background:rgba(229,51,74,.1);color:var(--red);border-color:rgba(229,51,74,.25)}
-
-/* SOUNDBOARD */
-.sfx-btn{padding:6px 10px;border-radius:8px;font-size:12px;font-weight:600;background:rgba(139,92,246,.12);color:var(--accent);border:1px solid rgba(139,92,246,.25);transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
-.sfx-btn:hover{background:rgba(139,92,246,.22)}
-.sfx-btn>.ui-icon{width:15px;height:15px}
-#sfxPanel{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:260;width:340px;max-width:92vw;max-height:70vh;background:var(--surface,#151a23);border:1px solid var(--border);border-radius:16px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.5)}
-#sfxPanel.show{display:flex}
-.sfx-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:600;flex-shrink:0}
-.sfx-head .sfx-title{display:flex;align-items:center;gap:8px}
-.sfx-close{width:28px;height:28px;border-radius:8px;border:none;background:var(--panel);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center}
-.sfx-close:hover{background:var(--border)}
-.sfx-upload{display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 16px;padding:10px 12px;border-radius:10px;background:rgba(139,92,246,.08);border:1px dashed rgba(139,92,246,.3);color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
-.sfx-upload:hover{background:rgba(139,92,246,.15)}
-.sfx-list{flex:1;overflow-y:auto;padding:0 12px 14px}
-.sfx-empty{font-size:12px;color:var(--muted);text-align:center;padding:24px 0}
-.sfx-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--panel);border:1px solid var(--border);margin-bottom:8px}
-.sfx-play{width:34px;height:34px;border-radius:10px;border:none;background:rgba(139,92,246,.15);color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
-.sfx-play:hover{background:rgba(139,92,246,.28);transform:scale(1.05)}
-.sfx-info{flex:1;min-width:0}
-.sfx-name{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sfx-dur{font-size:10px;color:var(--muted);margin-top:2px}
-.sfx-del{width:28px;height:28px;border-radius:8px;border:none;background:rgba(229,51,74,.1);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
-.sfx-del:hover{background:rgba(229,51,74,.22)}
-.sfx-item.playing{border-color:var(--accent);box-shadow:0 0 0 2px rgba(139,92,246,.25);background:rgba(139,92,246,.08)}
-.sfx-item.playing .sfx-play{background:var(--accent);color:#fff;animation:sfxPulse .8s ease-in-out infinite}
-@keyframes sfxPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-.sfx-now-playing{font-size:10px;color:var(--accent);text-align:center;padding:2px 12px 6px;display:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* SFX mobile */
-@media(max-width:420px){
-  #sfxPanel,#sfxPreview{width:100%;max-width:100vw;border-radius:20px 20px 0 0;max-height:88vh;margin-top:auto;left:0;top:auto;bottom:0;transform:none}
-  #sfxPanel.show,#sfxPreview.show{display:flex;animation:sheetUp .3s cubic-bezier(.16,1,.3,1)}
-  .sfx-head,.sfx-prev-head{padding:10px 14px}
-  .sfx-upload{margin:10px 12px;font-size:11px;padding:8px 10px}
-  .sfx-list{padding:0 8px 12px}
-  .sfx-item{padding:6px 8px;gap:8px}
-  .sfx-play{width:30px;height:30px;border-radius:8px}
-  .sfx-name{font-size:11px}
-  .sfx-dur{font-size:9px}
-  .sfx-prev-body{padding:12px;gap:10px}
-  .sfx-prev-audio{height:38px}
-  .sfx-prev-input{font-size:12px;padding:8px 10px}
-  .sfx-prev-btn{font-size:11px;padding:9px}
-}
-@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.sfx-edit{width:28px;height:28px;border-radius:8px;border:none;background:rgba(139,92,246,.08);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
-.sfx-edit:hover{background:rgba(139,92,246,.22);color:var(--accent)}
-#sfxPreview{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:270;width:360px;max-width:92vw;background:var(--surface,#151a23);border:1px solid var(--border);border-radius:16px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.5)}
-#sfxPreview.show{display:flex}
-.sfx-prev-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:600;flex-shrink:0}
-.sfx-prev-head .sfx-title{display:flex;align-items:center;gap:8px}
-.sfx-prev-body{padding:16px;display:flex;flex-direction:column;gap:12px}
-.sfx-prev-audio{width:100%;height:42px;border-radius:10px;background:var(--panel)}
-.sfx-prev-dur{font-size:11px;color:var(--muted);text-align:center}
-.sfx-prev-input{width:100%;padding:10px 12px;border-radius:10px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-size:13px;outline:none;transition:border-color .15s;box-sizing:border-box}
-.sfx-prev-input:focus{border-color:var(--accent)}
-.sfx-prev-input.err{border-color:var(--red)}
-.sfx-prev-actions{display:flex;gap:8px}
-.sfx-prev-btn{flex:1;padding:10px;border-radius:10px;border:none;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
-.sfx-prev-btn.confirm{background:var(--accent);color:#fff}
-.sfx-prev-btn.confirm:hover{filter:brightness(1.15)}
-.sfx-prev-btn.cancel{background:var(--panel);color:var(--muted)}
-.sfx-prev-btn.cancel:hover{background:var(--border)}
 
 /* MEET-LIKE CALL PANEL */
 #callPanel{position:fixed;inset:0;z-index:150;display:none;flex-direction:column;background:#0a0e14}
@@ -1565,9 +1500,8 @@ window.signOut = async function() {
   if (!confirm('خروج؟')) return;
   if (voiceChannel) { await db.removeChannel(voiceChannel); voiceChannel = null; } if (realtimeRelay) { await db.removeChannel(realtimeRelay); realtimeRelay = null; }
   if (presenceChannel) { await db.removeChannel(presenceChannel); presenceChannel = null; }
-  if (sfxRoomChannel) { await db.removeChannel(sfxRoomChannel); sfxRoomChannel = null; }
-  sfxMemberTimers = {}; sfxPlayingId = null;
-  stopSfxSync();
+  if (friendsChannel) { await db.removeChannel(friendsChannel); friendsChannel = null; }
+  if (bansChannel) { await db.removeChannel(bansChannel); bansChannel = null; }
   leaveVoice();
   await db.auth.signOut();
   me = null; myProfile = null;
@@ -1633,7 +1567,8 @@ function enterApp() {
   loadDmList();
   startPresence();
   startRelay();
-  startSfxSync();
+  startFriendsSync();
+  startBansSync();
   initQuickReplies();
 }
 
@@ -1702,6 +1637,38 @@ async function startRelay() {
     addMsg(payload.payload);
     scrollBottom();
   }).subscribe();
+}
+
+// === FRIENDS + BANS REALTIME ===
+var friendsChannel = null, bansChannel = null;
+async function startFriendsSync() {
+  if (friendsChannel) { try { await db.removeChannel(friendsChannel); } catch(e) {} friendsChannel = null; }
+  if (!me) return;
+  try {
+    friendsChannel = db.channel('friends-live:' + me.id)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'friend_requests', filter: 'receiver_id=eq.' + me.id }, function(p) {
+        if (p.eventType === 'INSERT' && p.new && p.new.status === 'pending') toast('درخواست دوستی جدید داری');
+        loadFriends();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships', filter: 'user_id=eq.' + me.id }, function() { loadFriends(); })
+      .subscribe();
+  } catch(e) {}
+}
+async function startBansSync() {
+  if (bansChannel) { try { await db.removeChannel(bansChannel); } catch(e) {} bansChannel = null; }
+  if (!me) return;
+  try {
+    bansChannel = db.channel('bans-live:' + me.id)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'voice_bans', filter: 'user_id=eq.' + me.id }, function(p) {
+        var r = p.new;
+        if (r && (r.room_id === curVoiceRoom || r.room_id === curRoom)) { toast('از این ویس بن شدی'); leaveVoice(); }
+        loadVoiceBans();
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'voice_bans', filter: 'user_id=eq.' + me.id }, function() {
+        toast('بن تو رفع شد'); loadVoiceBans();
+      })
+      .subscribe();
+  } catch(e) {}
 }
 
 // PRESENCE
@@ -1884,7 +1851,6 @@ window.removeFriend=async function(friendId){
 
 let dmSub = null;
 async function openDm(userId, userName) {
-  if (sfxRoomChannel) { await db.removeChannel(sfxRoomChannel); sfxRoomChannel = null; }
   if (msgSub) { await db.removeChannel(msgSub); msgSub = null; }
   if (dmSub) { await db.removeChannel(dmSub); dmSub = null; }
   curDm = userId; curRoom = null;
@@ -1914,7 +1880,6 @@ async function openDm(userId, userName) {
 
 let msgSub = null;
 async function openRoom(id, name, type) {
-  if (sfxRoomChannel) { await db.removeChannel(sfxRoomChannel); sfxRoomChannel = null; }
   if (msgSub) { await db.removeChannel(msgSub); msgSub = null; }
   if (dmSub) { await db.removeChannel(dmSub); dmSub = null; }
   curRoom = id; curType = type; curDm = null;
@@ -1943,19 +1908,9 @@ async function openRoom(id, name, type) {
       if (msg) addMsg(msg);
     }).subscribe();
   } else {
-    // Voice room - show welcome message + start sfx channel (works without joining voice call)
+    // Voice room - show welcome message (voice works without joining call)
     $('messages').style.display = 'flex';
     $('messages').innerHTML = '<div class="empty"><div class="empty-icon"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg></div><div class="empty-txt">اتاق صوتی فعاله</div></div>';
-    try {
-      sfxRoomChannel = db.channel('sfx-room:' + id);
-      sfxRoomChannel.on('broadcast', { event: 'sfx' }, function(payload) {
-        var d = payload.payload;
-        if (d && d.userId === me.id) return;
-        if (d && d.url) { var a = new Audio(d.url); a.volume = 1; a.play().catch(function(){}); }
-        if (d && d.userId) showSfxPlayingOnMember(d.userId);
-      });
-      await sfxRoomChannel.subscribe();
-    } catch(e) {}
   }
 }
 
@@ -2370,11 +2325,6 @@ async function joinVoice() {
     }).on('broadcast', { event: 'voice-kick' }, function(payload) {
       var d = payload.payload; if (!d || d.to !== me.id) return;
       toast('از ویس اخراج شدی'); leaveVoice();
-    }).on('broadcast', { event: 'sfx' }, function(payload) {
-      var d = payload.payload;
-      if (d && d.userId === me.id) return;
-      if (d && d.url) { var a = new Audio(d.url); a.volume = 1; a.play().catch(function(){}); }
-      if (d && d.userId) showSfxPlayingOnMember(d.userId);
     }).on('broadcast', { event: 'leave' }, function(payload) {
       var m = voiceMembers.get(payload.payload.userId);
       if (m) toast(m.username + ' از تماس صوتی خارج شد');
@@ -2404,299 +2354,7 @@ function leaveVoice() {
   clearInterval(voiceTimerInterval);
 }
 
-// === SOUNDBOARD (shared via DB, live sync) ===
-var sfxSounds = [], sfxBoardChannel = null, sfxTableMissing = false, sfxRoomChannel = null;
-async function loadSfxList() {
-  try {
-    var { data, error } = await db.from('sound_effects').select('*, profiles:user_id (id, username, display_name, role, avatar_url)').order('created_at', { ascending: false }).limit(100);
-    if (error) { sfxTableMissing = true; toast('جدول sound_effects موجود نیست — SQL را در Supabase اجرا کن'); return; }
-    sfxTableMissing = false;
-    sfxSounds = data || [];
-    await migrateLocalSfx();
-    if ($('sfxPanel').classList.contains('show')) renderSfxList();
-  } catch(e) { toast('خطا در بارگذاری صداها'); }
-}
-async function migrateLocalSfx() {
-  try {
-    var old = JSON.parse(localStorage.getItem('gapchat_sfx') || '[]');
-    if (!old.length) return;
-    // Insert all old sounds; only clear localStorage once every insert succeeds
-    var knownUrls = {};
-    sfxSounds.forEach(function(s) { knownUrls[s.file_url] = true; });
-    var pending = [];
-    old.forEach(function(s) {
-      if (!knownUrls[s.url]) {
-        pending.push(db.from('sound_effects').insert({ user_id: me.id, name: s.name || 'صدا', file_url: s.url, duration: s.dur || 0 }).select('id').single());
-      }
-    });
-    if (pending.length) {
-      var results = await Promise.all(pending);
-      for (var i = 0; i < results.length; i++) { if (results[i].error) return; }
-    }
-    localStorage.removeItem('gapchat_sfx');
-  } catch(e) {}
-}
-function startSfxSync() {
-  if (sfxBoardChannel) return;
-  try {
-    sfxBoardChannel = db.channel('sfx-board')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sound_effects' }, function() { if (!sfxTableMissing) loadSfxList(); })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'sound_effects' }, function() { if (!sfxTableMissing) loadSfxList(); })
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'sound_effects' }, function() { if (!sfxTableMissing) loadSfxList(); })
-      .subscribe();
-  } catch(e) {}
-}
-function stopSfxSync() { if (sfxBoardChannel) { db.removeChannel(sfxBoardChannel); sfxBoardChannel = null; } }
-function renderSfxList() {
-  var el = $('sfxList'); if (!el) return;
-  el.innerHTML = '';
-  if (sfxTableMissing) { el.innerHTML = '<div class="sfx-empty">ابتدا جدول sound_effects را بسازید</div>'; return; }
-  if (!sfxSounds.length) { el.innerHTML = '<div class="sfx-empty">هنوز صدایی اضافه نشده — اولین نفر باش</div>'; return; }
-  var isAdmin = myProfile && ['owner', 'admin', 'mod'].indexOf(myProfile.role) !== -1;
-  sfxSounds.forEach(function(s) {
-    var own = s.user_id === (me && me.id);
-    var who = (s.profiles && (s.profiles.display_name || s.profiles.username)) || 'کاربر';
-    var d = document.createElement('div');
-    d.className = 'sfx-item';
-    d.innerHTML = '<button class="sfx-play" onclick="playSfx(\'' + s.id + '\')" title="پخش"><svg class="ui-icon" aria-hidden="true"><use href="#pg-volume"></use></svg></button>' +
-      '<div class="sfx-info"><div class="sfx-name">' + esc(s.name) + '</div><div class="sfx-dur">' + (s.duration ? s.duration + ' ثانیه' : '') + (own ? '' : ' · ' + esc(who)) + '</div></div>' +
-      ((own || isAdmin) ? '<button class="sfx-edit" onclick="renameSfx(\'' + s.id + '\')" title="تغییر اسم"><svg class="ui-icon" aria-hidden="true"><use href="#pg-pencil"></use></svg></button><button class="sfx-del" onclick="deleteSfx(\'' + s.id + '\')" title="حذف"><svg class="ui-icon" aria-hidden="true"><use href="#pg-trash"></use></svg></button>' : '');
-    el.appendChild(d);
-  });
-}
-window.toggleSfxPanel = function() {
-  var p = $('sfxPanel'); if (!p) return;
-  p.classList.toggle('show');
-  if (p.classList.contains('show')) { renderSfxList(); loadSfxList(); }
-};
-function validateSfxFile(file) {
-  return new Promise(function(resolve, reject) {
-    var url = URL.createObjectURL(file);
-    var a = document.createElement('audio');
-    a.preload = 'metadata';
-    a.onloadedmetadata = function() {
-      var dur = a.duration || 0;
-      if (dur > 20.5) { URL.revokeObjectURL(url); reject(new Error('حداکثر ۲۰ ثانیه')); return; }
-      resolve({ dur: Math.round(dur), url: url });
-    };
-    a.onerror = function() { URL.revokeObjectURL(url); reject(new Error('فایل نامعتبر')); };
-    a.src = url;
-  });
-}
-async function uploadSfxFile(file, dur, customName) {
-  var ext = ((file.name || '').split('.').pop() || 'mp3').toLowerCase().replace(/[^a-z0-9]/g, '') || 'mp3';
-  var path = 'sfx/' + Date.now() + '_' + Math.random().toString(36).slice(2, 6) + '.' + ext;
-  try {
-    await new Promise(function(resolve, reject) {
-      var xhr = new XMLHttpRequest();
-      xhr.open('POST', SB_URL + '/storage/v1/object/chat-images/' + path);
-      xhr.setRequestHeader('apikey', SB_KEY); xhr.setRequestHeader('x-upsert', 'true');
-      xhr.setRequestHeader('Content-Type', file.type || 'audio/mpeg');
-      db.auth.getSession().then(function(res) {
-        var session = res.data.session;
-        xhr.setRequestHeader('Authorization', 'Bearer ' + (session ? session.access_token : SB_KEY));
-        xhr.onload = function() { if (xhr.status >= 200 && xhr.status < 300) resolve(JSON.parse(xhr.responseText)); else reject(new Error(xhr.status)); };
-        xhr.onerror = function() { reject(new Error('آپلود ناموفق')); };
-        xhr.send(file);
-      });
-    });
-    var ud = db.storage.from('chat-images').getPublicUrl(path);
-    var nm = (customName && customName.trim()) || (file.name || 'صدا').replace(/\.[^.]+$/, '') || 'صدا';
-    var ins = await db.from('sound_effects').insert({ user_id: me.id, name: nm, file_url: ud.data.publicUrl, duration: dur }).select('id').single();
-    if (ins.error) { toast('خطا در ثبت صدا'); return; }
-    await loadSfxList();
-    toast('افکت صوتی اضافه شد');
-  } catch(e) { toast('خطا: ' + (e.message || 'نامشخص')); }
-}
-var sfxPendingFile = null, sfxPendingUrl = null, sfxPendingDur = 0;
-window.handleSfxUpload = async function(input) {
-  var f = input && input.files && input.files[0];
-  input.value = '';
-  if (!f) return;
-  if (!f.type.startsWith('audio/')) { toast('فقط فایل صوتی'); return; }
-  toast('در حال بررسی...');
-  try {
-    var info = await validateSfxFile(f);
-    openSfxPreview(f, info);
-  } catch(e) { toast(e.message || 'خطا'); }
-};
-function openSfxPreview(file, info) {
-  if (sfxPendingUrl && sfxPendingUrl !== info.url) URL.revokeObjectURL(sfxPendingUrl);
-  sfxPendingFile = file; sfxPendingUrl = info.url; sfxPendingDur = info.dur;
-  $('sfxPrevAudio').src = info.url;
-  $('sfxPrevDur').textContent = info.dur + ' ثانیه (حداکثر ۲۰ ثانیه)';
-  var base = (file.name || 'صدا').replace(/\.[^.]+$/, '') || 'صدا';
-  $('sfxPrevName').value = base;
-  $('sfxPrevName').classList.remove('err');
-  $('sfxPreview').classList.add('show');
-  var inp = $('sfxPrevName'); inp.focus(); inp.select();
-}
-window.closeSfxPreview = function() {
-  $('sfxPreview').classList.remove('show');
-  $('sfxPrevAudio').pause(); $('sfxPrevAudio').src = '';
-  if (sfxPendingUrl) { URL.revokeObjectURL(sfxPendingUrl); sfxPendingUrl = null; }
-  sfxPendingFile = null; sfxPendingDur = 0; sfxRenameId = null;
-  var title = document.querySelector('#sfxPreview .sfx-title');
-  if (title) title.innerHTML = '<svg class="ui-icon" aria-hidden="true"><use href="#pg-music"></use></svg> پیش‌نمایش صدا';
-  var confirmBtn = document.querySelector('#sfxPreview .sfx-prev-btn.confirm');
-  if (confirmBtn) confirmBtn.textContent = 'آپلود';
-};
-window.confirmSfxUpload = async function() {
-  if (sfxRenameId) { await saveSfxRename(); return; }
-  var nm = $('sfxPrevName').value.trim();
-  if (!nm) { $('sfxPrevName').classList.add('err'); $('sfxPrevName').focus(); return; }
-  if (!sfxPendingFile) return;
-  var f = sfxPendingFile, d = sfxPendingDur;
-  closeSfxPreview();
-  await uploadSfxFile(f, d, nm);
-};
-var sfxPlayingId = null;
-window.playSfx = function(id) {
-  var s = sfxSounds.find(function(x) { return x.id === id; });
-  if (!s) return;
-  // Visual feedback: highlight the currently playing sound
-  if (sfxPlayingId) { var prev = document.querySelector('.sfx-item[data-id="'+sfxPlayingId+'"]'); if (prev) prev.classList.remove('playing'); }
-  sfxPlayingId = id;
-  var item = document.querySelector('.sfx-item[data-id="'+id+'"]'); if (item) item.classList.add('playing');
-  var a = new Audio(s.file_url); a.volume = 1; a.play().catch(function() {});
-  a.onended = function() { if (sfxPlayingId === id) sfxPlayingId = null; if (item) item.classList.remove('playing'); };
-  a.onerror = function() { if (sfxPlayingId === id) sfxPlayingId = null; if (item) item.classList.remove('playing'); };
-  // Show play icon on my own chip in voice-bar
-  if (me && me.id) showSfxPlayingOnMember(me.id);
-  // Broadcast via room-scoped channel (works regardless of voice call state)
-  if (sfxRoomChannel) {
-    sfxRoomChannel.send({ type: 'broadcast', event: 'sfx', payload: { url: s.file_url, name: s.name, userId: me.id } });
-  } else if (voiceChannel) {
-    voiceChannel.send({ type: 'broadcast', event: 'sfx', payload: { url: s.file_url, name: s.name, userId: me.id } });
-  } else {
-    toast('برای پخش برای بقیه، وارد اتاق صوتی شو');
-  }
-  // Show who played what in voice bar
-  try {
-    var nm = (me && myProfile && (myProfile.display_name || myProfile.username)) || 'کاربر';
-    var info = $('sfxNowPlaying');
-    if (info) { info.textContent = 'در حال پخش: ' + s.name + ' (' + nm + ')'; info.style.display = 'block'; }
-    clearTimeout(sfxPlayingInfoTimer);
-    sfxPlayingInfoTimer = setTimeout(function() { if (info) info.style.display = 'none'; }, 3000);
-  } catch(e) {}
-};
-var sfxPlayingInfoTimer = null, lastTypingBroadcast = 0, typingTimers = {};
-window.showTypingIndicator = function(name) {
-  var el = $('typingIndicator'), label = $('typingLabel');
-  if (!el || !label) return;
-  label.textContent = name + ' در حال نوشتن...';
-  el.classList.add('show');
-  if (typingTimers._show) clearTimeout(typingTimers._show);
-  typingTimers._show = setTimeout(function() { el.classList.remove('show'); }, 3000);
-};
-document.addEventListener('input', function(e) {
-  var inp = document.getElementById('msg-input'); if (!inp || e.target !== inp) return;
-  if (!me || !curRoom || !realtimeRelay) return;
-  var now = Date.now();
-  if (now - lastTypingBroadcast < 2000) return;
-  lastTypingBroadcast = now;
-  realtimeRelay.send({ type: 'broadcast', event: 'typing', payload: { room_id: curRoom, userId: me.id, username: (myProfile && (myProfile.display_name || myProfile.username)) || 'کاربر' } });
-});
-// INVITE LINKS
-window.showInviteModal = function() {
-  if (!curRoom) return;
-  $('inviteModal').classList.add('show');
-  $('inviteLink').value = '';
-  $('inviteExpHours').value = '24';
-  $('inviteMaxUses').value = '0';
-};
-window.closeInviteModal = function() { $('inviteModal').style.display = 'none'; $('inviteModal').classList.remove('show'); };
-window.copyInviteLink = function() {
-  var inp = $('inviteLink');
-  if (!inp.value) return toast('اول لینک بساز');
-  navigator.clipboard.writeText(inp.value).then(function() { toast('لینک کپی شد'); }).catch(function() {
-    inp.select(); document.execCommand('copy'); toast('لینک کپی شد');
-  });
-};
-window.createInviteLink = async function() {
-  if (!curRoom || !me) return;
-  var hours = parseInt($('inviteExpHours').value) || 24;
-  var maxUses = parseInt($('inviteMaxUses').value) || 0;
-  var token = crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) { var r = Math.random()*16|0, v = c==='x'?r:(r&0x3|0x8); return v.toString(16); });
-  var expires = new Date(Date.now() + hours * 3600000).toISOString();
-  var res = await db.from('invite_tokens').insert({ room_id: curRoom, created_by: me.id, token: token, expires_at: expires, max_uses: maxUses });
-  if (res.error) { toast('خطا: ' + (res.error.message || '')); return; }
-  var link = window.location.origin + window.location.pathname + '?invite=' + token;
-  $('inviteLink').value = link;
-  toast('لینک ساخته شد');
-};
-
-// HANDLE INVITE ON PAGE LOAD
-(function() {
-  var params = new URLSearchParams(window.location.search);
-  var inviteToken = params.get('invite');
-  if (inviteToken) {
-    window._pendingInvite = inviteToken;
-  }
-})();
-
-window.joinByInvite = async function(token) {
-  var res = await db.from('invite_tokens').select('*, rooms(name,type)').eq('token', token).single();
-  if (res.error || !res.data) { toast('لینک دعوت نامعتبره'); return; }
-  var inv = res.data;
-  if (inv.expires_at && new Date(inv.expires_at) < new Date()) { toast('لینک منقضی شده'); return; }
-  if (inv.max_uses > 0 && inv.uses >= inv.max_uses) { toast('حداکثر استفاده از لینک تموم شده'); return; }
-  // Increment uses
-  await db.from('invite_tokens').update({ uses: (inv.uses || 0) + 1 }).eq('id', inv.id);
-  // Open the room
-  var rname = inv.rooms && inv.rooms.length ? inv.rooms[0].name : 'اتاق';
-  var rtype = inv.rooms && inv.rooms.length ? (inv.rooms[0].type || 'text') : 'text';
-  openRoom(inv.room_id, rname, rtype);
-  // Clean URL
-  if (window.history && window.history.replaceState) {
-    window.history.replaceState({}, '', window.location.pathname);
-  }
-};
-
-window.deleteSfx = async function(id) {
-  var s = sfxSounds.find(function(x) { return x.id === id; });
-  var del = await db.from('sound_effects').delete().eq('id', id);
-  if (del.error) { toast('خطا در حذف'); return; }
-  if (s && s.file_url) {
-    var m = s.file_url.match(/\/sfx\/([^?]+)/);
-    if (m) db.storage.from('chat-images').remove(['sfx/' + m[1]]);
-  }
-  await loadSfxList();
-  toast('حذف شد');
-};
-
-
-var sfxRenameId = null;
-window.renameSfx = function(id) {
-  var s = sfxSounds.find(function(x) { return x.id === id; });
-  if (!s) return;
-  sfxRenameId = id;
-  sfxPendingFile = null; sfxPendingUrl = null; sfxPendingDur = 0;
-  $('sfxPrevAudio').src = s.file_url;
-  $('sfxPrevAudio').load();
-  $('sfxPrevDur').textContent = (s.duration ? s.duration + ' ثانیه' : '');
-  $('sfxPrevName').value = s.name;
-  $('sfxPrevName').classList.remove('err');
-  var title = document.querySelector('#sfxPreview .sfx-title');
-  if (title) title.innerHTML = '<svg class="ui-icon" aria-hidden="true"><use href="#pg-pencil"></use></svg> تغییر اسم';
-  var confirmBtn = document.querySelector('#sfxPreview .sfx-prev-btn.confirm');
-  if (confirmBtn) confirmBtn.textContent = 'ذخیره';
-  $('sfxPreview').classList.add('show');
-  var inp = $('sfxPrevName'); inp.focus(); inp.select();
-};
-async function saveSfxRename() {
-  var nm = $('sfxPrevName').value.trim();
-  if (!nm) { $('sfxPrevName').classList.add('err'); $('sfxPrevName').focus(); return; }
-  var id = sfxRenameId;
-  var cur = sfxSounds.find(function(x) { return x.id === id; });
-  if (cur && nm === cur.name) { closeSfxPreview(); return; }
-  sfxRenameId = null;
-  closeSfxPreview();
-  var up = await db.from('sound_effects').update({ name: nm }).eq('id', id);
-  if (up.error) { toast('خطا در تغییر اسم'); return; }
-  await loadSfxList();
-  toast('اسم صدا تغییر کرد');
-}
+// === SOUNDBOARD removed: effects section deleted by owner request ===
 function showCallPanel() { showFloatingVoice(); return;
   $('callPanel').classList.add('show');
   $('callRoomName').textContent = $('roomTitle').textContent;
@@ -3313,27 +2971,11 @@ function renderVoiceMembers() {
     d.className = 'vm-chip';
     d.setAttribute('data-uid', uid);
     var isMe = uid === me.id;
-    var vmAvHtml; if (m.avatar_url && /\.(mp4|webm|gif)(\?|$)/i.test(m.avatar_url)) { vmAvHtml = '<video class="vm-av" src="'+esc(m.avatar_url)+'" autoplay loop muted playsinline preload="auto" ontimeupdate="if(this.currentTime>=this.duration-0.3){this.currentTime=0;this.play().catch(function(){})}" style="object-fit:cover"></video>'; } else if (m.avatar_url) { vmAvHtml = '<img class="vm-av" src="'+esc(m.avatar_url)+'" style="object-fit:cover">'; } else { vmAvHtml = '<div class="vm-av" style="background:' + (isMe ? 'var(--accent)' : 'var(--panel)') + ';color:#fff">' + (m.username || '?').charAt(0).toUpperCase() + '</div>'; } d.innerHTML = '<span class="vm-sfx-icon"><svg class="ui-icon" aria-hidden="true" style="width:13px;height:13px"><use href="#pg-music"></use></svg></span>'+vmAvHtml+'<span class="vm-name">' + esc(m.username || '') + (isMe ? ' (شما)' : '') + '</span>';
+    var vmAvHtml; if (m.avatar_url && /\.(mp4|webm|gif)(\?|$)/i.test(m.avatar_url)) { vmAvHtml = '<video class="vm-av" src="'+esc(m.avatar_url)+'" autoplay loop muted playsinline preload="auto" ontimeupdate="if(this.currentTime>=this.duration-0.3){this.currentTime=0;this.play().catch(function(){})}" style="object-fit:cover"></video>'; } else if (m.avatar_url) { vmAvHtml = '<img class="vm-av" src="'+esc(m.avatar_url)+'" style="object-fit:cover">'; } else { vmAvHtml = '<div class="vm-av" style="background:' + (isMe ? 'var(--accent)' : 'var(--panel)') + ';color:#fff">' + (m.username || '?').charAt(0).toUpperCase() + '</div>'; } d.innerHTML = vmAvHtml+'<span class="vm-name">' + esc(m.username || '') + (isMe ? ' (شما)' : '') + '</span>';
     $('vbMembers').appendChild(d);
   });
   if (!voiceMembers.size) $('vbMembers').innerHTML = '<span style="font-size:11px;color:var(--muted)">خالی</span>';
 
-var sfxMemberTimers = {};
-function showSfxPlayingOnMember(uid) {
-  var chip = document.querySelector('.vm-chip[data-uid="' + uid + '"]');
-  if (!chip) return;
-  var av = chip.querySelector('.vm-av');
-  var icon = chip.querySelector('.vm-sfx-icon');
-  // Show icon + ripple on avatar
-  if (icon) icon.classList.add('show');
-  if (av) av.classList.add('rippling');
-  if (sfxMemberTimers[uid]) clearTimeout(sfxMemberTimers[uid]);
-  sfxMemberTimers[uid] = setTimeout(function() {
-    if (icon) icon.classList.remove('show');
-    if (av) av.classList.remove('rippling');
-    delete sfxMemberTimers[uid];
-  }, 2500);
-}
 }
 
 // SCREEN SHARE
