@@ -824,6 +824,13 @@ body{transition:background-color .35s ease}
 .skel::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);animation:shimmer 1.4s infinite;transform:translateX(-100%)}
 @keyframes shimmer{to{transform:translateX(100%)}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+/* LIVE VOICE METERS + JOIN ANIM */
+.vol-meter{height:4px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:6px;min-width:70px}
+.vol-fill{height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,var(--green),#a7f3d0);transition:width .12s linear}
+.meet-card .vol-meter{width:100%;max-width:140px}
+.call-tile.join-anim{animation:tileJoin .45s cubic-bezier(.16,1,.3,1)}
+.meet-card.join-anim{animation:tileJoin .45s cubic-bezier(.16,1,.3,1)}
+@keyframes tileJoin{from{opacity:0;transform:scale(.7)}60%{opacity:1;transform:scale(1.06)}to{opacity:1;transform:scale(1)}}
 
 </style>
 <link rel="manifest" href="/manifest.json">
@@ -2330,6 +2337,7 @@ async function joinVoice() {
     } catch(e) {}
     myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     setupMicGain(); syncMicVolUI();
+    meterEnsure(me.id, (typeof micOutStream !== 'undefined' && micOutStream) ? micOutStream : myStream); meterStart();
     voiceChannel = db.channel('voice:' + curRoom);
     voiceChannel.on('broadcast', { event: 'join' }, async function(payload) {
       if (payload.payload.userId === me.id) return;
@@ -2341,6 +2349,7 @@ async function joinVoice() {
       } catch(e) {}
       voiceMembers.set(payload.payload.userId, { username: payload.payload.username, avatar_url: avatarUrl });
       toast(payload.payload.username + ' وارد تماس صوتی شد');
+      playVoiceCue(true);
       updateFloatingVoice();
       renderCallGrid();
       // Create peer as initiator
@@ -2421,6 +2430,8 @@ async function joinVoice() {
     }).on('broadcast', { event: 'leave' }, function(payload) {
       var m = voiceMembers.get(payload.payload.userId);
       if (m) toast(m.username + ' از تماس صوتی خارج شد');
+      playVoiceCue(false); meterDrop(payload.payload.userId);
+      delete knownTiles[payload.payload.userId]; delete knownMeet[payload.payload.userId];
       delete remoteShares[payload.payload.userId]; delete remoteShareKinds[payload.payload.userId]; delete mutedPeers[payload.payload.userId];
       if (remoteShareUid === payload.payload.userId) remoteShareUid = null;
       voiceMembers.delete(payload.payload.userId); updateFloatingVoice(); var fs4 = document.getElementById('float-screen'); if (fs4 && voiceMembers.size <= 1) { fs4.classList.remove('show'); }
@@ -2440,6 +2451,7 @@ async function joinVoice() {
 
 function leaveVoice() {
   releaseWakeLock();
+  meterStop();
   if (voiceChannel) { voiceChannel.send({ type: 'broadcast', event: 'leave', payload: { userId: me.id } }); db.removeChannel(voiceChannel); voiceChannel = null; }
   if (myStream) { myStream.getTracks().forEach(function(t) { t.stop(); }); myStream = null; }
   teardownMicGain();
@@ -2535,7 +2547,8 @@ function renderCallGrid() {
   selfTile.style.cursor = 'pointer';
   selfTile.onclick = function() { openProfile(myProfile.display_name || myProfile.username); };
   var selfAvatar = myProfile.avatar_url ? '<img src="' + esc(myProfile.avatar_url) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : (myProfile.display_name || '?').charAt(0).toUpperCase();
-  selfTile.innerHTML = '<div class="tile-mic" id="mic-indicator-' + me.id + '"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg></div><div class="tile-av">' + selfAvatar + '</div><div class="tile-name">' + esc(myProfile.display_name || '') + '</div><div class="tile-status">شما</div>';
+  selfTile.innerHTML = '<div class="tile-mic" id="mic-indicator-' + me.id + '"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg></div><div class="tile-av">' + selfAvatar + '</div><div class="tile-name">' + esc(myProfile.display_name || '') + '</div><div class="tile-status">شما</div><div class="vol-meter"><div class="vol-fill" id="vol-' + me.id + '"></div></div>';
+  if (!knownTiles[me.id]) selfTile.classList.add('join-anim');
   grid.appendChild(selfTile);
   // Add peer tiles
   voiceMembers.forEach(function(m, uid) {
@@ -2549,9 +2562,12 @@ function renderCallGrid() {
     var peerMuted = (typeof mutedPeers !== 'undefined' && mutedPeers[uid]) ? ' muted' : '';
     var modBtns = '';
     if (isMod()) modBtns = '<div class="tile-mods"><button class="tile-mod" onclick="event.stopPropagation();forceMuteUser(\'' + uid + '\')" title="میوت/آنمیوت">🔇</button><button class="tile-mod danger" onclick="event.stopPropagation();banVoiceUser(\'' + uid + '\')" title="بن از ویس">⛔</button></div>';
-    tile.innerHTML = '<div class="tile-mic' + peerMuted + '" id="mic-indicator-' + uid + '"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg></div><div class="tile-av" style="background:linear-gradient(135deg,var(--accent2),var(--accent))">' + peerAvatar + '</div><div class="tile-name">' + esc(m.username || '') + '</div><div class="tile-status">در تماس</div>' + modBtns;
+    tile.innerHTML = '<div class="tile-mic' + peerMuted + '" id="mic-indicator-' + uid + '"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg></div><div class="tile-av" style="background:linear-gradient(135deg,var(--accent2),var(--accent))">' + peerAvatar + '</div><div class="tile-name">' + esc(m.username || '') + '</div><div class="tile-status">در تماس</div><div class="vol-meter"><div class="vol-fill" id="vol-' + uid + '"></div></div>' + modBtns;
+    if (!knownTiles[uid]) tile.classList.add('join-anim');
     grid.appendChild(tile);
   });
+  knownTiles = {}; knownTiles[me.id] = 1;
+  voiceMembers.forEach(function(m, uid){ knownTiles[uid] = 1; });
 }
 
 // === VOICE DATA SAVER (safe mode: ~60-70% less bandwidth, FEC kept on) ===
@@ -2589,6 +2605,93 @@ function mungeAudioSdp(sdp) {
     }
     return lines.join('\r\n');
   } catch(e) { return sdp; }
+}
+
+// === LIVE VOICE METERS + JOIN/LEAVE CUES ===
+var meterCtx = null, meterNodes = {}, meterLvls = {}, meterRaf = null;
+var knownTiles = {}, knownMeet = {};
+function meterEnsure(uid, stream) {
+  try {
+    if (!stream) return null;
+    if (!meterCtx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      meterCtx = new AC();
+    }
+    if (meterCtx.state === 'suspended') meterCtx.resume().catch(function(){});
+    var ex = meterNodes[uid];
+    if (ex) return ex.analyser;
+    var src = meterCtx.createMediaStreamSource(stream);
+    var an = meterCtx.createAnalyser();
+    an.fftSize = 256; an.smoothingTimeConstant = .75;
+    src.connect(an);
+    var buf = new Uint8Array(an.frequencyBinCount);
+    meterNodes[uid] = { analyser: an, buf: buf, src: src };
+    if (!(uid in meterLvls)) meterLvls[uid] = 0;
+    return an;
+  } catch(e) { return null; }
+}
+function meterDrop(uid) {
+  var n = meterNodes[uid];
+  if (n) { try { n.src.disconnect(); } catch(e) {} delete meterNodes[uid]; }
+  delete meterLvls[uid];
+}
+function meterLevel(uid) {
+  var n = meterNodes[uid];
+  if (!n) return 0;
+  try {
+    n.analyser.getByteFrequencyData(n.buf);
+    var sum = 0, i;
+    for (i = 0; i < n.buf.length; i++) sum += n.buf[i];
+    var raw = sum / n.buf.length / 255;
+    var lvl = (meterLvls[uid] || 0) * .65 + raw * .35;
+    meterLvls[uid] = lvl;
+    return lvl;
+  } catch(e) { return 0; }
+}
+function meterLoop() {
+  meterRaf = null;
+  if (!voiceChannel) return;
+  try {
+    var ids = Object.keys(meterNodes), i, lvl, w, e1, e2;
+    for (i = 0; i < ids.length; i++) {
+      lvl = meterLevel(ids[i]);
+      w = Math.min(100, Math.round(lvl * 160));
+      e1 = document.getElementById('vol-' + ids[i]);
+      if (e1) e1.style.width = w + '%';
+      e2 = document.getElementById('mvol-' + ids[i]);
+      if (e2) e2.style.width = w + '%';
+    }
+  } catch(e) {}
+  meterRaf = requestAnimationFrame(meterLoop);
+}
+function meterStart() {
+  try { if (meterCtx && meterCtx.state === 'suspended') meterCtx.resume().catch(function(){}); } catch(e) {}
+  if (!meterRaf && voiceChannel) meterRaf = requestAnimationFrame(meterLoop);
+}
+function meterStop() {
+  if (meterRaf) { cancelAnimationFrame(meterRaf); meterRaf = null; }
+  meterNodes = {}; meterLvls = {}; knownTiles = {}; knownMeet = {};
+  try { if (meterCtx && meterCtx.state === 'running') meterCtx.suspend(); } catch(e) {}
+}
+function playVoiceCue(up) {
+  try {
+    if (!meterCtx) return;
+    if (meterCtx.state === 'suspended') meterCtx.resume().catch(function(){});
+    var t0 = meterCtx.currentTime;
+    var g = meterCtx.createGain(); g.gain.value = .12; g.connect(meterCtx.destination);
+    var seq = up ? [620, 830] : [500, 340];
+    seq.forEach(function(f, idx) {
+      var o = meterCtx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+      var gg = meterCtx.createGain();
+      var s = t0 + idx * .09;
+      gg.gain.setValueAtTime(0, s);
+      gg.gain.linearRampToValueAtTime(1, s + .015);
+      gg.gain.exponentialRampToValueAtTime(.001, s + .11);
+      o.connect(gg); gg.connect(g);
+      o.start(s); o.stop(s + .13);
+    });
+  } catch(e) {}
 }
 
 async function createPeer(pid, init) {
@@ -2643,7 +2746,8 @@ async function createPeer(pid, init) {
        aud.srcObject = stream;
        if (audCt) audCt.appendChild(aud);
        else document.body.appendChild(aud);
-       aud.play().catch(function(){});
+        aud.play().catch(function(){});
+        meterEnsure(pid, stream);
        // keep legacy single element for backward compat
        try{ $('remoteAudio').srcObject = stream; }catch(e){}
      }
@@ -2967,8 +3071,15 @@ function renderMeetProfiles() {
       }
     }
 
+    var meter = document.createElement('div');
+    meter.className = 'vol-meter';
+    meter.innerHTML = '<div class="vol-fill" id="mvol-' + m.id + '"></div>';
+    card.appendChild(meter);
+    if (!knownMeet[m.id]) card.classList.add('join-anim');
     grid.appendChild(card);
   });
+  knownMeet = {};
+  cards.forEach(function(m){ knownMeet[m.id] = 1; });
   loadVoiceBans();
 }
 
