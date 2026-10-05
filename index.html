@@ -635,7 +635,7 @@ textarea,input[type="text"],input[type="email"],input[type="password"]{-webkit-u
 .tile-mod:hover{background:var(--accent)}
 .tile-mod.danger:hover{background:var(--red)}
 .tile-mods{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:2px;z-index:3;background:rgba(0,0,0,.45);border-radius:8px;padding:2px 4px}
-@media(max-width:768px){.tile-mod{width:34px;height:34px;font-size:14px}.tile-mods{bottom:2px;padding:3px 6px;gap:4px}}
+@media(max-width:768px){.tile-mod{width:34px;height:34px;font-size:14px}.tile-mods{bottom:2px;padding:3px 6px;gap:4px}.meet-mod{padding:8px 14px;font-size:12px}}
 .meet-mods{display:flex;gap:6px;margin-top:4px}
 .meet-mod{padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--panel);color:var(--text)}
 .meet-mod:hover{background:var(--border)}
@@ -1636,6 +1636,9 @@ startRelay = async function() {
         if (rxnRow) rxnRow.style.display = 'none';
       }
     });
+    realtimeRelay.on('broadcast', { event: 'mute' }, function(payload) { onMuteRx(payload.payload); });
+    realtimeRelay.on('broadcast', { event: 'force-mute' }, function(payload) { onForceMuteRx(payload.payload); });
+    realtimeRelay.on('broadcast', { event: 'voice-kick' }, function(payload) { onVoiceKickRx(payload.payload); });
     realtimeRelay.on('broadcast', { event: 'typing' }, function(payload) {
       var d = payload.payload;
       if (d.userId === (me && me.id)) return;
@@ -2412,22 +2415,7 @@ async function joinVoice() {
         if (lbl) lbl.remove();
         tile.classList.remove('screen-sharing');
       }
-    }).on('broadcast', { event: 'mute' }, function(payload) {
-      var d = payload.payload; if (!d || !d.userId || d.userId === me.id) return;
-      mutedPeers[d.userId] = !!d.muted;
-      var ind = document.getElementById('mic-indicator-' + d.userId);
-      if (ind) ind.className = 'tile-mic' + (d.muted ? ' muted' : '');
-      var mv = $('meetView');
-      if (mv && mv.classList.contains('show')) renderMeetProfiles();
-    }).on('broadcast', { event: 'force-mute' }, function(payload) {
-      try {
-        var d = payload.payload; if (!d || d.to !== me.id) return;
-        applyLocalMute(!!d.muted, (d.byName || 'مدیر') + (d.muted ? ' میکروفون تو رو قطع کرد' : ' میکروفون تو رو وصل کرد'));
-      } catch(e) {}
-    }).on('broadcast', { event: 'voice-kick' }, function(payload) {
-      var d = payload.payload; if (!d || d.to !== me.id) return;
-      toast('از ویس اخراج شدی'); leaveVoice();
-    }).on('broadcast', { event: 'leave' }, function(payload) {
+    }).on('broadcast', { event: 'mute' }, function(payload) { onMuteRx(payload.payload); }).on('broadcast', { event: 'force-mute' }, function(payload) { onForceMuteRx(payload.payload); }).on('broadcast', { event: 'voice-kick' }, function(payload) { onVoiceKickRx(payload.payload); }).on('broadcast', { event: 'leave' }, function(payload) {
       var m = voiceMembers.get(payload.payload.userId);
       if (m) toast(m.username + ' از تماس صوتی خارج شد');
       playVoiceCue(false); meterDrop(payload.payload.userId);
@@ -2561,7 +2549,7 @@ function renderCallGrid() {
     var peerAvatar = m.avatar_url ? '<img src="' + esc(m.avatar_url) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : (m.username || '?').charAt(0).toUpperCase();
     var peerMuted = (typeof mutedPeers !== 'undefined' && mutedPeers[uid]) ? ' muted' : '';
     var modBtns = '';
-    if (isMod()) modBtns = '<div class="tile-mods"><button class="tile-mod" onclick="event.stopPropagation();forceMuteUser(\'' + uid + '\')" title="میوت/آنمیوت">🔇</button><button class="tile-mod danger" onclick="event.stopPropagation();banVoiceUser(\'' + uid + '\')" title="بن از ویس">⛔</button></div>';
+    if (isMod()) modBtns = '<div class="tile-mods"><button class="tile-mod" onclick="event.stopPropagation();forceMuteUser(\'' + uid + '\')" title="میوت/آنمیوت">🔇</button></div>';
     tile.innerHTML = '<div class="tile-mic' + peerMuted + '" id="mic-indicator-' + uid + '"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg></div><div class="tile-av" style="background:linear-gradient(135deg,var(--accent2),var(--accent))">' + peerAvatar + '</div><div class="tile-name">' + esc(m.username || '') + '</div><div class="tile-status">در تماس</div><div class="vol-meter"><div class="vol-fill" id="vol-' + uid + '"></div></div>' + modBtns;
     if (!knownTiles[uid]) tile.classList.add('join-anim');
     grid.appendChild(tile);
@@ -3062,11 +3050,7 @@ function renderMeetProfiles() {
         mb.className = 'meet-mod';
         mb.textContent = isMuted ? 'آنمیوت' : 'میوت';
         mb.onclick = (function(id){ return function(){ forceMuteUser(id); }; })(m.id);
-        var bb = document.createElement('button');
-        bb.className = 'meet-mod danger';
-        bb.textContent = 'بن';
-        bb.onclick = (function(id){ return function(){ banVoiceUser(id); }; })(m.id);
-        mods.appendChild(mb); mods.appendChild(bb);
+        mods.appendChild(mb);
         card.appendChild(mods);
       }
     }
@@ -3108,9 +3092,14 @@ updateFloatingVoice = function() {
 };
 
 function toggleMute() {
-  if (!myStream) return;
-  var a = myStream.getAudioTracks()[0];
-  if (a) applyLocalMute(a.enabled, null);
+  try {
+    if (!myStream) { toast('اول وارد ویس شو'); return; }
+    var a = myStream.getAudioTracks()[0];
+    if (!a) { toast('میکروفون در دسترس نیست'); return; }
+    var wasOn = a.enabled;
+    applyLocalMute(wasOn, null);
+    toast(wasOn ? 'میکروفون قطع شد' : 'میکروفون وصل شد');
+  } catch(e) { toast('خطا در میوت'); }
 }
 // === SHARE VIEW (reopen someone's share after closing the preview) ===
 var remoteShares = {}, remoteShareKinds = {}, remoteShareUid = null;
@@ -3153,15 +3142,40 @@ function applyLocalMute(muted, reason) {
   if (mv && mv.classList.contains('show')) renderMeetProfiles();
   if (reason) toast(reason);
 }
+// send mod commands on voice channel, fall back to global relay (mobile-proof)
+async function modSend(ev, payload) {
+  var msg = { type:'broadcast', event:ev, payload: payload };
+  try { if (voiceChannel && await voiceChannel.send(msg) === 'ok') return true; } catch(e) {}
+  try { if (realtimeRelay && await realtimeRelay.send(msg) === 'ok') return true; } catch(e) {}
+  return false;
+}
+function onMuteRx(d) {
+  if (!d || !d.userId || (me && d.userId === me.id)) return;
+  mutedPeers[d.userId] = !!d.muted;
+  var ind = document.getElementById('mic-indicator-' + d.userId);
+  if (ind) ind.className = 'tile-mic' + (d.muted ? ' muted' : '');
+  var mv = $('meetView');
+  if (mv && mv.classList.contains('show')) renderMeetProfiles();
+}
+function onForceMuteRx(d) {
+  try {
+    if (!d || !me || d.to !== me.id) return;
+    applyLocalMute(!!d.muted, (d.byName || 'مدیر') + (d.muted ? ' میکروفون تو رو قطع کرد' : ' میکروفون تو رو وصل کرد'));
+  } catch(e) {}
+}
+function onVoiceKickRx(d) {
+  try {
+    if (!d || !me || d.to !== me.id) return;
+    toast('از ویس اخراج شدی'); leaveVoice();
+  } catch(e) {}
+}
 async function forceMuteUser(uid) {
   if (!isMod()) { toast('فقط owner/admin'); return; }
-  if (!voiceChannel) { toast('اول وارد ویس شو'); return; }
+  if (!voiceChannel && !realtimeRelay) { toast('اول وارد ویس شو'); return; }
   var target = !mutedPeers[uid];
   var nm = (myProfile && (myProfile.display_name || myProfile.username)) || 'مدیر';
-  try {
-    var res = await voiceChannel.send({ type:'broadcast', event:'force-mute', payload:{ to: uid, muted: target, byName: nm } });
-    if (res !== 'ok') { toast('ارسال نشد، دوباره بزن'); return; }
-  } catch(e) { toast('ارسال نشد، دوباره بزن'); return; }
+  var ok = await modSend('force-mute', { to: uid, muted: target, byName: nm });
+  if (!ok) { toast('ارسال نشد، اینترنت رو چک کن و دوباره بزن'); return; }
   toast(target ? 'میوت شد' : 'آنمیوت شد');
 }
 async function banVoiceUser(uid) {
@@ -3171,13 +3185,9 @@ async function banVoiceUser(uid) {
   var roomId = curVoiceRoom || curRoom;
   var ins = await db.from('voice_bans').insert({ room_id: roomId, user_id: uid, banned_by: me.id });
   if (ins.error) { toast('خطا: ' + (ins.error.message || '')); return; }
-  if (voiceChannel) {
-    try {
-      var kr = await voiceChannel.send({ type:'broadcast', event:'voice-kick', payload:{ to: uid } });
-      if (kr !== 'ok') toast('بن ثبت شد ولی کیک ارسال نشد');
-    } catch(e) { toast('بن ثبت شد ولی کیک ارسال نشد'); }
-  }
-  toast('بن شد');
+  var kok = await modSend('voice-kick', { to: uid });
+  if (!kok) toast('بن ثبت شد ولی کیک ارسال نشد');
+  else toast('بن شد');
   loadVoiceBans();
 }
 async function unbanVoiceUser(uid) {
@@ -3455,6 +3465,25 @@ window.openProfile = async function(name) {
   $('profile-body').innerHTML = '<div class="pf-avatar-wrap">' + avH + upBtn + '</div><div class="pf-name">' + esc(data.display_name || data.username) + '' + (isMe ? ' <button onclick="toggleNE()" style="width:22px;height:22px;font-size:10px;background:var(--panel);border:none;border-radius:6px;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center"><svg class="ui-icon" aria-hidden="true"><use href="#pg-pen"></use></svg></button>' : '') + '</div>' + nmE + '<div class="pf-email">' + esc(data.username) + '</div><span class="pf-role-badge ' + data.role + '">' + rn + '</span>' + (myProfile && myProfile.role === 'owner' && !isMe ? '<div style="margin-top:8px;width:100%"><select onchange="setUserRank(\'' + data.id + '\', this.value)" style="width:100%;padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;cursor:pointer"><option value="">-- تغییر رنک --</option><option value="owner" ' + (data.role === 'owner' ? 'selected' : '') + '>مالک</option><option value="admin" ' + (data.role === 'admin' ? 'selected' : '') + '>ادمین</option><option value="mod" ' + (data.role === 'mod' ? 'selected' : '') + '>مدیر</option><option value="vip" ' + (data.role === 'vip' ? 'selected' : '') + '>ویژه</option><option value="active" ' + (data.role === 'active' ? 'selected' : '') + '>فعال</option><option value="user" ' + (data.role === 'user' ? 'selected' : '') + '>کاربر</option></select></div>' : '') + bio + '<div class="pf-stats"><div class="pf-stat"><div class="pf-stat-val">' + (mc || 0) + '</div><div class="pf-stat-lbl">پیام</div></div><div class="pf-stat"><div class="pf-stat-val">' + new Date(data.created_at).toLocaleDateString('fa-IR') + '</div><div class="pf-stat-lbl">عضویت</div></div>' + '<div class="pf-stat" style="grid-column:1/-1;background:linear-gradient(135deg,rgba(139,92,246,.14),rgba(34,211,238,.06));border:1px solid rgba(139,92,246,.25)"><div class="pf-stat-val" style="color:var(--accent)">' + fmtVoiceTime(isMe ? Math.max(totalVoiceSeconds || 0, (typeof data.voice_seconds === 'number') ? data.voice_seconds : 0) : (data.voice_seconds || 0)) + '</div><div class="pf-stat-lbl"><svg class="ui-icon" aria-hidden="true"><use href="#pg-mic"></use></svg> زمان در تماس صوتی</div></div>' + '</div>';// avatar autoplay handled by native video attributes
 };
 
+// Voice-ban button inside profile modal (owner/admin only, kept away from mute)
+var origOpenProfile = openProfile;
+openProfile = async function(name) {
+  await origOpenProfile(name);
+  try {
+    if (!isMod() || !(curVoiceRoom || curRoom)) return;
+    var body = $('profile-body');
+    if (!body || document.getElementById('pfVoiceBan')) return;
+    var uid = null;
+    voiceMembers.forEach(function(m, id){ if (m.username === name) uid = id; });
+    if (!uid || (me && uid === me.id)) return;
+    window._pfBanUid = uid;
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'margin-top:10px;width:100%';
+    wrap.innerHTML = '<button id="pfVoiceBan" onclick="banVoiceUserByName()" style="width:100%;padding:9px;border-radius:10px;background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3);font-size:12px;font-weight:700;cursor:pointer">بن از ویس</button>';
+    body.appendChild(wrap);
+  } catch(e) {}
+};
+window.banVoiceUserByName = function() { if (window._pfBanUid) banVoiceUser(window._pfBanUid); };
 window.toggleNE = function() { var e = $('pf-ne'); if (!e) return; e.style.display = e.style.display === 'none' ? 'flex' : 'none'; if (e.style.display === 'flex') { $('pf-ni').focus(); $('pf-ni').select(); } };
 window.setUserRank = async function(userId, newRole) {
   if (!myProfile || myProfile.role !== "owner") { toast("فقط مالک میتونه رنک تغییر بده"); return; }
