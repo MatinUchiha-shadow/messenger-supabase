@@ -2554,6 +2554,43 @@ function renderCallGrid() {
   });
 }
 
+// === VOICE DATA SAVER (safe mode: ~60-70% less bandwidth, FEC kept on) ===
+function mungeAudioSdp(sdp) {
+  try {
+    var lines = sdp.split('\r\n');
+    var opusPt = null, i;
+    for (i = 0; i < lines.length; i++) {
+      var m = lines[i].match(/^a=rtpmap:(\d+) opus\/48000(?:\/\d+)?/);
+      if (m) { opusPt = m[1]; break; }
+    }
+    if (!opusPt) return sdp;
+    var fmtpLine = 'a=fmtp:' + opusPt + ' ';
+    var extra = ';maxaveragebitrate=16000;stereo=0;sprop-stereo=0;usedtx=1;useinbandfec=1;cbr=0';
+    var hasFmtp = false, hasPtime = false;
+    for (i = 0; i < lines.length; i++) {
+      if (lines[i].indexOf(fmtpLine) === 0) {
+        hasFmtp = true;
+        if (lines[i].indexOf('maxaveragebitrate=') < 0) lines[i] += extra;
+      }
+      if (lines[i].indexOf('a=ptime:') === 0) hasPtime = true;
+    }
+    if (!hasFmtp) {
+      for (i = 0; i < lines.length; i++) {
+        if (lines[i].indexOf('a=rtpmap:' + opusPt + ' ') === 0) {
+          lines.splice(i + 1, 0, fmtpLine + 'maxaveragebitrate=16000;stereo=0;sprop-stereo=0;usedtx=1;useinbandfec=1;cbr=0');
+          break;
+        }
+      }
+    }
+    if (!hasPtime) {
+      for (i = 0; i < lines.length; i++) {
+        if (lines[i].indexOf(fmtpLine) === 0) { lines.splice(i + 1, 0, 'a=ptime:40'); break; }
+      }
+    }
+    return lines.join('\r\n');
+  } catch(e) { return sdp; }
+}
+
 async function createPeer(pid, init) {
   var pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }, { urls: 'stun:stun2.l.google.com:19302' }] });
   peers.set(pid, pc);
@@ -2620,7 +2657,7 @@ async function createPeer(pid, init) {
    };
   pc.onconnectionstatechange = function() { if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') { pc.close(); peers.delete(pid); renderCallGrid(); } };
   if (init) {
-    var o = await pc.createOffer(); await pc.setLocalDescription(o);
+    var o = await pc.createOffer(); o.sdp = mungeAudioSdp(o.sdp); await pc.setLocalDescription(o);
     voiceChannel.send({ type: 'broadcast', event: 'offer', payload: { from: me.id, to: pid, offer: o } });
   }
   return pc;
@@ -2636,7 +2673,7 @@ async function handleOffer(from, offer) {
     pc = await createPeer(from, false);
   }
   await pc.setRemoteDescription(new RTCSessionDescription(offer));
-  var a = await pc.createAnswer(); await pc.setLocalDescription(a);
+  var a = await pc.createAnswer(); a.sdp = mungeAudioSdp(a.sdp); await pc.setLocalDescription(a);
   voiceChannel.send({ type: 'broadcast', event: 'answer', payload: { from: me.id, to: from, answer: a } });
 }
 
@@ -3223,7 +3260,7 @@ async function publishShareTrack() {
       pc.addTrack(videoTrack, screenStream);
     }
     // Force renegotiation
-    promises.push(pc.createOffer().then(function(o) { return pc.setLocalDescription(o); }).then(function() {
+      promises.push(pc.createOffer().then(function(o) { o.sdp = mungeAudioSdp(o.sdp); return pc.setLocalDescription(o); }).then(function() {
       voiceChannel.send({ type: 'broadcast', event: 'offer', payload: { from: me.id, to: pid, offer: pc.localDescription } });
     }));
   });
