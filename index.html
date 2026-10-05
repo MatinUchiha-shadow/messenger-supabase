@@ -631,10 +631,11 @@ textarea,input[type="text"],input[type="email"],input[type="password"]{-webkit-u
 #float-screen .fs-switch{position:absolute;bottom:4px;right:4px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:12px;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center}
 #float-screen .fs-switch:hover{background:var(--accent)}
 /* VOICE MODERATION (owner/admin mute + ban buttons on tiles/cards) */
-.tile-mod{width:24px;height:24px;border-radius:8px;background:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.15);font-size:11px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;margin:0 2px}
+.tile-mod{width:28px;height:28px;border-radius:8px;background:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.15);font-size:12px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;margin:0 2px}
 .tile-mod:hover{background:var(--accent)}
 .tile-mod.danger:hover{background:var(--red)}
 .tile-mods{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:2px;z-index:3;background:rgba(0,0,0,.45);border-radius:8px;padding:2px 4px}
+@media(max-width:768px){.tile-mod{width:34px;height:34px;font-size:14px}.tile-mods{bottom:2px;padding:3px 6px;gap:4px}}
 .meet-mods{display:flex;gap:6px;margin-top:4px}
 .meet-mod{padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--panel);color:var(--text)}
 .meet-mod:hover{background:var(--border)}
@@ -2340,6 +2341,7 @@ async function joinVoice() {
       } catch(e) {}
       voiceMembers.set(payload.payload.userId, { username: payload.payload.username, avatar_url: avatarUrl });
       toast(payload.payload.username + ' وارد تماس صوتی شد');
+      updateFloatingVoice();
       renderCallGrid();
       // Create peer as initiator
       setTimeout(async function() {
@@ -2409,8 +2411,10 @@ async function joinVoice() {
       var mv = $('meetView');
       if (mv && mv.classList.contains('show')) renderMeetProfiles();
     }).on('broadcast', { event: 'force-mute' }, function(payload) {
-      var d = payload.payload; if (!d || d.to !== me.id) return;
-      applyLocalMute(!!d.muted, (d.byName || 'مدیر') + (d.muted ? ' میکروفون تو رو قطع کرد' : ' میکروفون تو رو وصل کرد'));
+      try {
+        var d = payload.payload; if (!d || d.to !== me.id) return;
+        applyLocalMute(!!d.muted, (d.byName || 'مدیر') + (d.muted ? ' میکروفون تو رو قطع کرد' : ' میکروفون تو رو وصل کرد'));
+      } catch(e) {}
     }).on('broadcast', { event: 'voice-kick' }, function(payload) {
       var d = payload.payload; if (!d || d.to !== me.id) return;
       toast('از ویس اخراج شدی'); leaveVoice();
@@ -2426,6 +2430,7 @@ async function joinVoice() {
       if (status === 'SUBSCRIBED') {
         voiceMembers.set(me.id, { username: myProfile.display_name || myProfile.username }); updateFloatingVoice();
         showFloatingVoice();
+        requestWakeLock();
         // Announce join - existing members will respond with 'here'
         await voiceChannel.send({ type: 'broadcast', event: 'join', payload: { userId: me.id, username: myProfile.display_name || myProfile.username, avatar_url: myProfile.avatar_url || null } });
       }
@@ -2434,6 +2439,7 @@ async function joinVoice() {
 }
 
 function leaveVoice() {
+  releaseWakeLock();
   if (voiceChannel) { voiceChannel.send({ type: 'broadcast', event: 'leave', payload: { userId: me.id } }); db.removeChannel(voiceChannel); voiceChannel = null; }
   if (myStream) { myStream.getTracks().forEach(function(t) { t.stop(); }); myStream = null; }
   teardownMicGain();
@@ -2999,12 +3005,15 @@ function applyLocalMute(muted, reason) {
   if (mv && mv.classList.contains('show')) renderMeetProfiles();
   if (reason) toast(reason);
 }
-function forceMuteUser(uid) {
+async function forceMuteUser(uid) {
   if (!isMod()) { toast('فقط owner/admin'); return; }
   if (!voiceChannel) { toast('اول وارد ویس شو'); return; }
   var target = !mutedPeers[uid];
   var nm = (myProfile && (myProfile.display_name || myProfile.username)) || 'مدیر';
-  voiceChannel.send({ type:'broadcast', event:'force-mute', payload:{ to: uid, muted: target, byName: nm } });
+  try {
+    var res = await voiceChannel.send({ type:'broadcast', event:'force-mute', payload:{ to: uid, muted: target, byName: nm } });
+    if (res !== 'ok') { toast('ارسال نشد، دوباره بزن'); return; }
+  } catch(e) { toast('ارسال نشد، دوباره بزن'); return; }
   toast(target ? 'میوت شد' : 'آنمیوت شد');
 }
 async function banVoiceUser(uid) {
@@ -3014,7 +3023,12 @@ async function banVoiceUser(uid) {
   var roomId = curVoiceRoom || curRoom;
   var ins = await db.from('voice_bans').insert({ room_id: roomId, user_id: uid, banned_by: me.id });
   if (ins.error) { toast('خطا: ' + (ins.error.message || '')); return; }
-  if (voiceChannel) voiceChannel.send({ type:'broadcast', event:'voice-kick', payload:{ to: uid } });
+  if (voiceChannel) {
+    try {
+      var kr = await voiceChannel.send({ type:'broadcast', event:'voice-kick', payload:{ to: uid } });
+      if (kr !== 'ok') toast('بن ثبت شد ولی کیک ارسال نشد');
+    } catch(e) { toast('بن ثبت شد ولی کیک ارسال نشد'); }
+  }
   toast('بن شد');
   loadVoiceBans();
 }
@@ -3101,6 +3115,24 @@ function toggleFvVol() {
   var p = $('fvVolPop');
   if (p) { syncMicVolUI(); p.classList.toggle('show'); }
 }
+
+// === WAKE LOCK: keep phone screen on during voice (prevents sleep disconnect) ===
+var wakeLockObj = null, wakeToastShown = false;
+async function requestWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    wakeLockObj = await navigator.wakeLock.request('screen');
+    if (!wakeToastShown) { wakeToastShown = true; toast('صفحه در تماس روشن می‌مونه'); }
+    wakeLockObj.addEventListener('release', function(){ wakeLockObj = null; });
+  } catch(e) {}
+}
+function releaseWakeLock() {
+  try { if (wakeLockObj) wakeLockObj.release(); } catch(e) {}
+  wakeLockObj = null;
+}
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible' && voiceChannel && !wakeLockObj) requestWakeLock();
+});
 document.addEventListener('click', function(e) {
   var p = $('fvVolPop');
   if (p && p.classList.contains('show')) {
