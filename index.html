@@ -2430,6 +2430,7 @@ async function joinVoice() {
         voiceMembers.set(me.id, { username: myProfile.display_name || myProfile.username }); updateFloatingVoice();
         showFloatingVoice();
         requestWakeLock();
+        startVoiceWatchdog(); rejoinCount = 0;
         // Announce join - existing members will respond with 'here'
         await voiceChannel.send({ type: 'broadcast', event: 'join', payload: { userId: me.id, username: myProfile.display_name || myProfile.username, avatar_url: myProfile.avatar_url || null } });
       }
@@ -2440,6 +2441,7 @@ async function joinVoice() {
 function leaveVoice() {
   releaseWakeLock();
   meterStop();
+  stopVoiceWatchdog();
   if (voiceChannel) { voiceChannel.send({ type: 'broadcast', event: 'leave', payload: { userId: me.id } }); db.removeChannel(voiceChannel); voiceChannel = null; }
   if (myStream) { myStream.getTracks().forEach(function(t) { t.stop(); }); myStream = null; }
   teardownMicGain();
@@ -2747,7 +2749,35 @@ async function createPeer(pid, init) {
        if(card){ card.classList.add('speaking'); setTimeout(function(){ card.classList.remove('speaking'); }, 800); }
      }
    };
-  pc.onconnectionstatechange = function() { if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') { pc.close(); peers.delete(pid); renderCallGrid(); } };
+  pc.onconnectionstatechange = function() {
+    var st = null;
+    try { st = pc.connectionState; } catch(e) { return; }
+    if (st !== 'failed' && st !== 'disconnected' && st !== 'closed') return;
+    var delay = (st === 'failed') ? 0 : 4000; // 'disconnected' is often transient: wait before acting
+    setTimeout(function() {
+      try {
+        if (peers.get(pid) !== pc) return; // already replaced/closed
+        var cur = null; try { cur = pc.connectionState; } catch(e) {}
+        if (cur !== 'failed' && cur !== 'disconnected' && cur !== 'closed') return; // recovered on its own
+        if (!voiceChannel || !curVoiceRoom || !me) return; // we left meanwhile
+        if (!voiceMembers.has(pid)) return;
+        try { pc.close(); } catch(e) {}
+        if (peers.get(pid) === pc) peers.delete(pid);
+        renderCallGrid();
+        // deterministic heal: smaller id re-offers, so no glare and no manual rejoin
+        if (String(me.id) < String(pid)) {
+          setTimeout(function() {
+            try {
+              if (!peers.has(pid) && voiceChannel && voiceMembers.has(pid)) {
+                toast('در حال وصل مجدد صدا...');
+                createPeer(pid, true);
+              }
+            } catch(e) {}
+          }, 1200);
+        }
+      } catch(e) {}
+    }, delay);
+  };
   if (init) {
     var o = await pc.createOffer(); o.sdp = mungeAudioSdp(o.sdp); await pc.setLocalDescription(o);
     voiceChannel.send({ type: 'broadcast', event: 'offer', payload: { from: me.id, to: pid, offer: o } });
@@ -2802,19 +2832,24 @@ function initDrag(el) {
     var rect = el.getBoundingClientRect();
     // Don't drag from the resize corner (bottom-right 36px zone)
     if (x > rect.right - 36 && y > rect.bottom - 36) return;
-    // Don't drag when tapping a button or label inside
-    var target = ev.target;
-    if (target && (target.tagName === 'BUTTON' || target.tagName === 'LABEL' || target.tagName === 'INPUT' || target.closest('button') || target.closest('label'))) return;
+    // Don't drag when tapping a button or label inside (any doubt: let the tap through)
+    try {
+      var target = ev.target;
+      if (!target || target.nodeType !== 1) return;
+      if (target.tagName === 'BUTTON' || target.tagName === 'LABEL' || target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA' || target.tagName === 'A') return;
+      if (target.closest && (target.closest('button') || target.closest('label') || target.closest('input') || target.closest('a') || target.closest('select'))) return;
+    } catch(e) { return; }
     dragging = true; moved = false; el.classList.add('dragging');
     startX = x; startY = y;
     startLeft = rect.left; startBottom = window.innerHeight - rect.bottom;
-    if (ev.cancelable) ev.preventDefault();
+    // NOTE: no preventDefault here — taps must always produce clicks; we only block scrolling once actually moving
   }
   function onMove(x, y, ev) {
     if (!dragging) return;
     var dx = x - startX, dy = y - startY;
     if (!moved && Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
     moved = true;
+    if (ev.cancelable) ev.preventDefault();
     var newLeft = startLeft + dx, newBottom = startBottom - dy;
     // Clamp to viewport (keep at least 20px visible)
     var maxLeft = window.innerWidth - 40;
@@ -2824,7 +2859,6 @@ function initDrag(el) {
     el.style.left = newLeft + 'px';
     el.style.bottom = newBottom + 'px';
     el.style.transform = 'none';
-    if (ev.cancelable) ev.preventDefault();
   }
   function onEnd() { dragging = false; el.classList.remove('dragging'); }
   el.addEventListener('mousedown', function(e) { onStart(e.clientX, e.clientY, e); });
@@ -3290,6 +3324,50 @@ function releaseWakeLock() {
 }
 document.addEventListener('visibilitychange', function() {
   if (document.visibilityState === 'visible' && voiceChannel && !wakeLockObj) requestWakeLock();
+});
+
+// === VOICE WATCHDOG: auto-rejoin when net drops and comes back ===
+var voiceWatchdog = null, lastRejoin = 0, rejoinCount = 0;
+function startVoiceWatchdog() {
+  stopVoiceWatchdog();
+  voiceWatchdog = setInterval(function() {
+    try {
+      if (!voiceChannel || !curVoiceRoom || !me) return;
+      var st = null;
+      try { st = voiceChannel.state; } catch(e) {}
+      if (st === 'closed' || st === 'errored' || st === 'leaving' || st === 'timed out') {
+        var now = Date.now();
+        if (now - lastRejoin < 30000 || rejoinCount >= 5) return;
+        lastRejoin = now; rejoinCount++;
+        toast('اتصال ویس قطع شد، وصل مجدد...');
+        silentRejoin();
+      }
+    } catch(e) {}
+  }, 5000);
+}
+function stopVoiceWatchdog() {
+  if (voiceWatchdog) { clearInterval(voiceWatchdog); voiceWatchdog = null; }
+}
+async function silentRejoin() {
+  var room = curVoiceRoom;
+  if (!room || !me) return;
+  try { if (voiceChannel) await db.removeChannel(voiceChannel); } catch(e) {}
+  voiceChannel = null;
+  try { if (myStream) { myStream.getTracks().forEach(function(t){ try { t.stop(); } catch(e) {} }); } } catch(e) {}
+  myStream = null;
+  try { teardownMicGain(); } catch(e) {}
+  try { meterStop(); } catch(e) {}
+  peers.forEach(function(pc){ try { pc.close(); } catch(e) {} }); peers.clear();
+  // drop stale members (keep self); 'here' replies rebuild the list live
+  try {
+    var keepSelf = voiceMembers.has(me.id) ? voiceMembers.get(me.id) : null;
+    voiceMembers.clear();
+    if (keepSelf) voiceMembers.set(me.id, keepSelf);
+  } catch(e) {}
+  try { await joinVoice(); } catch(e) { toast('وصل مجدد نشد، دستی وارد شو'); }
+}
+window.addEventListener('online', function() {
+  if (curVoiceRoom && voiceChannel) lastRejoin = 0; // let watchdog retry immediately
 });
 document.addEventListener('click', function(e) {
   var p = $('fvVolPop');
